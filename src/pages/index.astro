@@ -258,10 +258,11 @@ const totalVenues = venueNames.length;
           <div class="vaxis-head">Venue</div>
           <div class="vaxis-rows" style={`height:${lanesHeight}px`}>
             {venueRows.map((v) => (
-              <div class={`vlabel ${v.alt ? "alt" : ""}`} style={`top:${v.yOffset}px;height:${v.height}px`}>
+              <button type="button" class={`vlabel ${v.alt ? "alt" : ""}`} data-venue={v.name} data-h={v.height} style={`top:${v.yOffset}px;height:${v.height}px`}>
+                <span class="vchevron" aria-hidden="true">▾</span>
                 <span class="vlabel-name">{v.name}</span>
                 <span class="vlabel-count">{v.count}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -286,7 +287,7 @@ const totalVenues = venueNames.length;
 
             <div class="lanes" style={`height:${lanesHeight}px`}>
               {venueRows.map((v) => (
-                <span class={`vband ${v.alt ? "alt" : ""}`} data-bx={0} data-bw={totalWidth} style={`top:${v.yOffset}px;height:${v.height}px;left:0;width:${totalWidth}px`} />
+                <span class={`vband ${v.alt ? "alt" : ""}`} data-venue={v.name} data-h={v.height} data-bx={0} data-bw={totalWidth} style={`top:${v.yOffset}px;height:${v.height}px;left:0;width:${totalWidth}px`} />
               ))}
               {bands.map((b) => (!b.first &&
                 <span class="divider" data-bx={b.left - DAY_GAP / 2} style={`left:${b.left - DAY_GAP / 2}px`} />
@@ -310,6 +311,8 @@ const totalVenues = venueNames.length;
                   data-start={e.absStart}
                   data-end={e.absEnd}
                   data-clock={e.timeLabel}
+                  data-venue={(e.location && e.location.trim()) ? e.location.trim() : "Unlisted"}
+                  data-sublane={e.subLane}
                 >
                   <span class="bar-check" aria-hidden="true">✓</span>
                   <span class="bar-time">{e.timeLabel}</span>
@@ -391,20 +394,24 @@ const totalVenues = venueNames.length;
 
       function applyFilter() {
         const q = search.value.trim().toLowerCase();
-        let visible = 0, firstMatch = null;
+        let visible = 0;
         for (const b of bars) {
           const match = !q || b.dataset.search.includes(q);
           b.classList.toggle("dim", !match);
-          if (match) { visible++; if (q && !firstMatch) firstMatch = b; }
+          if (match) visible++;
         }
         count.textContent = visible + (visible === 1 ? " event" : " events");
         empty.hidden = visible !== 0;
         searchClear.hidden = q === "";
-        // jump the horizontal timeline to the first (leftmost) match
-        if (firstMatch) {
-          const sc = document.getElementById("scroll");
-          const delta = firstMatch.getBoundingClientRect().left - sc.getBoundingClientRect().left;
-          sc.scrollTo({ left: Math.max(0, sc.scrollLeft + delta - 48), behavior: "smooth" });
+        // collapse venues with no matches, then jump to the first visible match
+        relayoutY(q !== "");
+        if (q) {
+          const firstMatch = bars.find((b) => !b.classList.contains("dim") && b.offsetParent !== null);
+          if (firstMatch) {
+            const sc = document.getElementById("scroll");
+            const delta = firstMatch.getBoundingClientRect().left - sc.getBoundingClientRect().left;
+            sc.scrollTo({ left: Math.max(0, sc.scrollLeft + delta - 48), behavior: "smooth" });
+          }
         }
       }
       search.addEventListener("input", applyFilter);
@@ -425,6 +432,53 @@ const totalVenues = venueNames.length;
         chart.style.width = w; daylabels.style.width = w;
       }
       zoom.addEventListener("input", () => setZoom(+zoom.value));
+
+      // ---- collapsible venues (Y-axis relayout) ----
+      const ROW = 54;          // LANE_H (46) + LANE_GAP (8)
+      const VGAP = 12;         // VENUE_GAP
+      const COLLAPSED_H = 30;
+      const lanesEl = document.querySelector(".lanes");
+      const vaxisRows = document.querySelector(".vaxis-rows");
+      const manualCollapsed = new Set();
+      const vlabels = Array.from(document.querySelectorAll(".vlabel"));
+      const vbands = Array.from(document.querySelectorAll(".vband"));
+      const venues = vlabels.map((label, i) => ({
+        name: label.dataset.venue, label, band: vbands[i], h: +label.dataset.h, bars: [],
+      }));
+      const vByName = new Map(venues.map((v) => [v.name, v]));
+      for (const b of bars) { const v = vByName.get(b.dataset.venue); if (v) v.bars.push(b); }
+
+      function relayoutY(searchActive) {
+        let y = 0;
+        for (const v of venues) {
+          const matches = searchActive ? v.bars.filter((b) => !b.classList.contains("dim")).length : v.bars.length;
+          const noMatch = searchActive && matches === 0;
+          const manual = manualCollapsed.has(v.name);
+          const collapsed = manual || noMatch;
+          const h = collapsed ? COLLAPSED_H : v.h;
+          v.label.style.top = y + "px"; v.label.style.height = h + "px";
+          v.band.style.top = y + "px"; v.band.style.height = h + "px";
+          v.label.classList.toggle("collapsed", collapsed);
+          v.label.classList.toggle("nomatch", noMatch && !manual);
+          v.label.setAttribute("aria-expanded", String(!collapsed));
+          for (const b of v.bars) {
+            if (collapsed) { b.style.display = "none"; }
+            else { b.style.display = ""; b.style.top = (y + (+b.dataset.sublane) * ROW) + "px"; }
+          }
+          y += h + VGAP;
+        }
+        const total = Math.max(0, y - VGAP);
+        lanesEl.style.height = total + "px";
+        vaxisRows.style.height = total + "px";
+      }
+      for (const v of venues) {
+        v.label.addEventListener("click", () => {
+          if (manualCollapsed.has(v.name)) manualCollapsed.delete(v.name);
+          else manualCollapsed.add(v.name);
+          relayoutY(search.value.trim() !== "");
+        });
+      }
+      relayoutY(false);
 
       const el = (tag, cls, text) => {
         const n = document.createElement(tag);
@@ -734,12 +788,19 @@ const totalVenues = venueNames.length;
       }
       .vaxis-rows { position: relative; }
       .vlabel {
-        position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .4rem;
-        padding: 0 .55rem 0 .75rem;
+        position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .35rem;
+        padding: 0 .5rem 0 .55rem; margin: 0; border: none; background: transparent;
+        color: inherit; font: inherit; text-align: left; cursor: pointer;
+        transition: background .12s;
       }
       .vlabel.alt { background: rgba(49,50,68,.30); }
+      .vlabel:hover { background: rgba(137,180,250,.12); }
+      .vchevron { flex: 0 0 auto; font-size: .6rem; color: var(--overlay1); transition: transform .15s; }
+      .vlabel.collapsed .vchevron { transform: rotate(-90deg); }
       .vlabel-name { flex: 1; font-size: .8rem; font-weight: 600; color: var(--subtext1); line-height: 1.15;
         overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .vlabel.collapsed .vlabel-name { -webkit-line-clamp: 1; }
+      .vlabel.nomatch { opacity: .4; }
       .vlabel-count { flex: 0 0 auto; font-size: .68rem; font-weight: 700; color: var(--subtext0); background: var(--surface0); border-radius: 999px; padding: .08rem .42rem; }
 
       .scroll {
