@@ -205,9 +205,9 @@ const totalDays = groups.length;
       <p class="kicker">✦ Vibe Camp</p>
       <h1>2026 Event Timeline</h1>
       <p class="tagline">
-        The whole year on one continuous track — scroll left → right through every
-        day. Overlapping events stack into parallel lanes. {totalEvents} events
-        across {totalDays} days.
+        This year's schedule, paired with a schedule maker. Send bugs to
+        <a href="https://twitter.com/timebard" target="_blank" rel="noopener">@timebard</a>
+        on twitter!
       </p>
       <div class="controls">
         <div class="search-wrap">
@@ -603,6 +603,8 @@ const totalDays = groups.length;
         -webkit-background-clip: text; background-clip: text; color: transparent;
       }
       .tagline { margin: .8rem auto 0; max-width: 42rem; color: var(--subtext0); font-size: 1.02rem; }
+      .tagline a { color: var(--sky); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--sky) 45%, transparent); }
+      .tagline a:hover { color: var(--sapphire); border-bottom-color: var(--sapphire); }
       .controls { display: flex; align-items: center; justify-content: center; gap: .9rem; flex-wrap: wrap; margin-top: 1.6rem; }
       .search-wrap { position: relative; flex: 1; max-width: 26rem; min-width: 14rem; }
       .search-icon { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--overlay1); font-size: 1.1rem; }
