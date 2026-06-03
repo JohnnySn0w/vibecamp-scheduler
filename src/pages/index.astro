@@ -426,29 +426,40 @@ const totalDays = groups.length;
       const reviewList = document.getElementById("review-list");
       const reviewSub = document.getElementById("review-sub");
 
+      const pairsOf = (e) => conflictPairs.filter(([a, b]) => a === e || b === e);
+
       function renderReview() {
         reviewList.textContent = "";
-        reviewSub.textContent = conflictPairs.length
-          ? `${conflictPairs.length} overlapping pair${conflictPairs.length > 1 ? "s" : ""}. Mark the ones you're fine with — they'll be noted, not flagged, in the PDF.`
+        // one row per event involved in a conflict, sorted by start time
+        const evs = [...new Set(conflictPairs.flat())].sort(
+          (a, b) => (+a.dataset.start) - (+b.dataset.start)
+        );
+        reviewSub.textContent = evs.length
+          ? `${evs.length} event${evs.length > 1 ? "s" : ""} with overlaps. Marking an event OK clears every overlap it's part of — resolved ones are simply left out of the PDF.`
           : "No overlaps — you're all clear.";
-        for (const [a, b] of conflictPairs) {
-          const key = pairKey(a, b);
-          const row = el("div", "rv-row");
+        for (const e of evs) {
+          const mine = pairsOf(e);
+          const partners = mine
+            .map(([a, b]) => (a === e ? b : a))
+            .sort((x, y) => (+x.dataset.start) - (+y.dataset.start));
+          const resolved = mine.every(([a, b]) => ackedOverlaps.has(pairKey(a, b)));
+
+          const row = el("div", "rv-row" + (resolved ? " resolved" : ""));
           const info = el("div", "rv-info");
-          info.appendChild(el("div", "rv-pair", `${a.dataset.title}  ↔  ${b.dataset.title}`));
-          info.appendChild(el("div", "rv-times", `${a.dataset.clock}   ·   ${b.dataset.clock}`));
+          info.appendChild(el("div", "rv-pair", `${e.dataset.title}  (${e.dataset.clock})`));
+          info.appendChild(el("div", "rv-times",
+            "overlaps " + partners.map((p) => `${p.dataset.title} (${p.dataset.clock})`).join(",  ")));
           const btn = el("button", "rv-ok");
-          const sync = () => {
-            const on = ackedOverlaps.has(key);
-            btn.textContent = on ? "OK ✓" : "Mark OK";
-            btn.classList.toggle("on", on);
-          };
+          btn.textContent = resolved ? "OK ✓" : "Mark OK";
+          btn.classList.toggle("on", resolved);
           btn.addEventListener("click", () => {
-            if (ackedOverlaps.has(key)) ackedOverlaps.delete(key);
-            else ackedOverlaps.add(key);
-            sync();
+            for (const [a, b] of mine) {
+              const k = pairKey(a, b);
+              if (resolved) ackedOverlaps.delete(k);
+              else ackedOverlaps.add(k);
+            }
+            renderReview(); // re-render so events that share an overlap update too
           });
-          sync();
           row.appendChild(info);
           row.appendChild(btn);
           reviewList.appendChild(row);
@@ -476,13 +487,10 @@ const totalDays = groups.length;
           .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
 
-        // split overlaps into acknowledged vs unresolved
-        const ackedPairs = [], unackedPairs = [];
-        const ackedIds = new Set(), unackedIds = new Set();
-        for (const [a, b] of conflictPairs) {
-          if (ackedOverlaps.has(pairKey(a, b))) { ackedPairs.push([a, b]); ackedIds.add(a.id); ackedIds.add(b.id); }
-          else { unackedPairs.push([a, b]); unackedIds.add(a.id); unackedIds.add(b.id); }
-        }
+        // only unresolved overlaps matter for the PDF; anything marked OK is silent
+        const unackedPairs = conflictPairs.filter(([a, b]) => !ackedOverlaps.has(pairKey(a, b)));
+        const unackedIds = new Set();
+        for (const [a, b] of unackedPairs) { unackedIds.add(a.id); unackedIds.add(b.id); }
 
         const body = document.getElementById("ps-body");
         body.textContent = "";
@@ -496,7 +504,6 @@ const totalDays = groups.length;
           for (const b of sel.filter((x) => x.dataset.day === day)) {
             let cls = "ps-item";
             if (unackedIds.has(b.id)) cls += " conflict";
-            else if (ackedIds.has(b.id)) cls += " acked";
             const item = el("div", cls);
             item.appendChild(el("div", "ps-time", b.dataset.clock));
             const main = el("div", "ps-main");
@@ -513,19 +520,12 @@ const totalDays = groups.length;
 
         const warn = document.getElementById("ps-warn");
         warn.textContent = "";
-        warn.hidden = !(unackedPairs.length || ackedPairs.length);
+        warn.hidden = unackedPairs.length === 0;
         if (unackedPairs.length) {
           const box = el("div", "pw-red");
           box.appendChild(el("h4", null, `⚠ ${unackedPairs.length} unresolved time conflict${unackedPairs.length > 1 ? "s" : ""}`));
           for (const [a, b] of unackedPairs)
             box.appendChild(el("div", null, `“${a.dataset.title}” (${a.dataset.clock}) overlaps “${b.dataset.title}” (${b.dataset.clock})`));
-          warn.appendChild(box);
-        }
-        if (ackedPairs.length) {
-          const box = el("div", "pw-ok");
-          box.appendChild(el("h4", null, `✓ ${ackedPairs.length} overlap${ackedPairs.length > 1 ? "s" : ""} reviewed & marked OK`));
-          for (const [a, b] of ackedPairs)
-            box.appendChild(el("div", null, `“${a.dataset.title}” (${a.dataset.clock}) & “${b.dataset.title}” (${b.dataset.clock})`));
           warn.appendChild(box);
         }
         window.print();
@@ -774,6 +774,7 @@ const totalDays = groups.length;
       }
       .rv-ok:hover { background: var(--surface1); color: var(--text); }
       .rv-ok.on { background: color-mix(in srgb, var(--green) 26%, var(--mantle)); border-color: var(--green); color: var(--green); }
+      .rv-row.resolved { border-left-color: var(--green); }
       .review-actions { display: flex; align-items: center; gap: .6rem; margin-top: 1.2rem; }
       .rv-btn { border: none; border-radius: 999px; padding: .5rem 1rem; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
       .rv-btn.ghost { background: var(--surface0); color: var(--subtext1); }
@@ -791,8 +792,7 @@ const totalDays = groups.length;
         .ps-head h1 { margin: 0 0 3pt; font-size: 20pt; color: #1e1e2e; }
         .ps-sub { margin: 0 0 12pt; font-size: 10pt; color: #555; }
         .ps-warn { margin-bottom: 12pt; font-size: 9.5pt; }
-        .pw-red { border: 1.4pt solid #c0392b; background: #fdecea; color: #a5281b; border-radius: 6pt; padding: 8pt 10pt; margin-bottom: 7pt; }
-        .pw-ok { border: 1.4pt solid #1e8449; background: #eafaf1; color: #1c7a44; border-radius: 6pt; padding: 8pt 10pt; }
+        .pw-red { border: 1.4pt solid #c0392b; background: #fdecea; color: #a5281b; border-radius: 6pt; padding: 8pt 10pt; }
         .ps-warn h4 { margin: 0 0 4pt; font-size: 10.5pt; }
         .ps-warn div { margin: 1pt 0; }
         .ps-day { margin-bottom: 11pt; break-inside: avoid; }
@@ -800,8 +800,6 @@ const totalDays = groups.length;
         .ps-item { display: flex; gap: 9pt; padding: 3pt 0; font-size: 10pt; break-inside: avoid; }
         .ps-item.conflict .ps-time { color: #c0392b; }
         .ps-item.conflict .t::after { content: " ⚠ overlaps"; color: #c0392b; font-weight: 700; font-size: 8.5pt; }
-        .ps-item.acked .ps-time { color: #1e8449; }
-        .ps-item.acked .t::after { content: " ✓ overlap OK"; color: #1e8449; font-weight: 700; font-size: 8.5pt; }
         .ps-time { flex: 0 0 110pt; font-variant-numeric: tabular-nums; font-weight: 700; color: #333; }
         .ps-main .t { font-weight: 600; }
         .ps-main .m { color: #666; font-size: 8.6pt; margin-top: 1pt; }
