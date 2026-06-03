@@ -220,6 +220,7 @@ const totalDays = groups.length;
     </header>
 
     <main>
+      <p class="scroll-hint">More events that way! <span class="scroll-arrow">→</span></p>
       <div class="scroll" id="scroll">
         <div class="chart" style={`width:${totalWidth}px`}>
           <div class="daylabels" style={`width:${totalWidth}px`}>
@@ -619,6 +620,13 @@ const totalDays = groups.length;
       .hint { font-size: .8rem; color: var(--overlay1); }
 
       main { max-width: 1240px; margin: 0 auto; padding: 1.2rem 1.5rem 6rem; }
+      .scroll-hint {
+        margin: .2rem 0 .7rem; font-size: 1.5rem; font-weight: 800; letter-spacing: -.01em;
+        color: var(--peach); display: flex; align-items: center; gap: .5rem;
+      }
+      .scroll-arrow { display: inline-block; animation: nudge 1.2s ease-in-out infinite; }
+      @keyframes nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(.4rem); } }
+      @media (prefers-reduced-motion: reduce) { .scroll-arrow { animation: none; } }
 
       .scroll {
         overflow-x: auto; overflow-y: hidden; cursor: grab;
