@@ -325,12 +325,16 @@ const totalDays = groups.length;
     <!-- printable schedule (hidden on screen, shown only when printing) -->
     <div id="print-schedule" class="print-schedule" aria-hidden="true">
       <header class="ps-head">
-        <h1>My Vibecamp 2026 Schedule</h1>
-        <p id="ps-sub" class="ps-sub"></p>
+        <img class="ps-logo" src="vibecamp_logo.png" alt="" />
+        <div class="ps-headtext">
+          <p class="ps-kicker">✦ Vibe Camp 2026</p>
+          <h1>My Schedule</h1>
+          <p id="ps-sub" class="ps-sub"></p>
+        </div>
       </header>
       <div id="ps-warn" class="ps-warn" hidden></div>
       <div id="ps-body"></div>
-      <footer class="ps-foot">Built from the Vibecamp event calendar · times in UTC</footer>
+      <footer class="ps-foot">Built from the Vibecamp event calendar · times shown in UTC · vibecamp.mahan.io</footer>
     </div>
 
     <script is:inline>
@@ -519,19 +523,26 @@ const totalDays = groups.length;
           `${sel.length} event${sel.length > 1 ? "s" : ""} · ${days.length} day${days.length > 1 ? "s" : ""}`;
 
         for (const day of days) {
+          const dayEvents = sel.filter((x) => x.dataset.day === day);
           const sec = el("section", "ps-day");
-          sec.appendChild(el("h2", null, day));
-          for (const b of sel.filter((x) => x.dataset.day === day)) {
+          const head = el("h2");
+          head.appendChild(el("span", "ps-dayname", day));
+          head.appendChild(el("span", "ps-daycount", `${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""}`));
+          sec.appendChild(head);
+          for (const b of dayEvents) {
             let cls = "ps-item";
             if (unackedIds.has(b.id)) cls += " conflict";
             const item = el("div", cls);
             item.appendChild(el("div", "ps-time", b.dataset.clock));
             const main = el("div", "ps-main");
             main.appendChild(el("div", "t", b.dataset.title));
-            const bits = [];
-            if (b.dataset.org) bits.push("♟ " + b.dataset.org);
-            if (b.dataset.loc) bits.push("⌖ " + b.dataset.loc);
-            if (bits.length) main.appendChild(el("div", "m", bits.join("   ")));
+            const meta = el("div", "m");
+            if (b.dataset.org) meta.appendChild(el("span", "ps-host", "by " + b.dataset.org));
+            if (b.dataset.loc) {
+              if (b.dataset.org) meta.appendChild(el("span", "ps-dot", "·"));
+              meta.appendChild(el("span", "ps-loc", b.dataset.loc));
+            }
+            if (b.dataset.org || b.dataset.loc) main.appendChild(meta);
             item.appendChild(main);
             sec.appendChild(item);
           }
@@ -824,25 +835,59 @@ const totalDays = groups.length;
       /* printable schedule — hidden on screen, revealed when printing */
       .print-schedule { display: none; }
       @media print {
+        /* Catppuccin Latte — the light sibling of the Mocha screen theme */
         .aurora, .hero, main, footer, #panel, #tray, #review { display: none !important; }
         html, body { background: #fff !important; }
-        .print-schedule { display: block !important; color: #14141b; padding: 0; }
-        @page { margin: 14mm; }
-        .ps-head h1 { margin: 0 0 3pt; font-size: 20pt; color: #1e1e2e; }
-        .ps-sub { margin: 0 0 12pt; font-size: 10pt; color: #555; }
-        .ps-warn { margin-bottom: 12pt; font-size: 9.5pt; }
-        .pw-red { border: 1.4pt solid #c0392b; background: #fdecea; color: #a5281b; border-radius: 6pt; padding: 8pt 10pt; }
-        .ps-warn h4 { margin: 0 0 4pt; font-size: 10.5pt; }
-        .ps-warn div { margin: 1pt 0; }
-        .ps-day { margin-bottom: 11pt; break-inside: avoid; }
-        .ps-day h2 { font-size: 12.5pt; margin: 0 0 4pt; padding-bottom: 2pt; border-bottom: 1pt solid #ccc; color: #1e1e2e; }
-        .ps-item { display: flex; gap: 9pt; padding: 3pt 0; font-size: 10pt; break-inside: avoid; }
-        .ps-item.conflict .ps-time { color: #c0392b; }
-        .ps-item.conflict .t::after { content: " ⚠ overlaps"; color: #c0392b; font-weight: 700; font-size: 8.5pt; }
-        .ps-time { flex: 0 0 110pt; font-variant-numeric: tabular-nums; font-weight: 700; color: #333; }
-        .ps-main .t { font-weight: 600; }
-        .ps-main .m { color: #666; font-size: 8.6pt; margin-top: 1pt; }
-        .ps-foot { margin-top: 16pt; font-size: 8pt; color: #999; }
+        @page { margin: 13mm; }
+
+        .print-schedule {
+          display: block !important; max-width: 720pt; margin: 0 auto;
+          color: #4c4f69; font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+          -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
+
+        /* header */
+        .ps-head {
+          display: flex; align-items: center; gap: 14pt;
+          padding-bottom: 12pt; margin-bottom: 15pt; border-bottom: 1.5pt solid #8839ef;
+        }
+        .ps-logo { width: 50pt; height: 50pt; border-radius: 11pt; flex: 0 0 auto; }
+        .ps-headtext { min-width: 0; }
+        .ps-kicker { margin: 0 0 2pt; font-size: 8pt; letter-spacing: .22em; text-transform: uppercase; color: #8839ef; font-weight: 700; }
+        .ps-head h1 { margin: 0; font-size: 23pt; font-weight: 800; letter-spacing: -.02em; color: #4c4f69; }
+        .ps-sub { margin: 3pt 0 0; font-size: 9.5pt; color: #8c8fa1; }
+
+        /* unresolved-conflict notice */
+        .ps-warn { margin-bottom: 15pt; font-size: 9pt; }
+        .pw-red { border: 1pt solid #f0a9b8; background: #fce7ec; color: #b30f33; border-radius: 8pt; padding: 9pt 12pt; }
+        .ps-warn h4 { margin: 0 0 5pt; font-size: 10pt; font-weight: 700; }
+        .ps-warn div { margin: 1.5pt 0; color: #9c2440; }
+
+        /* day groups */
+        .ps-day { margin-bottom: 15pt; break-inside: avoid; }
+        .ps-day h2 { display: flex; align-items: baseline; gap: 8pt; margin: 0 0 5pt; padding-bottom: 4pt; border-bottom: 1pt solid #e6e9ef; }
+        .ps-dayname { font-size: 13pt; font-weight: 700; letter-spacing: -.01em; color: #8839ef; }
+        .ps-daycount { margin-left: auto; font-size: 8pt; font-weight: 600; color: #9ca0b0; }
+
+        /* event rows */
+        .ps-item { display: flex; gap: 11pt; align-items: flex-start; padding: 7pt 0; border-bottom: .75pt solid #eff1f5; break-inside: avoid; }
+        .ps-item:last-child { border-bottom: none; }
+        .ps-time {
+          flex: 0 0 88pt; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 8.5pt;
+          color: #8839ef; background: #f1e9fb; border-radius: 6pt; padding: 4pt 6pt; text-align: center; line-height: 1.25;
+        }
+        .ps-main { flex: 1; padding-top: .5pt; }
+        .ps-main .t { font-weight: 700; font-size: 10.5pt; line-height: 1.25; color: #4c4f69; }
+        .ps-main .m { margin-top: 2.5pt; font-size: 8.5pt; color: #8c8fa1; }
+        .ps-host { font-style: italic; }
+        .ps-loc { color: #6c6f85; }
+        .ps-dot { margin: 0 5pt; color: #bcc0cc; }
+
+        /* conflicts */
+        .ps-item.conflict .ps-time { color: #d20f39; background: #fce7ec; }
+        .ps-item.conflict .t::after { content: "  ⚠ overlaps"; color: #d20f39; font-weight: 700; font-size: 7.5pt; letter-spacing: .02em; }
+
+        .ps-foot { margin-top: 18pt; padding-top: 8pt; border-top: 1pt solid #e6e9ef; font-size: 7.5pt; color: #acb0be; text-align: center; }
       }
 
       @media (max-width: 560px) { .hero { padding-top: 2.6rem; } }
