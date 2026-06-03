@@ -4,9 +4,11 @@ on:
   # Rebuild & deploy on every push to main
   push:
     branches: [main]
-  # Allow manual runs from the Actions tab
+  # Allow manual runs from the Actions tab (works anytime, even after the cutoff)
   workflow_dispatch:
-  # Pull the live calendar feed and redeploy once a day (13:17 UTC)
+  # Pull the live calendar feed and redeploy once a day (13:17 UTC).
+  # Scheduled runs stop doing work after 2026-06-18 (see the `gate` job) — the
+  # schedule is final by then, so no further automatic rebuilds are needed.
   schedule:
     - cron: "17 13 * * *"
 
@@ -22,7 +24,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decide whether to build. Push / manual runs always build. Scheduled runs
+  # only build up to and including 2026-06-18, then quietly skip forever after.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
+    steps:
+      - id: decide
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "Triggered by ${{ github.event_name }} — building."
+          elif [ "$(date -u +%Y%m%d)" -le 20260618 ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "Scheduled run on/before 2026-06-18 — building."
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "Past 2026-06-18 — schedule is final; skipping automatic rebuild."
+          fi
+
   build:
+    needs: gate
+    if: needs.gate.outputs.build == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

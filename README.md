@@ -17,8 +17,9 @@ time** and baked into the static HTML. The published page never touches the netw
 
 - `npm run refresh:data` — pull the live feed and regenerate `src/events.json`
 - `npm run refresh` — refresh the data **and** rebuild the site
-- The deploy workflow runs the refresh on every build **and on a daily cron**, so the
-  published site stays current on its own.
+- The deploy workflow runs the refresh on every build **and on a daily cron** (through
+  2026-06-18, after which the schedule is final and automatic rebuilds stop), so the
+  published site stays current on its own. Push / manual runs still build anytime.
 
 ## Develop
 
