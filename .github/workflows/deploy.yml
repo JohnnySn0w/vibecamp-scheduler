@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Rebuild & deploy on every push to main
+  push:
+    branches: [main]
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+  # Pull the live calendar feed and redeploy once a day (13:17 UTC)
+  schedule:
+    - cron: "17 13 * * *"
+
+# Permissions required by the GitHub Pages deploy action
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; let a newer run cancel an in-flight one
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Pull the live Vibecamp .ics feed
+        # If the feed is unreachable, fall back to the committed snapshot so a
+        # transient outage never breaks the daily deploy.
+        run: npm run refresh:data || echo "::warning::feed fetch failed; using committed events.json"
+
+      - name: Build static site
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

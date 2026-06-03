@@ -1,0 +1,812 @@
+---
+import events from "../events.json";
+
+// ---- geometry config ----
+const PX_PER_MIN = 2.6;
+const LANE_H = 46;
+const LANE_GAP = 8;
+const MIN_BAR = 66;
+const DAY_GAP = 76;     // gap between days on the continuous axis
+const SIDE_PAD = 16;
+
+const BAR_COLORS = [
+  "#89b4fa", "#cba6f7", "#a6e3a1", "#fab387", "#89dceb",
+  "#f5c2e7", "#94e2d5", "#f9e2af", "#eba0ac", "#b4befe",
+  "#74c7ec", "#f38ba8",
+];
+const hashColor = (s) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return BAR_COLORS[h % BAR_COLORS.length];
+};
+
+const toMin = (hhmm) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+const parseDur = (s) => {
+  if (!s) return 0;
+  let t = 0;
+  const d = s.match(/(\d+)d/), h = s.match(/(\d+)h/), m = s.match(/(\d+)m/);
+  if (d) t += +d[1] * 1440;
+  if (h) t += +h[1] * 60;
+  if (m) t += +m[1];
+  return t;
+};
+const pad = (n) => String(n).padStart(2, "0");
+const dayName = (iso) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" });
+const fmtDate = (iso) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+    month: "short", day: "numeric",
+  });
+
+const shortDay = (iso) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
+const addDays = (iso, n) => {
+  const dt = new Date(iso + "T00:00:00");
+  dt.setDate(dt.getDate() + n);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+};
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// ---- group by day, compute per-day span (the axis mapping) ----
+const byDate = new Map();
+for (const e of events) {
+  if (!byDate.has(e.date)) byDate.set(e.date, []);
+  byDate.get(e.date).push(e);
+}
+
+const groups = [];
+for (const [date, items] of byDate) {
+  const evs = items.map((e) => {
+    const allDay = e.start === "all-day";
+    const startMin = allDay ? 0 : toMin(e.start);
+    let durMin = allDay ? 1440 : parseDur(e.dur);
+    if (!durMin) durMin = e.end ? ((toMin(e.end) - startMin + 1440) % 1440) || 60 : 60;
+    const endAbs = startMin + durMin;
+    const renderEnd = Math.min(endAbs, 1440); // clamped within the day, for span/peak only
+    return { ...e, allDay, startMin, durMin, endAbs, renderEnd };
+  });
+
+  const dayMin = Math.min(...evs.map((e) => e.startMin));
+  const dayMax = Math.max(...evs.map((e) => e.renderEnd));
+  const spanStart = Math.floor(dayMin / 60) * 60;
+  let spanEnd = Math.ceil(dayMax / 60) * 60;
+  if (spanEnd <= spanStart) spanEnd = spanStart + 60;
+  const width = (spanEnd - spanStart) * PX_PER_MIN;
+
+  // peak concurrency within the day (sweep line) — for the day label
+  const pts = [];
+  for (const e of evs) { pts.push([e.startMin, 1], [e.renderEnd, -1]); }
+  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  let cur = 0, peak = 0;
+  for (const [, d] of pts) { cur += d; if (cur > peak) peak = cur; }
+
+  // hour ticks (relative to this day's span)
+  const ticks = [];
+  for (let m = spanStart; m <= spanEnd; m += 60) {
+    ticks.push({ x: (m - spanStart) * PX_PER_MIN, label: `${pad((m / 60) % 24)}:00` });
+  }
+
+  groups.push({
+    date, day: dayName(date), pretty: fmtDate(date),
+    count: evs.length, spanStart, spanEnd, width, peak, ticks, events: evs,
+  });
+}
+groups.sort((a, b) => a.date.localeCompare(b.date));
+
+// ---- lay days end-to-end on ONE continuous axis ----
+let cursor = SIDE_PAD;
+for (const g of groups) {
+  g.offset = cursor;
+  cursor += g.width + DAY_GAP;
+}
+const totalWidth = cursor - DAY_GAP + SIDE_PAD;
+const firstDate = groups[0].date;
+const lastG = groups[groups.length - 1];
+const lastDate = lastG.date;
+const dayIndex = new Map(groups.map((g, i) => [g.date, i]));
+const daysFromFirst = new Map(
+  groups.map((g) => [
+    g.date,
+    Math.round((new Date(g.date + "T00:00:00") - new Date(firstDate + "T00:00:00")) / 86400000),
+  ])
+);
+
+// map any (date, minute-of-day) to a global X on the collapsed axis
+const xOf = (dateStr, minute) => {
+  const idx = dayIndex.get(dateStr);
+  if (idx != null) {
+    const g = groups[idx];
+    return g.offset + (clamp(minute, g.spanStart, g.spanEnd) - g.spanStart) * PX_PER_MIN;
+  }
+  if (dateStr < firstDate) return groups[0].offset;
+  if (dateStr > lastDate) return lastG.offset + lastG.width;
+  // date sits in a collapsed gap → snap to the preceding present day's right edge
+  let prev = groups[0];
+  for (const g of groups) if (g.date < dateStr) prev = g;
+  return prev.offset + prev.width;
+};
+
+// ---- build global bars with real (possibly multi-day) spans ----
+const allEvents = [];
+for (const g of groups) {
+  for (const e of g.events) {
+    const offDays = Math.floor(e.endAbs / 1440);
+    const endMin = e.endAbs - offDays * 1440;
+    const endDate = offDays > 0 ? addDays(g.date, offDays) : g.date;
+    const leftX = xOf(g.date, e.startMin);
+    const rightX = xOf(endDate, endMin);
+    const barW = Math.max(rightX - leftX, MIN_BAR);
+    const crossesDay = endDate !== g.date;
+    const beyondDays =
+      endDate > lastDate
+        ? Math.round((new Date(endDate + "T00:00:00") - new Date(lastDate + "T00:00:00")) / 86400000)
+        : 0;
+    const endLabel = beyondDays > 0
+      ? `+${beyondDays}d`
+      : `${shortDay(endDate)} ${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
+    const baseTime = e.allDay ? "all-day" : `${e.start}${e.end ? "–" + e.end : ""}`;
+    const absStart = daysFromFirst.get(g.date) * 1440 + e.startMin;
+    allEvents.push({
+      ...e,
+      leftX, barW, crossesDay, beyondDays, endLabel,
+      absStart, absEnd: absStart + e.durMin,
+      color: hashColor(e.org || e.summary || "x"),
+      timeLabel: crossesDay ? `${e.start} → ${endLabel}` : baseTime,
+      dayFull: `${g.day}, ${g.pretty}`,
+    });
+  }
+}
+
+// ---- global lane packing across the whole continuous axis ----
+allEvents.sort((a, b) => a.leftX - b.leftX || (a.leftX + a.barW) - (b.leftX + b.barW));
+const laneEnds = [];
+for (const e of allEvents) {
+  let lane = laneEnds.findIndex((end) => end <= e.leftX + 0.5);
+  if (lane === -1) { lane = laneEnds.length; laneEnds.push(0); }
+  laneEnds[lane] = e.leftX + e.barW;
+  e.top = lane * (LANE_H + LANE_GAP);
+}
+const lanesHeight = laneEnds.length * (LANE_H + LANE_GAP);
+
+const bands = groups.map((g, i) => ({
+  left: g.offset, width: g.width, alt: i % 2 === 1,
+  day: g.day, pretty: g.pretty, count: g.count, peak: g.peak, first: i === 0,
+}));
+const hourTicks = groups.flatMap((g) =>
+  g.ticks.map((t) => ({ x: g.offset + t.x, label: t.label }))
+);
+const bars = allEvents.map((e) => ({ ...e, gleft: e.leftX }));
+
+const totalEvents = events.length;
+const totalDays = groups.length;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibecamp 2026 · Continuous Timeline</title>
+    <meta name="description" content="The Vibecamp 2026 schedule as one continuous lateral timeline." />
+  </head>
+  <body>
+    <div class="aurora"></div>
+    <header class="hero">
+      <p class="kicker">✦ Vibe Camp</p>
+      <h1>2026 Event Timeline</h1>
+      <p class="tagline">
+        The whole year on one continuous track — scroll left → right through every
+        day. Overlapping events stack into parallel lanes. {totalEvents} events
+        across {totalDays} days.
+      </p>
+      <div class="controls">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="search" type="search" placeholder="Filter events, hosts, or places…" autocomplete="off" />
+        </div>
+        <span id="count" class="count">{totalEvents} events</span>
+        <span class="hint">↔ drag to scroll · click events to build a PDF schedule</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="scroll" id="scroll">
+        <div class="chart" style={`width:${totalWidth}px`}>
+          <div class="daylabels" style={`width:${totalWidth}px`}>
+            {bands.map((b) => (
+              <div class="daylabel" style={`left:${b.left}px;width:${b.width}px`}>
+                <span class="dl-day">{b.day}</span>
+                <span class="dl-date">{b.pretty}</span>
+                <span class="dl-meta">{b.count} events · {b.peak} at peak</span>
+              </div>
+            ))}
+          </div>
+
+          <div class="ruler">
+            {hourTicks.map((t) => (
+              <span class="tick" style={`left:${t.x}px`}>{t.label}</span>
+            ))}
+          </div>
+
+          <div class="lanes" style={`height:${lanesHeight}px`}>
+            {bands.map((b) => (
+              <span class={`band ${b.alt ? "alt" : ""}`} style={`left:${b.left}px;width:${b.width}px`} />
+            ))}
+            {bands.map((b) => (!b.first &&
+              <span class="divider" style={`left:${b.left - DAY_GAP / 2}px`} />
+            ))}
+            {hourTicks.map((t) => (
+              <span class="grid" style={`left:${t.x}px`} />
+            ))}
+            {bars.map((e, i) => (
+              <button
+                class={`bar ${e.crossesDay ? "multi" : ""}`}
+                id={`ev${i}`}
+                style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
+                data-search={`${e.summary} ${e.org} ${e.location} ${e.desc}`.toLowerCase()}
+                data-title={e.summary || "Untitled event"}
+                data-time={`${e.timeLabel}${e.dur ? " · " + e.dur : ""}`}
+                data-day={e.dayFull}
+                data-org={e.org}
+                data-loc={e.location}
+                data-desc={e.desc}
+                data-start={e.absStart}
+                data-end={e.absEnd}
+                data-clock={e.timeLabel}
+              >
+                <span class="bar-check" aria-hidden="true">✓</span>
+                <span class="bar-time">{e.timeLabel}</span>
+                <span class="bar-title">{e.summary || "Untitled event"}</span>
+                {e.crossesDay && <span class="bar-cap" aria-hidden="true">›</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <p id="empty" class="empty" hidden>No events match your filter.</p>
+    </main>
+
+    <footer>
+      <p>Generated from the Vibecamp event calendar · times in UTC · empty stretches between days are collapsed · {totalEvents} events in 2026</p>
+    </footer>
+
+    <aside id="panel" class="panel" hidden>
+      <button id="panel-close" class="panel-close" aria-label="Close">✕</button>
+      <h3 id="p-title"></h3>
+      <div class="p-meta">
+        <span id="p-time" class="p-chip p-time"></span>
+        <span id="p-day" class="p-chip"></span>
+        <span id="p-org" class="p-chip p-org"></span>
+        <span id="p-loc" class="p-chip p-loc"></span>
+      </div>
+      <p id="p-desc" class="p-desc"></p>
+      <button id="p-toggle" class="p-toggle">+ Add to my schedule</button>
+    </aside>
+
+    <!-- selection tray -->
+    <div id="tray" class="tray" hidden>
+      <span class="tray-count"><b id="tray-n">0</b> selected</span>
+      <span id="tray-warn" class="tray-warn" hidden></span>
+      <span class="tray-spacer"></span>
+      <button id="tray-review" class="tray-btn ghost" hidden>Review overlaps</button>
+      <button id="tray-clear" class="tray-btn ghost">Clear</button>
+      <button id="tray-pdf" class="tray-btn primary">⎙ Generate PDF schedule</button>
+    </div>
+
+    <!-- overlap review modal -->
+    <div id="review" class="review" hidden>
+      <div class="review-card">
+        <button id="review-close" class="review-x" aria-label="Close">✕</button>
+        <h3>Review overlapping events</h3>
+        <p id="review-sub" class="review-sub"></p>
+        <div id="review-list" class="review-list"></div>
+        <div class="review-actions">
+          <button id="review-allok" class="rv-btn ghost">Mark all OK</button>
+          <span class="tray-spacer"></span>
+          <button id="review-cancel" class="rv-btn ghost">Back</button>
+          <button id="review-pdf" class="rv-btn primary">⎙ Create PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- printable schedule (hidden on screen, shown only when printing) -->
+    <div id="print-schedule" class="print-schedule" aria-hidden="true">
+      <header class="ps-head">
+        <h1>My Vibecamp 2026 Schedule</h1>
+        <p id="ps-sub" class="ps-sub"></p>
+      </header>
+      <div id="ps-warn" class="ps-warn" hidden></div>
+      <div id="ps-body"></div>
+      <footer class="ps-foot">Built from the Vibecamp event calendar · times in UTC</footer>
+    </div>
+
+    <script is:inline>
+      const search = document.getElementById("search");
+      const count = document.getElementById("count");
+      const empty = document.getElementById("empty");
+      const bars = Array.from(document.querySelectorAll(".bar"));
+
+      search.addEventListener("input", () => {
+        const q = search.value.trim().toLowerCase();
+        let visible = 0;
+        for (const b of bars) {
+          const match = !q || b.dataset.search.includes(q);
+          b.classList.toggle("dim", !match);
+          if (match) visible++;
+        }
+        count.textContent = visible + (visible === 1 ? " event" : " events");
+        empty.hidden = visible !== 0;
+      });
+
+      const el = (tag, cls, text) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null) n.textContent = text;
+        return n;
+      };
+
+      const panel = document.getElementById("panel");
+      const pToggle = document.getElementById("p-toggle");
+      let currentBar = null;
+      const set = (id, v) => {
+        const e = document.getElementById(id);
+        e.textContent = v || "";
+        if (e.classList.contains("p-chip")) e.hidden = !v;
+      };
+      const refreshToggle = () => {
+        if (!currentBar) return;
+        const on = currentBar.classList.contains("selected");
+        pToggle.textContent = on ? "✓ In schedule — remove" : "+ Add to my schedule";
+        pToggle.classList.toggle("on", on);
+      };
+      const show = (b) => {
+        currentBar = b;
+        set("p-title", b.dataset.title);
+        set("p-time", b.dataset.time);
+        set("p-day", b.dataset.day);
+        set("p-org", b.dataset.org ? "♟ " + b.dataset.org : "");
+        set("p-loc", b.dataset.loc ? "⌖ " + b.dataset.loc : "");
+        set("p-desc", b.dataset.desc);
+        refreshToggle();
+        panel.hidden = false;
+      };
+      // click opens the info popup (selection happens via the panel button)
+      bars.forEach((b) => b.addEventListener("click", () => show(b)));
+      document.getElementById("panel-close").addEventListener("click", () => { panel.hidden = true; });
+      pToggle.addEventListener("click", () => { if (currentBar) { toggleSelect(currentBar); refreshToggle(); } });
+
+      // ---- selection + overlap detection ----
+      const tray = document.getElementById("tray");
+      const trayN = document.getElementById("tray-n");
+      const trayWarn = document.getElementById("tray-warn");
+      const trayReview = document.getElementById("tray-review");
+      let conflictPairs = [];
+      const ackedOverlaps = new Set();
+      const pairKey = (a, b) => [a.id, b.id].sort().join("|");
+
+      const toggleSelect = (b) => { b.classList.toggle("selected"); recompute(); };
+
+      function recompute() {
+        const sel = bars.filter((b) => b.classList.contains("selected"));
+        bars.forEach((b) => b.classList.remove("conflict"));
+        conflictPairs = [];
+        const sorted = [...sel].sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+        for (let i = 0; i < sorted.length; i++) {
+          for (let j = i + 1; j < sorted.length; j++) {
+            const a = sorted[i], b = sorted[j];
+            if (+b.dataset.start < +a.dataset.end) {
+              a.classList.add("conflict"); b.classList.add("conflict");
+              conflictPairs.push([a, b]);
+            } else break; // sorted by start: no later event can overlap a
+          }
+        }
+        const nConflict = bars.filter((b) => b.classList.contains("conflict")).length;
+        trayN.textContent = sel.length;
+        tray.hidden = sel.length === 0;
+        trayReview.hidden = conflictPairs.length === 0;
+        if (nConflict > 0) {
+          trayWarn.hidden = false;
+          trayWarn.textContent = `⚠ ${conflictPairs.length} overlap${conflictPairs.length > 1 ? "s" : ""} (${nConflict} events)`;
+        } else {
+          trayWarn.hidden = true;
+        }
+      }
+
+      document.getElementById("tray-clear").addEventListener("click", () => {
+        bars.forEach((b) => b.classList.remove("selected", "conflict"));
+        ackedOverlaps.clear();
+        recompute(); refreshToggle();
+      });
+
+      // ---- overlap review modal ----
+      const review = document.getElementById("review");
+      const reviewList = document.getElementById("review-list");
+      const reviewSub = document.getElementById("review-sub");
+
+      function renderReview() {
+        reviewList.textContent = "";
+        reviewSub.textContent = conflictPairs.length
+          ? `${conflictPairs.length} overlapping pair${conflictPairs.length > 1 ? "s" : ""}. Mark the ones you're fine with — they'll be noted, not flagged, in the PDF.`
+          : "No overlaps — you're all clear.";
+        for (const [a, b] of conflictPairs) {
+          const key = pairKey(a, b);
+          const row = el("div", "rv-row");
+          const info = el("div", "rv-info");
+          info.appendChild(el("div", "rv-pair", `${a.dataset.title}  ↔  ${b.dataset.title}`));
+          info.appendChild(el("div", "rv-times", `${a.dataset.clock}   ·   ${b.dataset.clock}`));
+          const btn = el("button", "rv-ok");
+          const sync = () => {
+            const on = ackedOverlaps.has(key);
+            btn.textContent = on ? "OK ✓" : "Mark OK";
+            btn.classList.toggle("on", on);
+          };
+          btn.addEventListener("click", () => {
+            if (ackedOverlaps.has(key)) ackedOverlaps.delete(key);
+            else ackedOverlaps.add(key);
+            sync();
+          });
+          sync();
+          row.appendChild(info);
+          row.appendChild(btn);
+          reviewList.appendChild(row);
+        }
+      }
+      const openReview = () => { renderReview(); review.hidden = false; };
+      const closeReview = () => { review.hidden = true; };
+
+      trayReview.addEventListener("click", openReview);
+      document.getElementById("review-close").addEventListener("click", closeReview);
+      document.getElementById("review-cancel").addEventListener("click", closeReview);
+      document.getElementById("review-allok").addEventListener("click", () => {
+        for (const [a, b] of conflictPairs) ackedOverlaps.add(pairKey(a, b));
+        renderReview();
+      });
+      document.getElementById("review-pdf").addEventListener("click", () => { closeReview(); doPrint(); });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") { closeReview(); panel.hidden = true; }
+      });
+
+      // ---- build printable schedule & open print dialog (Save as PDF) ----
+      function doPrint() {
+        const sel = bars
+          .filter((b) => b.classList.contains("selected"))
+          .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+        if (!sel.length) return;
+
+        // split overlaps into acknowledged vs unresolved
+        const ackedPairs = [], unackedPairs = [];
+        const ackedIds = new Set(), unackedIds = new Set();
+        for (const [a, b] of conflictPairs) {
+          if (ackedOverlaps.has(pairKey(a, b))) { ackedPairs.push([a, b]); ackedIds.add(a.id); ackedIds.add(b.id); }
+          else { unackedPairs.push([a, b]); unackedIds.add(a.id); unackedIds.add(b.id); }
+        }
+
+        const body = document.getElementById("ps-body");
+        body.textContent = "";
+        const days = [...new Set(sel.map((b) => b.dataset.day))];
+        document.getElementById("ps-sub").textContent =
+          `${sel.length} event${sel.length > 1 ? "s" : ""} · ${days.length} day${days.length > 1 ? "s" : ""}`;
+
+        for (const day of days) {
+          const sec = el("section", "ps-day");
+          sec.appendChild(el("h2", null, day));
+          for (const b of sel.filter((x) => x.dataset.day === day)) {
+            let cls = "ps-item";
+            if (unackedIds.has(b.id)) cls += " conflict";
+            else if (ackedIds.has(b.id)) cls += " acked";
+            const item = el("div", cls);
+            item.appendChild(el("div", "ps-time", b.dataset.clock));
+            const main = el("div", "ps-main");
+            main.appendChild(el("div", "t", b.dataset.title));
+            const bits = [];
+            if (b.dataset.org) bits.push("♟ " + b.dataset.org);
+            if (b.dataset.loc) bits.push("⌖ " + b.dataset.loc);
+            if (bits.length) main.appendChild(el("div", "m", bits.join("   ")));
+            item.appendChild(main);
+            sec.appendChild(item);
+          }
+          body.appendChild(sec);
+        }
+
+        const warn = document.getElementById("ps-warn");
+        warn.textContent = "";
+        warn.hidden = !(unackedPairs.length || ackedPairs.length);
+        if (unackedPairs.length) {
+          const box = el("div", "pw-red");
+          box.appendChild(el("h4", null, `⚠ ${unackedPairs.length} unresolved time conflict${unackedPairs.length > 1 ? "s" : ""}`));
+          for (const [a, b] of unackedPairs)
+            box.appendChild(el("div", null, `“${a.dataset.title}” (${a.dataset.clock}) overlaps “${b.dataset.title}” (${b.dataset.clock})`));
+          warn.appendChild(box);
+        }
+        if (ackedPairs.length) {
+          const box = el("div", "pw-ok");
+          box.appendChild(el("h4", null, `✓ ${ackedPairs.length} overlap${ackedPairs.length > 1 ? "s" : ""} reviewed & marked OK`));
+          for (const [a, b] of ackedPairs)
+            box.appendChild(el("div", null, `“${a.dataset.title}” (${a.dataset.clock}) & “${b.dataset.title}” (${b.dataset.clock})`));
+          warn.appendChild(box);
+        }
+        window.print();
+      }
+
+      document.getElementById("tray-pdf").addEventListener("click", () => {
+        const hasSel = bars.some((b) => b.classList.contains("selected"));
+        if (!hasSel) return;
+        const unresolved = conflictPairs.some(([a, b]) => !ackedOverlaps.has(pairKey(a, b)));
+        if (unresolved) openReview();  // make the user review conflicts first
+        else doPrint();
+      });
+
+      // drag-to-scroll the continuous track
+      const scroll = document.getElementById("scroll");
+      let down = false, startX = 0, startL = 0, moved = 0;
+      scroll.addEventListener("pointerdown", (e) => {
+        if (e.target.closest(".bar")) return;
+        down = true; startX = e.clientX; startL = scroll.scrollLeft; moved = 0;
+        scroll.classList.add("grabbing");
+      });
+      window.addEventListener("pointermove", (e) => {
+        if (!down) return;
+        const dx = e.clientX - startX; moved = Math.abs(dx);
+        scroll.scrollLeft = startL - dx;
+      });
+      window.addEventListener("pointerup", () => { down = false; scroll.classList.remove("grabbing"); });
+      // wheel: translate vertical scroll into horizontal
+      scroll.addEventListener("wheel", (e) => {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          scroll.scrollLeft += e.deltaY; e.preventDefault();
+        }
+      }, { passive: false });
+    </script>
+
+    <style is:global>
+      :root {
+        --base: #1e1e2e; --mantle: #181825; --crust: #11111b;
+        --surface0: #313244; --surface1: #45475a; --surface2: #585b70;
+        --overlay0: #6c7086; --overlay1: #7f849c; --overlay2: #9399b2;
+        --text: #cdd6f4; --subtext1: #bac2de; --subtext0: #a6adc8;
+        --blue: #89b4fa; --lavender: #b4befe; --sapphire: #74c7ec;
+        --sky: #89dceb; --teal: #94e2d5; --green: #a6e3a1;
+        --yellow: #f9e2af; --peach: #fab387; --maroon: #eba0ac;
+        --red: #f38ba8; --mauve: #cba6f7; --pink: #f5c2e7;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--base); color: var(--text);
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.5; -webkit-font-smoothing: antialiased;
+      }
+      .aurora {
+        position: fixed; inset: 0; z-index: -1;
+        background:
+          radial-gradient(55% 45% at 12% 0%, rgba(203,166,247,.18), transparent 70%),
+          radial-gradient(50% 40% at 92% 4%, rgba(137,180,250,.16), transparent 70%),
+          radial-gradient(60% 50% at 50% 100%, rgba(148,226,213,.10), transparent 70%);
+      }
+
+      .hero { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem 1rem; text-align: center; }
+      .kicker { margin: 0 0 .6rem; font-size: .85rem; letter-spacing: .28em; text-transform: uppercase; color: var(--mauve); font-weight: 600; }
+      .hero h1 {
+        margin: 0; font-size: clamp(2.1rem, 5vw, 3.3rem); font-weight: 800; letter-spacing: -.02em;
+        background: linear-gradient(120deg, var(--lavender), var(--sky), var(--teal));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .tagline { margin: .8rem auto 0; max-width: 42rem; color: var(--subtext0); font-size: 1.02rem; }
+      .controls { display: flex; align-items: center; justify-content: center; gap: .9rem; flex-wrap: wrap; margin-top: 1.6rem; }
+      .search-wrap { position: relative; flex: 1; max-width: 26rem; min-width: 14rem; }
+      .search-icon { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--overlay1); font-size: 1.1rem; }
+      #search {
+        width: 100%; padding: .7rem 1rem .7rem 2.4rem; border-radius: .8rem;
+        border: 1px solid var(--surface1); background: rgba(49,50,68,.55); color: var(--text);
+        font-size: .98rem; backdrop-filter: blur(6px); transition: border-color .18s, box-shadow .18s;
+      }
+      #search::placeholder { color: var(--overlay0); }
+      #search:focus { outline: none; border-color: var(--mauve); box-shadow: 0 0 0 3px rgba(203,166,247,.18); }
+      .count { font-size: .85rem; color: var(--subtext1); background: var(--surface0); padding: .45rem .8rem; border-radius: 999px; white-space: nowrap; }
+      .hint { font-size: .8rem; color: var(--overlay1); }
+
+      main { max-width: 1240px; margin: 0 auto; padding: 1.2rem 1.5rem 6rem; }
+
+      .scroll {
+        overflow-x: auto; overflow-y: hidden; cursor: grab;
+        border: 1px solid var(--surface0); border-radius: 1rem; background: var(--mantle);
+        scrollbar-color: var(--surface2) var(--mantle);
+      }
+      .scroll.grabbing { cursor: grabbing; }
+      .scroll::-webkit-scrollbar { height: 12px; }
+      .scroll::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 999px; border: 3px solid var(--mantle); }
+      .scroll::-webkit-scrollbar-track { background: var(--mantle); }
+
+      .chart { position: relative; }
+      .daylabels { position: relative; height: 52px; }
+      .daylabel {
+        position: absolute; top: 8px; height: 40px; padding: 4px 10px;
+        display: flex; flex-direction: column; justify-content: center;
+        border-left: 2px solid var(--surface2);
+      }
+      .dl-day { font-size: .95rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+      .dl-date { font-size: .76rem; color: var(--peach); }
+      .dl-meta { font-size: .68rem; color: var(--overlay1); white-space: nowrap; }
+
+      .ruler { position: relative; height: 22px; }
+      .tick {
+        position: absolute; top: 4px; transform: translateX(-50%);
+        font-size: .68rem; font-variant-numeric: tabular-nums; color: var(--overlay1); white-space: nowrap;
+      }
+
+      .lanes { position: relative; margin: 2px 0 14px; }
+      .band { position: absolute; top: 0; bottom: 0; background: transparent; }
+      .band.alt { background: rgba(49,50,68,.30); }
+      .divider { position: absolute; top: -2px; bottom: 0; width: 2px; background: var(--surface1); }
+      .grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--surface0); opacity: .5; }
+
+      .bar {
+        position: absolute; height: 46px; padding: 5px 9px; text-align: left;
+        border: none; border-radius: .55rem; cursor: pointer; overflow: hidden;
+        background: color-mix(in srgb, var(--c) 22%, var(--mantle));
+        border-left: 3px solid var(--c); color: var(--text); font-family: inherit;
+        display: flex; flex-direction: column; justify-content: center; gap: 1px;
+        transition: transform .12s, box-shadow .12s, background .12s, opacity .15s;
+      }
+      .bar:hover {
+        background: color-mix(in srgb, var(--c) 34%, var(--mantle));
+        transform: translateY(-1px); box-shadow: 0 6px 18px rgba(17,17,27,.55); z-index: 4;
+      }
+      .bar-time { font-size: .66rem; font-variant-numeric: tabular-nums; color: var(--c); font-weight: 700; line-height: 1; }
+      .bar-title { font-size: .8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; }
+      .bar.dim { opacity: .1; pointer-events: none; }
+
+      /* multi-day events: span across the day columns with a striped fill + dashed leading edge */
+      .bar.multi {
+        background:
+          repeating-linear-gradient(45deg, transparent 0 9px, color-mix(in srgb, var(--c) 12%, transparent) 9px 18px),
+          color-mix(in srgb, var(--c) 20%, var(--mantle));
+        border-right: 2px dashed color-mix(in srgb, var(--c) 65%, transparent);
+        padding-right: 22px;
+      }
+      .bar.multi:hover {
+        background:
+          repeating-linear-gradient(45deg, transparent 0 9px, color-mix(in srgb, var(--c) 16%, transparent) 9px 18px),
+          color-mix(in srgb, var(--c) 32%, var(--mantle));
+      }
+      /* keep the label readable while scrolling along a long bar */
+      .bar.multi .bar-time, .bar.multi .bar-title {
+        position: sticky; left: 9px; width: max-content; max-width: calc(100% - 18px);
+      }
+      .bar-cap {
+        position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+        font-size: 1rem; font-weight: 800; color: var(--c); line-height: 1;
+      }
+
+      .empty { text-align: center; color: var(--subtext0); padding: 3rem 0; font-size: 1.05rem; }
+      footer { border-top: 1px solid var(--surface0); padding: 1.6rem 1.5rem 3rem; text-align: center; }
+      footer p { margin: 0; font-size: .82rem; color: var(--overlay0); }
+
+      .panel {
+        position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
+        width: min(640px, calc(100vw - 2rem)); z-index: 20;
+        background: rgba(24,24,37,.96); border: 1px solid var(--surface1);
+        border-radius: 1rem; padding: 1rem 1.2rem 1.1rem; backdrop-filter: blur(10px);
+        box-shadow: 0 16px 48px rgba(17,17,27,.6);
+      }
+      .panel-close {
+        position: absolute; top: .7rem; right: .8rem; background: var(--surface0); border: none;
+        color: var(--subtext0); width: 1.7rem; height: 1.7rem; border-radius: 50%; cursor: pointer; font-size: .85rem;
+      }
+      .panel-close:hover { background: var(--surface1); color: var(--text); }
+      .panel h3 { margin: 0 1.8rem .55rem 0; font-size: 1.12rem; color: var(--lavender); }
+      .p-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .55rem; }
+      .p-chip { font-size: .76rem; padding: .2rem .55rem; border-radius: 999px; background: var(--surface0); color: var(--subtext1); }
+      .p-time { color: var(--sky); font-variant-numeric: tabular-nums; }
+      .p-org { color: var(--green); }
+      .p-loc { color: var(--sapphire); }
+      .p-desc { margin: 0; font-size: .9rem; color: var(--subtext0); max-height: 7.5rem; overflow-y: auto; white-space: pre-wrap; }
+      .p-toggle {
+        margin-top: .8rem; width: 100%; padding: .55rem; border-radius: .6rem;
+        border: 1px solid var(--surface1); background: var(--surface0); color: var(--text);
+        cursor: pointer; font-weight: 600; font-family: inherit; transition: background .15s, border-color .15s, color .15s;
+      }
+      .p-toggle:hover { background: var(--surface1); }
+      .p-toggle.on { background: color-mix(in srgb, var(--green) 24%, var(--mantle)); border-color: var(--green); color: var(--green); }
+
+      /* selection state on bars */
+      .bar-check {
+        position: absolute; top: 4px; right: 5px; width: 15px; height: 15px; border-radius: 50%;
+        background: var(--green); color: var(--crust); font-size: .62rem; font-weight: 900;
+        display: none; align-items: center; justify-content: center; line-height: 1; z-index: 3;
+      }
+      .bar.selected { outline: 2px solid var(--green); outline-offset: -1px; z-index: 5; }
+      .bar.selected .bar-check { display: flex; }
+      .bar.conflict { outline: 2px solid var(--red); }
+      .bar.conflict .bar-check { background: var(--red); }
+
+      /* selection tray */
+      .tray {
+        position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 30;
+        display: flex; align-items: center; gap: .7rem;
+        background: rgba(24,24,37,.97); border: 1px solid var(--surface1);
+        border-radius: 999px; padding: .5rem .6rem .5rem 1.1rem;
+        box-shadow: 0 12px 40px rgba(17,17,27,.6); backdrop-filter: blur(10px);
+        max-width: calc(100vw - 1.5rem);
+      }
+      .tray-count { font-size: .9rem; color: var(--subtext1); white-space: nowrap; }
+      .tray-count b { color: var(--text); }
+      .tray-warn { font-size: .76rem; font-weight: 600; color: var(--crust); background: var(--red); padding: .22rem .6rem; border-radius: 999px; white-space: nowrap; }
+      .tray-spacer { flex: 1; min-width: .2rem; }
+      .tray-btn { border: none; border-radius: 999px; padding: .45rem .9rem; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+      .tray-btn.ghost { background: var(--surface0); color: var(--subtext1); }
+      .tray-btn.ghost:hover { background: var(--surface1); color: var(--text); }
+      .tray-btn.primary { background: var(--mauve); color: var(--crust); }
+      .tray-btn.primary:hover { background: var(--lavender); }
+
+      /* overlap review modal */
+      .review {
+        position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+        background: rgba(17,17,27,.7); backdrop-filter: blur(3px); padding: 1.5rem;
+      }
+      .review-card {
+        position: relative; width: min(560px, 100%); max-height: 82vh; overflow-y: auto;
+        background: var(--mantle); border: 1px solid var(--surface1); border-radius: 1rem;
+        padding: 1.4rem 1.4rem 1.1rem; box-shadow: 0 24px 64px rgba(17,17,27,.7);
+      }
+      .review-x {
+        position: absolute; top: .9rem; right: 1rem; background: var(--surface0); border: none;
+        color: var(--subtext0); width: 1.8rem; height: 1.8rem; border-radius: 50%; cursor: pointer; font-size: .9rem;
+      }
+      .review-x:hover { background: var(--surface1); color: var(--text); }
+      .review-card h3 { margin: 0 1.8rem .4rem 0; font-size: 1.2rem; color: var(--lavender); }
+      .review-sub { margin: 0 0 1rem; font-size: .9rem; color: var(--subtext0); }
+      .review-list { display: flex; flex-direction: column; gap: .55rem; }
+      .rv-row {
+        display: flex; align-items: center; gap: .8rem; padding: .65rem .8rem;
+        background: var(--base); border: 1px solid var(--surface0); border-left: 3px solid var(--red); border-radius: .6rem;
+      }
+      .rv-info { flex: 1; min-width: 0; }
+      .rv-pair { font-size: .9rem; font-weight: 600; color: var(--text); }
+      .rv-times { font-size: .78rem; color: var(--subtext0); font-variant-numeric: tabular-nums; margin-top: .15rem; }
+      .rv-ok {
+        flex: 0 0 auto; border: 1px solid var(--surface1); background: var(--surface0); color: var(--subtext1);
+        border-radius: 999px; padding: .4rem .85rem; font-size: .82rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      }
+      .rv-ok:hover { background: var(--surface1); color: var(--text); }
+      .rv-ok.on { background: color-mix(in srgb, var(--green) 26%, var(--mantle)); border-color: var(--green); color: var(--green); }
+      .review-actions { display: flex; align-items: center; gap: .6rem; margin-top: 1.2rem; }
+      .rv-btn { border: none; border-radius: 999px; padding: .5rem 1rem; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+      .rv-btn.ghost { background: var(--surface0); color: var(--subtext1); }
+      .rv-btn.ghost:hover { background: var(--surface1); color: var(--text); }
+      .rv-btn.primary { background: var(--mauve); color: var(--crust); }
+      .rv-btn.primary:hover { background: var(--lavender); }
+
+      /* printable schedule — hidden on screen, revealed when printing */
+      .print-schedule { display: none; }
+      @media print {
+        .aurora, .hero, main, footer, #panel, #tray, #review { display: none !important; }
+        html, body { background: #fff !important; }
+        .print-schedule { display: block !important; color: #14141b; padding: 0; }
+        @page { margin: 14mm; }
+        .ps-head h1 { margin: 0 0 3pt; font-size: 20pt; color: #1e1e2e; }
+        .ps-sub { margin: 0 0 12pt; font-size: 10pt; color: #555; }
+        .ps-warn { margin-bottom: 12pt; font-size: 9.5pt; }
+        .pw-red { border: 1.4pt solid #c0392b; background: #fdecea; color: #a5281b; border-radius: 6pt; padding: 8pt 10pt; margin-bottom: 7pt; }
+        .pw-ok { border: 1.4pt solid #1e8449; background: #eafaf1; color: #1c7a44; border-radius: 6pt; padding: 8pt 10pt; }
+        .ps-warn h4 { margin: 0 0 4pt; font-size: 10.5pt; }
+        .ps-warn div { margin: 1pt 0; }
+        .ps-day { margin-bottom: 11pt; break-inside: avoid; }
+        .ps-day h2 { font-size: 12.5pt; margin: 0 0 4pt; padding-bottom: 2pt; border-bottom: 1pt solid #ccc; color: #1e1e2e; }
+        .ps-item { display: flex; gap: 9pt; padding: 3pt 0; font-size: 10pt; break-inside: avoid; }
+        .ps-item.conflict .ps-time { color: #c0392b; }
+        .ps-item.conflict .t::after { content: " ⚠ overlaps"; color: #c0392b; font-weight: 700; font-size: 8.5pt; }
+        .ps-item.acked .ps-time { color: #1e8449; }
+        .ps-item.acked .t::after { content: " ✓ overlap OK"; color: #1e8449; font-weight: 700; font-size: 8.5pt; }
+        .ps-time { flex: 0 0 110pt; font-variant-numeric: tabular-nums; font-weight: 700; color: #333; }
+        .ps-main .t { font-weight: 600; }
+        .ps-main .m { color: #666; font-size: 8.6pt; margin-top: 1pt; }
+        .ps-foot { margin-top: 16pt; font-size: 8pt; color: #999; }
+      }
+
+      @media (max-width: 560px) { .hero { padding-top: 2.6rem; } }
+    </style>
+  </body>
+</html>
