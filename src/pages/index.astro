@@ -8,6 +8,7 @@ const LANE_GAP = 8;
 const MIN_BAR = 66;
 const DAY_GAP = 76;     // gap between days on the continuous axis
 const SIDE_PAD = 16;
+const VENUE_GAP = 12;   // vertical gap between venue rows
 
 const BAR_COLORS = [
   "#89b4fa", "#cba6f7", "#a6e3a1", "#fab387", "#89dceb",
@@ -160,19 +161,40 @@ for (const g of groups) {
   }
 }
 
-// ---- global lane packing across the whole continuous axis ----
-allEvents.sort((a, b) => a.leftX - b.leftX || (a.leftX + a.barW) - (b.leftX + b.barW));
-const laneEnds = [];
-for (const e of allEvents) {
-  let lane = laneEnds.findIndex((end) => end <= e.leftX + 0.5);
-  if (lane === -1) { lane = laneEnds.length; laneEnds.push(0); }
-  laneEnds[lane] = e.leftX + e.barW;
-  e.top = lane * (LANE_H + LANE_GAP);
+// ---- venues on the Y axis: group by location, sub-lane pack within each ----
+const UNLISTED = "Unlisted";
+const venueOf = (e) => (e.location && e.location.trim()) ? e.location.trim() : UNLISTED;
+const venueCount = new Map();
+for (const e of allEvents) { const v = venueOf(e); venueCount.set(v, (venueCount.get(v) || 0) + 1); }
+// busiest venues on top, ties alphabetical; Unlisted always last
+const venueNames = [...venueCount.keys()]
+  .filter((v) => v !== UNLISTED)
+  .sort((a, b) => venueCount.get(b) - venueCount.get(a) || a.localeCompare(b));
+if (venueCount.has(UNLISTED)) venueNames.push(UNLISTED);
+
+const venueRows = [];
+let yCursor = 0;
+for (const name of venueNames) {
+  const evs = allEvents
+    .filter((e) => venueOf(e) === name)
+    .sort((a, b) => a.leftX - b.leftX || (a.leftX + a.barW) - (b.leftX + b.barW));
+  const laneEnds = [];
+  for (const e of evs) {
+    let lane = laneEnds.findIndex((end) => end <= e.leftX + 0.5);
+    if (lane === -1) { lane = laneEnds.length; laneEnds.push(0); }
+    laneEnds[lane] = e.leftX + e.barW;
+    e.subLane = lane;
+  }
+  const lanes = Math.max(1, laneEnds.length);
+  const height = lanes * (LANE_H + LANE_GAP) - LANE_GAP;
+  for (const e of evs) e.top = yCursor + e.subLane * (LANE_H + LANE_GAP);
+  venueRows.push({ name, count: venueCount.get(name), yOffset: yCursor, height, lanes, alt: venueRows.length % 2 === 1 });
+  yCursor += height + VENUE_GAP;
 }
-const lanesHeight = laneEnds.length * (LANE_H + LANE_GAP);
+const lanesHeight = Math.max(0, yCursor - VENUE_GAP);
 
 const bands = groups.map((g, i) => ({
-  left: g.offset, width: g.width, alt: i % 2 === 1,
+  left: g.offset, width: g.width,
   day: g.day, pretty: g.pretty, count: g.count, peak: g.peak, first: i === 0,
 }));
 const hourTicks = groups.flatMap((g) =>
@@ -182,6 +204,7 @@ const bars = allEvents.map((e) => ({ ...e, gleft: e.leftX }));
 
 const totalEvents = events.length;
 const totalDays = groups.length;
+const totalVenues = venueNames.length;
 ---
 
 <!doctype html>
@@ -216,6 +239,11 @@ const totalDays = groups.length;
           <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
         </div>
         <span id="count" class="count">{totalEvents} events</span>
+        <label class="zoom">
+          <span class="zoom-icon" aria-hidden="true">⊖</span>
+          <input id="zoom" type="range" min="0.45" max="2" step="0.05" value="1" aria-label="Zoom timeline" />
+          <span class="zoom-icon" aria-hidden="true">⊕</span>
+        </label>
         <span class="hint">↔ drag to scroll · click events to build a PDF schedule</span>
       </div>
       <p class="search-note">Searching spotlights matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</p>
@@ -223,56 +251,72 @@ const totalDays = groups.length;
 
     <main>
       <p class="scroll-hint">More events that way! <span class="scroll-arrow">→</span></p>
-      <div class="scroll" id="scroll">
-        <div class="chart" style={`width:${totalWidth}px`}>
-          <div class="daylabels" style={`width:${totalWidth}px`}>
-            {bands.map((b) => (
-              <div class="daylabel" style={`left:${b.left}px;width:${b.width}px`}>
-                <span class="dl-day">{b.day}</span>
-                <span class="dl-date">{b.pretty}</span>
-                <span class="dl-meta">{b.count} events · {b.peak} at peak</span>
+      <div class="timeline-wrap">
+        <!-- static venue axis (does not scroll horizontally) -->
+        <div class="vaxis">
+          <div class="vaxis-head">Venue</div>
+          <div class="vaxis-rows" style={`height:${lanesHeight}px`}>
+            {venueRows.map((v) => (
+              <div class={`vlabel ${v.alt ? "alt" : ""}`} style={`top:${v.yOffset}px;height:${v.height}px`}>
+                <span class="vlabel-name">{v.name}</span>
+                <span class="vlabel-count">{v.count}</span>
               </div>
             ))}
           </div>
+        </div>
 
-          <div class="ruler">
-            {hourTicks.map((t) => (
-              <span class="tick" style={`left:${t.x}px`}>{t.label}</span>
-            ))}
-          </div>
+        <div class="scroll" id="scroll">
+          <div class="chart" id="chart" data-tw={totalWidth} style={`width:${totalWidth}px`}>
+            <div class="daylabels" id="daylabels" style={`width:${totalWidth}px`}>
+              {bands.map((b) => (
+                <div class="daylabel" data-bx={b.left} data-bw={b.width} style={`left:${b.left}px;width:${b.width}px`}>
+                  <span class="dl-day">{b.day}</span>
+                  <span class="dl-date">{b.pretty}</span>
+                  <span class="dl-meta">{b.count} events · {b.peak} at peak</span>
+                </div>
+              ))}
+            </div>
 
-          <div class="lanes" style={`height:${lanesHeight}px`}>
-            {bands.map((b) => (
-              <span class={`band ${b.alt ? "alt" : ""}`} style={`left:${b.left}px;width:${b.width}px`} />
-            ))}
-            {bands.map((b) => (!b.first &&
-              <span class="divider" style={`left:${b.left - DAY_GAP / 2}px`} />
-            ))}
-            {hourTicks.map((t) => (
-              <span class="grid" style={`left:${t.x}px`} />
-            ))}
-            {bars.map((e, i) => (
-              <button
-                class={`bar ${e.crossesDay ? "multi" : ""}`}
-                id={`ev${i}`}
-                style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
-                data-search={`${e.summary} ${e.org} ${e.location} ${e.desc}`.toLowerCase()}
-                data-title={e.summary || "Untitled event"}
-                data-time={`${e.timeLabel}${e.dur ? " · " + e.dur : ""}`}
-                data-day={e.dayFull}
-                data-org={e.org}
-                data-loc={e.location}
-                data-desc={e.desc}
-                data-start={e.absStart}
-                data-end={e.absEnd}
-                data-clock={e.timeLabel}
-              >
-                <span class="bar-check" aria-hidden="true">✓</span>
-                <span class="bar-time">{e.timeLabel}</span>
-                <span class="bar-title">{e.summary || "Untitled event"}</span>
-                {e.crossesDay && <span class="bar-cap" aria-hidden="true">›</span>}
-              </button>
-            ))}
+            <div class="ruler">
+              {hourTicks.map((t) => (
+                <span class="tick" data-bx={t.x} style={`left:${t.x}px`}>{t.label}</span>
+              ))}
+            </div>
+
+            <div class="lanes" style={`height:${lanesHeight}px`}>
+              {venueRows.map((v) => (
+                <span class={`vband ${v.alt ? "alt" : ""}`} data-bx={0} data-bw={totalWidth} style={`top:${v.yOffset}px;height:${v.height}px;left:0;width:${totalWidth}px`} />
+              ))}
+              {bands.map((b) => (!b.first &&
+                <span class="divider" data-bx={b.left - DAY_GAP / 2} style={`left:${b.left - DAY_GAP / 2}px`} />
+              ))}
+              {hourTicks.map((t) => (
+                <span class="grid" data-bx={t.x} style={`left:${t.x}px`} />
+              ))}
+              {bars.map((e, i) => (
+                <button
+                  class={`bar ${e.crossesDay ? "multi" : ""}`}
+                  id={`ev${i}`}
+                  data-bx={e.gleft} data-bw={e.barW}
+                  style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
+                  data-search={`${e.summary} ${e.org} ${e.location} ${e.desc}`.toLowerCase()}
+                  data-title={e.summary || "Untitled event"}
+                  data-time={`${e.timeLabel}${e.dur ? " · " + e.dur : ""}`}
+                  data-day={e.dayFull}
+                  data-org={e.org}
+                  data-loc={e.location}
+                  data-desc={e.desc}
+                  data-start={e.absStart}
+                  data-end={e.absEnd}
+                  data-clock={e.timeLabel}
+                >
+                  <span class="bar-check" aria-hidden="true">✓</span>
+                  <span class="bar-time">{e.timeLabel}</span>
+                  <span class="bar-title">{e.summary || "Untitled event"}</span>
+                  {e.crossesDay && <span class="bar-cap" aria-hidden="true">›</span>}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -364,6 +408,22 @@ const totalDays = groups.length;
       }
       search.addEventListener("input", applyFilter);
       searchClear.addEventListener("click", () => { search.value = ""; applyFilter(); search.focus(); });
+
+      // ---- zoom: rescale the time (X) axis; venue rows (Y) are unaffected ----
+      const zoom = document.getElementById("zoom");
+      const chart = document.getElementById("chart");
+      const daylabels = document.getElementById("daylabels");
+      const baseWidth = +chart.dataset.tw;
+      const xEls = Array.from(document.querySelectorAll("[data-bx]"));
+      function setZoom(z) {
+        for (const el of xEls) {
+          el.style.left = (+el.dataset.bx * z) + "px";
+          if (el.dataset.bw != null) el.style.width = (+el.dataset.bw * z) + "px";
+        }
+        const w = (baseWidth * z) + "px";
+        chart.style.width = w; daylabels.style.width = w;
+      }
+      zoom.addEventListener("input", () => setZoom(+zoom.value));
 
       const el = (tag, cls, text) => {
         const n = document.createElement(tag);
@@ -661,15 +721,41 @@ const totalDays = groups.length;
       @keyframes nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(.4rem); } }
       @media (prefers-reduced-motion: reduce) { .scroll-arrow { animation: none; } }
 
+      /* timeline = static venue axis + horizontally-scrolling chart */
+      .timeline-wrap {
+        display: flex; align-items: flex-start;
+        border: 1px solid var(--surface0); border-radius: 1rem; background: var(--mantle); overflow: hidden;
+      }
+      .vaxis { flex: 0 0 158px; background: var(--crust); border-right: 1px solid var(--surface1); z-index: 6; }
+      .vaxis-head {
+        height: 76px; display: flex; align-items: flex-end; padding: 0 .75rem .5rem;
+        font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--overlay1); font-weight: 700;
+      }
+      .vaxis-rows { position: relative; }
+      .vlabel {
+        position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .4rem;
+        padding: 0 .55rem 0 .75rem;
+      }
+      .vlabel.alt { background: rgba(49,50,68,.30); }
+      .vlabel-name { flex: 1; font-size: .8rem; font-weight: 600; color: var(--subtext1); line-height: 1.15;
+        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .vlabel-count { flex: 0 0 auto; font-size: .68rem; font-weight: 700; color: var(--subtext0); background: var(--surface0); border-radius: 999px; padding: .08rem .42rem; }
+
       .scroll {
-        overflow-x: auto; overflow-y: hidden; cursor: grab;
-        border: 1px solid var(--surface0); border-radius: 1rem; background: var(--mantle);
+        flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; cursor: grab;
         scrollbar-color: var(--surface2) var(--mantle);
       }
       .scroll.grabbing { cursor: grabbing; }
       .scroll::-webkit-scrollbar { height: 12px; }
       .scroll::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 999px; border: 3px solid var(--mantle); }
       .scroll::-webkit-scrollbar-track { background: var(--mantle); }
+
+      .vband { position: absolute; left: 0; background: transparent; }
+      .vband.alt { background: rgba(49,50,68,.30); }
+
+      .zoom { display: flex; align-items: center; gap: .35rem; }
+      .zoom input { width: 104px; accent-color: var(--mauve); cursor: pointer; }
+      .zoom-icon { color: var(--overlay1); font-size: .95rem; }
 
       .chart { position: relative; }
       .daylabels { position: relative; height: 52px; }
