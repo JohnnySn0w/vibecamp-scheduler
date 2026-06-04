@@ -485,6 +485,19 @@ const totalVenues = venueNames.length;
       }
       const K = Math.max(1, trackEnds.length);
       const trackAreaH = K * ROW - LG;
+      // long (bg) events get their OWN greedy lane-packing so each is bound to a
+      // single row (not the full track-area height). Rendered slightly taller than
+      // short events so their edges peek out from under the short events on top.
+      const BG_PEEK = 8;
+      const bgArr = bars.filter((b) => bgSet.has(b)).sort((a, b) => left(a) - left(b) || right(a) - right(b));
+      const bgEnds = [], bgLaneOf = new Map();
+      for (const b of bgArr) {
+        let l = bgEnds.findIndex((end) => end <= left(b) + 0.5);
+        if (l === -1) { l = bgEnds.length; bgEnds.push(0); }
+        bgEnds[l] = right(b); bgLaneOf.set(b, l);
+      }
+      const bgLanes = bgEnds.length;
+      const compactAreaH = Math.max(trackAreaH, bgLanes > 0 ? bgLanes * ROW - LG : 0);
       const tbands = [];
       for (let i = 0; i < K; i++) {
         const lbl = document.createElement("div");
@@ -549,11 +562,19 @@ const totalVenues = venueNames.length;
       function layoutTracks() {
         for (const b of bars) {
           b.style.display = "";
-          if (bgSet.has(b)) { b.classList.add("bgbar"); b.style.top = "0px"; b.style.height = trackAreaH + "px"; }
-          else { b.classList.remove("bgbar"); b.style.height = ""; b.style.top = (trackOf.get(b) * ROW) + "px"; }
+          if (bgSet.has(b)) {
+            // underneath layer: one row per long event, slightly taller than a
+            // short event so its top/bottom edges peek out from under the events on top.
+            b.classList.add("bgbar");
+            b.style.top = (bgLaneOf.get(b) * ROW - BG_PEEK) + "px";
+            b.style.height = (LH + 2 * BG_PEEK) + "px";
+          } else {
+            b.classList.remove("bgbar"); b.style.height = "";
+            b.style.top = (trackOf.get(b) * ROW) + "px";
+          }
         }
-        lanesEl.style.height = trackAreaH + "px";
-        trackRowsEl.style.height = trackAreaH + "px";
+        lanesEl.style.height = compactAreaH + "px";
+        trackRowsEl.style.height = compactAreaH + "px";
       }
 
       function setView(mode) {
