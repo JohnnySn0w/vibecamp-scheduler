@@ -265,18 +265,18 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       <div class="toolbars">
         <div class="tb-group tb-utility">
           <span class="tb-head">Utility</span>
-          <div class="search-wrap">
-            <span class="search-icon">⌕</span>
-            <input id="search" type="search" placeholder="Filter events, hosts, or places…" autocomplete="off" />
-            <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
-          </div>
-          <span id="count" class="count">{totalEvents} events</span>
           <label class="zoom">
             <span class="zoom-label">Zoom</span>
             <span class="zoom-icon" aria-hidden="true">⊖</span>
             <input id="zoom" type="range" min="0.1" max="2" step="0.05" value="1" aria-label="Zoom timeline" />
             <span class="zoom-icon" aria-hidden="true">⊕</span>
           </label>
+          <div class="search-wrap">
+            <span class="search-icon">⌕</span>
+            <input id="search" type="search" placeholder="Filter events, hosts, or places…" autocomplete="off" />
+            <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
+          </div>
+          <span id="count" class="count">{totalEvents} events</span>
           <button id="view-toggle" class="view-toggle" type="button">📍 Location view</button>
           <button id="map-btn" class="view-toggle" type="button">🗺 Map</button>
           <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
@@ -532,6 +532,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       const daylabels = document.getElementById("daylabels");
       const baseWidth = +chart.dataset.tw;
       const xEls = Array.from(document.querySelectorAll("[data-bx]"));
+      let curZoom = 1;   // tracks the applied scale so we can re-anchor on change
       function setZoom(z) {
         for (const el of xEls) {
           el.style.left = (+el.dataset.bx * z) + "px";
@@ -539,9 +540,17 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         }
         const w = (baseWidth * z) + "px";
         chart.style.width = w; daylabels.style.width = w;
+        curZoom = z;
+      }
+      // zoom around the viewport midline: keep whatever's centered now centered after
+      function zoomTo(z) {
+        const sc = document.getElementById("scroll");
+        const centerBase = (sc.scrollLeft + sc.clientWidth / 2) / curZoom;   // content point at center
+        setZoom(z);
+        sc.scrollLeft = centerBase * z - sc.clientWidth / 2;
       }
       zoom.addEventListener("input", () => {
-        setZoom(+zoom.value);
+        zoomTo(+zoom.value);
         try { localStorage.setItem("vc-zoom", zoom.value); } catch (e) {}
       });
       // restore saved zoom; with no saved preference, default mobile to a far-out
