@@ -256,6 +256,7 @@ const totalVenues = venueNames.length;
         <button id="view-toggle" class="view-toggle" type="button">📍 Location view</button>
         <button id="randomize-btn" class="view-toggle" type="button"><span class="die">🎲</span> Randomize</button>
         <button id="core-btn" class="view-toggle" type="button">✦ Core events</button>
+        <button id="map-btn" class="view-toggle" type="button">🗺 Map</button>
         <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
         <button id="collapse-all" class="collapse-all" type="button">⊟ Collapse all</button>
       </div>
@@ -360,6 +361,9 @@ const totalVenues = venueNames.length;
       <span class="tray-spacer"></span>
       <button id="howto-btn" class="tray-btn ghost">❔ How to use?</button>
       <button id="tray-review" class="tray-btn ghost" hidden>Review overlaps</button>
+      <label class="tray-check" title="Include the camp map on the last page of the PDF">
+        <input type="checkbox" id="map-pdf" checked /> 🗺 Map in PDF
+      </label>
       <button id="tray-clear" class="tray-btn ghost" disabled>Clear</button>
       <button id="tray-pdf" class="tray-btn primary" disabled>⎙ Generate PDF schedule</button>
     </div>
@@ -405,6 +409,15 @@ const totalVenues = venueNames.length;
       </div>
     </div>
 
+    <!-- camp map modal -->
+    <div id="mapmodal" class="review" hidden>
+      <div class="review-card mapcard">
+        <button id="mapmodal-close" class="review-x" aria-label="Close">✕</button>
+        <h3>Camp map</h3>
+        <img class="mapfull" src="vibecamp-map.jpg" alt="Vibecamp 5 camp map — Camp Ramblewood, MD" />
+      </div>
+    </div>
+
     <!-- printable schedule (hidden on screen, shown only when printing) -->
     <div id="print-schedule" class="print-schedule" aria-hidden="true">
       <header class="ps-head">
@@ -416,6 +429,10 @@ const totalVenues = venueNames.length;
         </div>
       </header>
       <div id="ps-warn" class="ps-warn" hidden></div>
+      <div id="ps-map" class="ps-map" hidden>
+        <h2 class="ps-map-h">Camp map</h2>
+        <img src="vibecamp-map.jpg" alt="Vibecamp 5 camp map — Camp Ramblewood, MD" />
+      </div>
       <div id="ps-body"></div>
       <footer class="ps-foot">Built from the Vibecamp event calendar · times shown in Eastern (ET) · vibecamp.mahan.io</footer>
     </div>
@@ -868,8 +885,15 @@ const totalVenues = venueNames.length;
       document.getElementById("howto-ok").addEventListener("click", closeHowto);
       howto.addEventListener("click", (e) => { if (e.target === howto) closeHowto(); });  // click backdrop to close
 
+      // ---- camp map modal ----
+      const mapmodal = document.getElementById("mapmodal");
+      const closeMap = () => { mapmodal.hidden = true; };
+      document.getElementById("map-btn").addEventListener("click", () => { mapmodal.hidden = false; });
+      document.getElementById("mapmodal-close").addEventListener("click", closeMap);
+      mapmodal.addEventListener("click", (e) => { if (e.target === mapmodal) closeMap(); });
+
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") { closeReview(); closeHowto(); closePanel(); }
+        if (e.key === "Escape") { closeReview(); closeHowto(); closeMap(); closePanel(); }
       });
 
       // ---- build printable schedule & open print dialog (Save as PDF) ----
@@ -927,6 +951,8 @@ const totalVenues = venueNames.length;
             box.appendChild(el("div", null, `“${a.dataset.title}” (${a.dataset.clock}) overlaps “${b.dataset.title}” (${b.dataset.clock})`));
           warn.appendChild(box);
         }
+
+        document.getElementById("ps-map").hidden = !document.getElementById("map-pdf").checked;
         window.print();
       }
 
@@ -1321,6 +1347,11 @@ const totalVenues = venueNames.length;
       .tray-btn.primary { background: var(--mauve); color: var(--crust); }
       .tray-btn.primary:hover { background: var(--lavender); }
       .tray-btn:disabled { opacity: .4; cursor: default; pointer-events: none; }
+      .tray-check {
+        display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap;
+        font-size: .82rem; color: var(--subtext1); cursor: pointer; user-select: none;
+      }
+      .tray-check input { accent-color: var(--mauve); cursor: pointer; width: 1rem; height: 1rem; }
 
       /* overlap review modal */
       .review {
@@ -1364,6 +1395,8 @@ const totalVenues = venueNames.length;
       .howto-body b { color: var(--text); font-weight: 600; }
       .howto-divider { border-top: 1px solid var(--surface1); margin: 1.15rem 0 .85rem; }
       .howto-subhead { margin: 0 0 .65rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--overlay1); }
+      .mapcard { width: min(980px, 100%); }
+      .mapfull { display: block; width: 100%; height: auto; margin-top: .4rem; border-radius: .6rem; border: 1px solid var(--surface1); }
 
       /* printable schedule — hidden on screen, revealed when printing */
       .print-schedule { display: none; }
@@ -1421,6 +1454,11 @@ const totalVenues = venueNames.length;
         .ps-item.conflict .t::after { content: "  ⚠ overlaps"; color: #d20f39; font-weight: 700; font-size: 7.5pt; letter-spacing: .02em; }
 
         .ps-foot { margin-top: 18pt; padding-top: 8pt; border-top: 1pt solid #e6e9ef; font-size: 7.5pt; color: #acb0be; text-align: center; }
+
+        /* camp map — at the top of the PDF, before the schedule */
+        .ps-map { margin: 0 0 16pt; text-align: center; break-inside: avoid; }
+        .ps-map-h { margin: 0 0 6pt; font-size: 13pt; font-weight: 700; letter-spacing: -.01em; color: #8839ef; }
+        .ps-map img { max-width: 100%; height: auto; border-radius: 8pt; border: 1pt solid #e6e9ef; }
       }
 
       @media (max-width: 560px) {
