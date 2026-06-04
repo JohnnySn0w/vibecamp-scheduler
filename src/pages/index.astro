@@ -1438,7 +1438,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       /* selection tray */
       .tray {
         position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 30;
-        display: flex; align-items: center; flex-wrap: wrap; gap: .55rem .7rem;
+        display: flex; align-items: center; gap: .7rem;
         background: rgba(24,24,37,.97); border: 1px solid var(--surface1);
         border-radius: 999px; padding: .5rem .6rem .5rem 1.1rem;
         box-shadow: 0 12px 40px rgba(17,17,27,.6); backdrop-filter: blur(10px);
@@ -1580,7 +1580,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
            Starts hidden (so it doesn't overlap the title) and fades in on first downscroll. */
         .tray {
           top: .6rem; left: .6rem; right: .6rem; max-width: none;
-          justify-content: center; border-radius: .9rem; padding: .55rem .65rem; gap: .4rem .5rem;
+          flex-wrap: wrap; justify-content: center; border-radius: .9rem; padding: .55rem .65rem; gap: .4rem .5rem;
           opacity: 0; transform: translateY(-12px); pointer-events: none;
           transition: opacity .45s ease, transform .45s ease;
         }
