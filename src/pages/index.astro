@@ -1564,8 +1564,10 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         .ps-warn div { margin: 1.5pt 0; color: #9c2440; }
 
         /* day groups */
-        .ps-day { margin-bottom: 15pt; break-inside: avoid; }
-        .ps-day h2 { display: flex; align-items: baseline; gap: 8pt; margin: 0 0 5pt; padding-bottom: 4pt; border-bottom: 1pt solid #e6e9ef; }
+        /* let a day flow across a page break (items below avoid splitting individually);
+           avoiding the break on the whole day is what left big gaps when one didn't fit */
+        .ps-day { margin-bottom: 15pt; }
+        .ps-day h2 { display: flex; align-items: baseline; gap: 8pt; margin: 0 0 5pt; padding-bottom: 4pt; border-bottom: 1pt solid #e6e9ef; break-after: avoid; }
         .ps-dayname { font-size: 13pt; font-weight: 700; letter-spacing: -.01em; color: #8839ef; }
         .ps-daycount { margin-left: auto; font-size: 8pt; font-weight: 600; color: #9ca0b0; }
 
