@@ -130,6 +130,24 @@ const xOf = (dateStr, minute) => {
   return prev.offset + prev.width;
 };
 
+// ---- event categories: keyword-derived, for the bulk select-by-type checkboxes ----
+const CAT_RULES = [
+  { key: "dance",    label: "🪩 Dance",            kw: ["danc","liminal","contact improv","foxtrot","rumba","swing","ceili","ballroom","parade","emo night"] },
+  { key: "music",    label: "🎵 Music",            kw: ["sing","karaoke","jam","shant","in c by","song","sound check","fake artist","music","instrument","auld lang"] },
+  { key: "food",     label: "🍽 Food & Drink",     kw: ["dinner","breakfast","lunch","ramen","cocktail","waffle","eating place","diet coke","drinks","meat in your mouth","electrolytes"] },
+  { key: "games",    label: "🎲 Games & Sports",   kw: ["clocktower","mtg","commander","board game","dodgeball","basketball","leg wrestling","sparring","conveyor belt","improv games","trials","metal detector","social deduction","small fishes","dodge","race","fitness challenge"] },
+  { key: "wellness", label: "🧘 Wellness & Spirit", kw: ["meditat","jhana","prostration","sun salutation","aerial","yoga","primal scream","breath","noting","circus","ceremon","kava","magick","magic","tarot","shaman","open circle","solstice","spoon"] },
+  { key: "art",      label: "🎨 Art & Craft",      kw: ["crochet","color","bracelet","henna","perfume","typewriter","sketch","weave","braiding","craft","slime","3d","phantogram","art of the future","poem","poetry","build"] },
+  { key: "talks",    label: "🗣 Talks & Workshops", kw: ["workshop","introduction","intro to","history","lecture","to be done","agency","cohomology","survey","podcast","recording","visual novel","negative feedback","glosso","twirl"] },
+  { key: "party",    label: "🎉 Parties & Nightlife", kw: ["party","pool","vibedip","naked","ghost night","hangout","newcomer","cigs","pre-vibecamp"] },
+  { key: "film",     label: "🎬 Film & Stars",     kw: ["megalopolis","cartoon","meteor","stargaz","movie","watch party","film"] },
+  { key: "kids",     label: "🧒 Kids & Family",    kw: ["kiddie","kids","famil","petting"] },
+];
+const catKeysOf = (e) => {
+  const t = `${e.summary || ""} ${e.desc || ""}`.toLowerCase();
+  return CAT_RULES.filter((c) => c.kw.some((k) => t.includes(k))).map((c) => c.key);
+};
+
 // ---- build global bars with real (possibly multi-day) spans ----
 const allEvents = [];
 for (const g of groups) {
@@ -157,6 +175,7 @@ for (const g of groups) {
       color: hashColor(e.org || e.summary || "x"),
       timeLabel: crossesDay ? `${e.start} → ${endLabel}` : baseTime,
       dayFull: `${g.day}, ${g.pretty}`,
+      cats: catKeysOf(e),
     });
   }
 }
@@ -205,6 +224,10 @@ const bars = allEvents.map((e) => ({ ...e, gleft: e.leftX }));
 const totalEvents = events.length;
 const totalDays = groups.length;
 const totalVenues = venueNames.length;
+
+const catCounts = {};
+for (const e of allEvents) for (const k of e.cats) catCounts[k] = (catCounts[k] || 0) + 1;
+const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCounts[c.key] || 0 })).filter((c) => c.count > 0);
 ---
 
 <!doctype html>
@@ -239,7 +262,6 @@ const totalVenues = venueNames.length;
     </header>
 
     <main>
-      <p class="scroll-hint">More events that way! <span class="scroll-arrow">→</span></p>
       <div class="tl-toolbar">
         <div class="search-wrap">
           <span class="search-icon">⌕</span>
@@ -260,6 +282,17 @@ const totalVenues = venueNames.length;
         <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
         <button id="collapse-all" class="collapse-all" type="button">⊟ Collapse all</button>
       </div>
+      <div class="cat-bar">
+        <span class="cat-label">Select by type</span>
+        {CATS.map((c) => (
+          <label class="cat-chip">
+            <input type="checkbox" class="cat-cb" data-cat={c.key} />
+            <span class="cat-chip-label">{c.label}</span>
+            <span class="cat-n">{c.count}</span>
+          </label>
+        ))}
+      </div>
+      <p class="scroll-hint">More events that way! <span class="scroll-arrow">→</span></p>
       <div class="timeline-wrap">
         <!-- static venue axis (does not scroll horizontally) -->
         <div class="vaxis">
@@ -322,6 +355,7 @@ const totalVenues = venueNames.length;
                   data-clock={e.timeLabel}
                   data-venue={(e.location && e.location.trim()) ? e.location.trim() : "Unlisted"}
                   data-sublane={e.subLane}
+                  data-cats={e.cats.join(" ")}
                 >
                   <span class="bar-check" aria-hidden="true">✓</span>
                   <span class="bar-time">{e.timeLabel}</span>
@@ -773,6 +807,7 @@ const totalVenues = venueNames.length;
         } else {
           trayWarn.hidden = true;
         }
+        syncCatChecks();
       }
 
       document.getElementById("tray-clear").addEventListener("click", () => {
@@ -808,6 +843,26 @@ const totalVenues = venueNames.length;
         for (const b of bars) if (CORE.has(b.dataset.title)) b.classList.add("selected");
         recompute(); refreshToggle();
       });
+
+      // ---- select-by-type: each checkbox bulk-selects / deselects its category ----
+      const catCbs = Array.from(document.querySelectorAll(".cat-cb"));
+      const catBars = new Map();
+      for (const cb of catCbs) {
+        catBars.set(cb.dataset.cat, bars.filter((b) => (b.dataset.cats || "").split(" ").includes(cb.dataset.cat)));
+      }
+      catCbs.forEach((cb) => cb.addEventListener("change", () => {
+        for (const b of (catBars.get(cb.dataset.cat) || [])) b.classList.toggle("selected", cb.checked);
+        recompute(); refreshToggle();
+      }));
+      function syncCatChecks() {
+        for (const cb of catCbs) {
+          const list = catBars.get(cb.dataset.cat) || [];
+          const sel = list.filter((b) => b.classList.contains("selected")).length;
+          cb.checked = list.length > 0 && sel === list.length;
+          cb.indeterminate = sel > 0 && sel < list.length;
+        }
+      }
+      syncCatChecks();
 
       // ---- clock-format toggle (re-labels every displayed time + the open panel) ----
       const clockToggle = document.getElementById("clock-toggle");
@@ -1160,6 +1215,24 @@ const totalVenues = venueNames.length;
       .collapse-all:hover, .view-toggle:hover { background: var(--surface1); color: var(--text); }
       .view-toggle { border-color: var(--mauve); color: var(--mauve); }
       .view-toggle:hover { background: color-mix(in srgb, var(--mauve) 18%, var(--mantle)); color: var(--lavender); }
+
+      /* select-by-type checkbox bar */
+      .cat-bar {
+        display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin: 0 0 .9rem;
+        padding: .6rem .8rem; border-radius: .9rem;
+        background: rgba(24,24,37,.45); border: 1px solid var(--surface0);
+      }
+      .cat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--overlay1); margin-right: .15rem; }
+      .cat-chip {
+        display: inline-flex; align-items: center; gap: .35rem; cursor: pointer; user-select: none;
+        padding: .28rem .55rem; border-radius: 999px; font-size: .82rem; color: var(--subtext1);
+        background: var(--surface0); border: 1px solid var(--surface1); transition: background .12s, border-color .12s;
+      }
+      .cat-chip:hover { background: var(--surface1); color: var(--text); }
+      .cat-chip:has(input:checked) { background: color-mix(in srgb, var(--mauve) 22%, var(--mantle)); border-color: var(--mauve); color: var(--lavender); }
+      .cat-chip:has(input:indeterminate) { border-color: var(--mauve); }
+      .cat-chip input { accent-color: var(--mauve); cursor: pointer; width: .95rem; height: .95rem; margin: 0; }
+      .cat-n { font-size: .68rem; font-weight: 700; color: var(--subtext0); background: rgba(0,0,0,.22); border-radius: 999px; padding: .04rem .38rem; }
       .die { display: inline-block; transform-origin: 50% 55%; }
       .die.rolling { animation: die-roll .55s cubic-bezier(.36,.07,.19,.97) both; }
       @keyframes die-roll {
