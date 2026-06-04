@@ -171,6 +171,7 @@ for (const g of groups) {
     allEvents.push({
       ...e,
       leftX, barW, crossesDay, beyondDays, endLabel,
+      date: g.date,
       absStart, absEnd: absStart + e.durMin,
       color: hashColor(e.org || e.summary || "x"),
       timeLabel: crossesDay ? `${e.start} → ${endLabel}` : baseTime,
@@ -355,6 +356,8 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
                   data-desc={e.desc}
                   data-start={e.absStart}
                   data-end={e.absEnd}
+                  data-date={e.date}
+                  data-shm={e.start}
                   data-clock={e.timeLabel}
                   data-venue={(e.location && e.location.trim()) ? e.location.trim() : "Unlisted"}
                   data-sublane={e.subLane}
@@ -399,11 +402,8 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       <span class="tray-spacer"></span>
       <button id="howto-btn" class="tray-btn ghost">❔ How to use?</button>
       <button id="tray-review" class="tray-btn ghost" hidden>Review overlaps</button>
-      <label class="tray-check" title="Include the camp map at the top of the PDF">
-        <input type="checkbox" id="map-pdf" checked /> 🗺 Map in PDF
-      </label>
       <button id="tray-clear" class="tray-btn ghost" disabled>Clear</button>
-      <button id="tray-pdf" class="tray-btn primary" disabled>⎙ Generate PDF schedule</button>
+      <button id="tray-export" class="tray-btn primary" disabled>⤓ Export</button>
     </div>
 
     <!-- overlap review modal -->
@@ -422,6 +422,28 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       </div>
     </div>
 
+    <!-- export modal -->
+    <div id="export" class="review" hidden>
+      <div class="review-card">
+        <button id="export-close" class="review-x" aria-label="Close">✕</button>
+        <h3>Export your schedule</h3>
+        <p class="review-sub">Take your <b id="export-n">0</b>-event schedule with you.</p>
+        <div class="export-opts">
+          <button id="export-ics" class="export-opt" type="button">
+            <span class="export-emoji">📅</span>
+            <span class="export-txt"><b>Add to calendar</b><small>Download an <code>.ics</code> file — imports into Apple&nbsp;Calendar, Google&nbsp;Calendar or Outlook. Times in Eastern (ET).</small></span>
+          </button>
+          <button id="export-pdf" class="export-opt" type="button">
+            <span class="export-emoji">⎙</span>
+            <span class="export-txt"><b>PDF schedule</b><small>A printable one-page schedule. Overlapping picks get flagged for review first.</small></span>
+          </button>
+        </div>
+        <label class="export-mapchk" title="Include the camp map at the top of the PDF">
+          <input type="checkbox" id="map-pdf" checked /> 🗺 Include the camp map in the PDF
+        </label>
+      </div>
+    </div>
+
     <!-- how-to guide modal -->
     <div id="howto" class="review" hidden>
       <div class="review-card">
@@ -432,7 +454,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           <li><b>Two toolbars:</b> <b>Utility</b> holds the view controls (zoom, search, view, clock, map); <b>Select events</b> holds the picking tools. On mobile they sit above and below the timeline.</li>
           <li><b>Two views:</b> <b>Location view</b> groups events by venue; <b>Row view</b> packs them compactly into rows, with long events shown as a striped layer underneath the shorter ones.</li>
           <li><b>Search</b> to spotlight matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</li>
-          <li><b>Build a schedule:</b> click an event to look at it and add it, or pick in bulk (below). Then <b>Generate PDF</b> for a printable schedule — overlapping picks get flagged for review first.</li>
+          <li><b>Build a schedule:</b> click an event to look at it and add it, or pick in bulk (below). Then <b>Export</b> to add it to your calendar (.ics for Apple / Google / Outlook) or save a printable PDF — overlapping picks get flagged for review before the PDF.</li>
         </ul>
         <div class="howto-divider"></div>
         <p class="howto-subhead">Picking events fast</p>
@@ -444,7 +466,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         <div class="howto-divider"></div>
         <p class="howto-subhead">Extra features</p>
         <ul class="howto-body">
-          <li><b>🗺 Map</b> opens the camp map; tick <b>Map in PDF</b> in the schedule bar to print it at the top of your schedule.</li>
+          <li><b>🗺 Map</b> opens the camp map; tick <b>Include the camp map in the PDF</b> in the Export dialog to print it at the top of your schedule.</li>
           <li><b>Clock toggle</b> switches every time between 24-hour and am/pm (PDF included).</li>
           <li><b>Row labels</b> show how many events sit in each row.</li>
         </ul>
@@ -794,7 +816,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       const trayWarn = document.getElementById("tray-warn");
       const trayReview = document.getElementById("tray-review");
       const trayClear = document.getElementById("tray-clear");
-      const trayPdf = document.getElementById("tray-pdf");
+      const trayExport = document.getElementById("tray-export");
       let conflictPairs = [];
       const ackedOverlaps = new Set();
       const pairKey = (a, b) => [a.id, b.id].sort().join("|");
@@ -820,7 +842,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         trayN.textContent = sel.length;
         trayHint.hidden = has;                 // empty-state prompt only when nothing picked
         trayClear.disabled = !has;             // stay visible, just inert until events are picked
-        trayPdf.disabled = !has;
+        trayExport.disabled = !has;
         trayReview.hidden = conflictPairs.length === 0;
         if (nConflict > 0) {
           trayWarn.hidden = false;
@@ -970,7 +992,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       mapmodal.addEventListener("click", (e) => { if (e.target === mapmodal) closeMap(); });
 
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") { closeReview(); closeHowto(); closeMap(); closePanel(); }
+        if (e.key === "Escape") { closeReview(); closeHowto(); closeMap(); closeExport(); closePanel(); }
       });
 
       // ---- build printable schedule & open print dialog (Save as PDF) ----
@@ -1033,13 +1055,90 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         window.print();
       }
 
-      document.getElementById("tray-pdf").addEventListener("click", () => {
+      // run the existing conflict-gate → review-or-print flow (shared by the PDF paths)
+      function startPdf() {
         const hasSel = bars.some((b) => b.classList.contains("selected"));
         if (!hasSel) return;
         const unresolved = conflictPairs.some(([a, b]) => !ackedOverlaps.has(pairKey(a, b)));
         if (unresolved) openReview();  // make the user review conflicts first
         else doPrint();
+      }
+
+      // ---- build a calendar .ics from the selected events ----
+      const icsEsc = (s) => (s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+      // RFC 5545 line folding: split octets >75 onto continuation lines (leading space)
+      function icsFold(line) {
+        if (line.length <= 75) return line;
+        const out = [line.slice(0, 75)];
+        let rest = line.slice(75);
+        while (rest.length > 74) { out.push(" " + rest.slice(0, 74)); rest = rest.slice(74); }
+        out.push(" " + rest);
+        return out.join("\r\n");
+      }
+      const TZBLOCK = [
+        "BEGIN:VTIMEZONE", "TZID:America/New_York",
+        "BEGIN:DAYLIGHT", "TZOFFSETFROM:-0500", "TZOFFSETTO:-0400", "TZNAME:EDT",
+        "DTSTART:19700308T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU", "END:DAYLIGHT",
+        "BEGIN:STANDARD", "TZOFFSETFROM:-0400", "TZOFFSETTO:-0500", "TZNAME:EST",
+        "DTSTART:19701101T020000", "RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU", "END:STANDARD",
+        "END:VTIMEZONE",
+      ];
+      const p2 = (n) => String(n).padStart(2, "0");
+      function buildICS(sel) {
+        const now = new Date();
+        const stamp = `${now.getUTCFullYear()}${p2(now.getUTCMonth() + 1)}${p2(now.getUTCDate())}T${p2(now.getUTCHours())}${p2(now.getUTCMinutes())}${p2(now.getUTCSeconds())}Z`;
+        const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//vibecamp-scheduler//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Vibecamp schedule", ...TZBLOCK];
+        for (const b of sel) {
+          const date = b.dataset.date, shm = b.dataset.shm;
+          lines.push("BEGIN:VEVENT", `UID:${b.id}@vibecamp.mahan.io`, `DTSTAMP:${stamp}`);
+          if (shm === "all-day" || !/^\d{1,2}:\d{2}$/.test(shm)) {
+            const d = date.replace(/-/g, "");
+            const next = new Date(date + "T00:00:00"); next.setDate(next.getDate() + 1);
+            const nd = `${next.getFullYear()}${p2(next.getMonth() + 1)}${p2(next.getDate())}`;
+            lines.push(`DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${nd}`);
+          } else {
+            const [h, m] = shm.split(":").map(Number);
+            const durMin = (+b.dataset.end) - (+b.dataset.start);
+            const s = new Date(date + "T00:00:00"); s.setHours(h, m, 0, 0);
+            const e = new Date(s.getTime()); e.setMinutes(e.getMinutes() + (durMin > 0 ? durMin : 60));
+            const fmt = (x) => `${x.getFullYear()}${p2(x.getMonth() + 1)}${p2(x.getDate())}T${p2(x.getHours())}${p2(x.getMinutes())}00`;
+            lines.push(`DTSTART;TZID=America/New_York:${fmt(s)}`, `DTEND;TZID=America/New_York:${fmt(e)}`);
+          }
+          lines.push(`SUMMARY:${icsEsc(b.dataset.title)}`);
+          if (b.dataset.loc) lines.push(`LOCATION:${icsEsc(b.dataset.loc)}`);
+          const desc = [b.dataset.org ? "Host: " + b.dataset.org : "", b.dataset.desc || ""].filter(Boolean).join("\n\n");
+          if (desc) lines.push(`DESCRIPTION:${icsEsc(desc)}`);
+          lines.push("END:VEVENT");
+        }
+        lines.push("END:VCALENDAR");
+        return lines.map(icsFold).join("\r\n");
+      }
+      function downloadICS() {
+        const sel = bars
+          .filter((b) => b.classList.contains("selected"))
+          .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+        if (!sel.length) return;
+        const blob = new Blob([buildICS(sel)], { type: "text/calendar;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "vibecamp-schedule.ics";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      // ---- export modal ----
+      const exportModal = document.getElementById("export");
+      const closeExport = () => { exportModal.hidden = true; };
+      document.getElementById("tray-export").addEventListener("click", () => {
+        if (!bars.some((b) => b.classList.contains("selected"))) return;
+        document.getElementById("export-n").textContent =
+          bars.filter((b) => b.classList.contains("selected")).length;
+        exportModal.hidden = false;
       });
+      document.getElementById("export-close").addEventListener("click", closeExport);
+      exportModal.addEventListener("click", (e) => { if (e.target === exportModal) closeExport(); });
+      document.getElementById("export-ics").addEventListener("click", () => { downloadICS(); closeExport(); });
+      document.getElementById("export-pdf").addEventListener("click", () => { closeExport(); startPdf(); });
 
       // drag-to-scroll the continuous track
       const scroll = document.getElementById("scroll");
@@ -1525,6 +1624,19 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .rv-btn.ghost:hover { background: var(--surface1); color: var(--text); }
       .rv-btn.primary { background: var(--mauve); color: var(--crust); }
       .rv-btn.primary:hover { background: var(--lavender); }
+
+      /* export modal: two big choice cards + a PDF-map toggle */
+      .export-opts { display: flex; flex-direction: column; gap: .6rem; }
+      .export-opt { display: flex; align-items: flex-start; gap: .8rem; text-align: left; width: 100%; padding: .85rem 1rem; border: 1px solid var(--surface1); border-radius: 14px; background: var(--surface0); color: var(--text); cursor: pointer; font-family: inherit; transition: border-color .12s, background .12s, transform .06s; }
+      .export-opt:hover { background: var(--surface1); border-color: var(--mauve); }
+      .export-opt:active { transform: translateY(1px); }
+      .export-emoji { font-size: 1.5rem; line-height: 1.4; flex: none; }
+      .export-txt { display: flex; flex-direction: column; gap: .2rem; }
+      .export-txt b { font-size: .98rem; }
+      .export-txt small { font-size: .82rem; color: var(--subtext0); line-height: 1.35; }
+      .export-txt code { background: var(--mantle); padding: 0 .25rem; border-radius: 4px; font-size: .9em; }
+      .export-mapchk { display: flex; align-items: center; gap: .45rem; margin: .9rem .15rem 0; font-size: .85rem; color: var(--subtext1); cursor: pointer; }
+      .export-mapchk input { accent-color: var(--mauve); }
       .howto-body { margin: .2rem 0 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .6rem; font-size: .9rem; color: var(--subtext0); line-height: 1.45; }
       .howto-body b { color: var(--text); font-weight: 600; }
       .howto-divider { border-top: 1px solid var(--surface1); margin: 1.15rem 0 .85rem; }
