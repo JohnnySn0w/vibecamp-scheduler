@@ -305,7 +305,7 @@ const totalVenues = venueNames.length;
               ))}
               {bars.map((e, i) => (
                 <button
-                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary === "Vibecamp Trials" ? "trials" : ""}`}
+                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary === "Vibecamp Trials" ? "trials" : ""} ${(e.org === "Leah (Prime)" || e.summary === "Welcome to the Vibe Parade") ? "sheen" : ""}`}
                   id={`ev${i}`}
                   data-bx={e.gleft} data-bw={e.barW}
                   style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
@@ -954,6 +954,11 @@ const totalVenues = venueNames.length;
       });
       window.addEventListener("pointerup", () => { down = false; scroll.classList.remove("grabbing"); });
 
+      // ---- scroll-driven sheen: slide the highlight streak on .sheen bars as you scroll ----
+      const setSheen = () => document.documentElement.style.setProperty("--sheenx", (-scroll.scrollLeft * 0.6) + "px");
+      scroll.addEventListener("scroll", setSheen, { passive: true });
+      setSheen();
+
       // ---- sparkles inside "Vibecamp Trials" — it's Michael's event, so it's special ----
       // The bar is very wide AND (in Row view) a background layer beneath the foreground
       // events, so sparkles drawn into it get occluded. Instead we draw them into a
@@ -1157,6 +1162,21 @@ const totalVenues = venueNames.length;
         100% { opacity: 0;  transform: translateY(-7px) scale(.2) rotate(15deg); }
       }
       @media (prefers-reduced-motion: reduce) { .sparkle { display: none; } }
+
+      /* glossy sheen for Leah (Prime)'s events + "Welcome to the Vibe Parade" —
+         the highlight streak slides as the timeline is scrolled (--sheenx) */
+      .bar.sheen::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        pointer-events: none; z-index: 2; mix-blend-mode: screen; opacity: .9;
+        background: linear-gradient(105deg,
+          transparent 38%,
+          color-mix(in srgb, var(--c) 30%, rgba(255,255,255,.85)) 48%,
+          rgba(255,255,255,.9) 50%,
+          color-mix(in srgb, var(--c) 30%, rgba(255,255,255,.85)) 52%,
+          transparent 62%);
+        background-size: 320px 100%; background-repeat: repeat;
+        background-position-x: var(--sheenx, 0px);
+      }
 
       .chart { position: relative; }
       .daylabels { position: relative; height: 52px; }
