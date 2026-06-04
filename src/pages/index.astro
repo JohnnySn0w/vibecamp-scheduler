@@ -255,6 +255,8 @@ const totalVenues = venueNames.length;
         </label>
         <button id="view-toggle" class="view-toggle" type="button">Location view</button>
         <button id="howto-btn" class="view-toggle" type="button">How to use?</button>
+        <button id="randomize-btn" class="view-toggle" type="button">🎲 Randomize</button>
+        <button id="clock-toggle" class="view-toggle" type="button">Clock: 24h</button>
         <button id="collapse-all" class="collapse-all" type="button">Collapse all</button>
       </div>
       <div class="timeline-wrap">
@@ -287,7 +289,7 @@ const totalVenues = venueNames.length;
 
             <div class="ruler">
               {hourTicks.map((t) => (
-                <span class="tick" data-bx={t.x} style={`left:${t.x}px`}>{t.label}</span>
+                <span class="tick" data-bx={t.x} data-clock={t.label} style={`left:${t.x}px`}>{t.label}</span>
               ))}
             </div>
 
@@ -416,6 +418,26 @@ const totalVenues = venueNames.length;
       const count = document.getElementById("count");
       const empty = document.getElementById("empty");
       const bars = Array.from(document.querySelectorAll(".bar"));
+
+      // ---- clock format: 24h by default; toggle reformats every HH:MM for display ----
+      // Times are stored 24h in the data attributes; fmtClock is applied wherever a
+      // time is shown (bars, ruler, panel, overlap review, PDF) so the toggle is global.
+      let use12hr = false;
+      try { use12hr = localStorage.getItem("vc-clock") === "12"; } catch (e) {}
+      const fmtClock = (str) => {
+        if (!use12hr || !str) return str;
+        return str.replace(/(\d{1,2}):(\d{2})/g, (_, h, mi) => {
+          h = +h; const ap = h < 12 ? "am" : "pm"; const h12 = (h % 12) || 12;
+          return h12 + ":" + mi + " " + ap;
+        });
+      };
+      function applyClockFormat() {
+        for (const b of bars) {
+          const t = b.querySelector(".bar-time");
+          if (t) t.textContent = fmtClock(b.dataset.clock);
+        }
+        for (const tk of document.querySelectorAll(".ruler .tick")) tk.textContent = fmtClock(tk.dataset.clock);
+      }
 
       function applyFilter() {
         const q = search.value.trim().toLowerCase();
@@ -669,7 +691,7 @@ const totalVenues = venueNames.length;
       const show = (b) => {
         currentBar = b;
         set("p-title", b.dataset.title);
-        set("p-time", b.dataset.time);
+        set("p-time", fmtClock(b.dataset.time));
         set("p-day", b.dataset.day);
         set("p-org", b.dataset.org ? "♟ " + b.dataset.org : "");
         set("p-loc", b.dataset.loc ? "⌖ " + b.dataset.loc : "");
@@ -725,6 +747,32 @@ const totalVenues = venueNames.length;
         recompute(); refreshToggle();
       });
 
+      // ---- randomize: build a random conflict-free schedule ----
+      document.getElementById("randomize-btn").addEventListener("click", () => {
+        bars.forEach((b) => b.classList.remove("selected", "conflict"));
+        ackedOverlaps.clear();
+        const picked = [];
+        for (const b of [...bars].sort(() => Math.random() - 0.5)) {
+          const bs = +b.dataset.start, be = +b.dataset.end;
+          if (!picked.some((p) => bs < +p.dataset.end && +p.dataset.start < be)) {
+            b.classList.add("selected"); picked.push(b);
+          }
+        }
+        recompute(); refreshToggle();
+      });
+
+      // ---- clock-format toggle (re-labels every displayed time + the open panel) ----
+      const clockToggle = document.getElementById("clock-toggle");
+      const setClockLabel = () => { clockToggle.textContent = use12hr ? "Clock: 12h" : "Clock: 24h"; };
+      setClockLabel();
+      clockToggle.addEventListener("click", () => {
+        use12hr = !use12hr;
+        try { localStorage.setItem("vc-clock", use12hr ? "12" : "24"); } catch (e) {}
+        setClockLabel(); applyClockFormat();
+        if (!panel.hidden && currentBar) set("p-time", fmtClock(currentBar.dataset.time));
+      });
+      if (use12hr) applyClockFormat();   // restore a saved 12h preference on load
+
       // ---- overlap review modal ----
       const review = document.getElementById("review");
       const reviewList = document.getElementById("review-list");
@@ -750,7 +798,7 @@ const totalVenues = venueNames.length;
 
           const row = el("div", "rv-row" + (resolved ? " resolved" : ""));
           const info = el("div", "rv-info");
-          info.appendChild(el("div", "rv-pair", `${e.dataset.title}  (${e.dataset.clock})`));
+          info.appendChild(el("div", "rv-pair", `${e.dataset.title}  (${fmtClock(e.dataset.clock)})`));
           info.appendChild(el("div", "rv-times",
             "overlaps " + partners.map((p) => `${p.dataset.title} (${p.dataset.clock})`).join(",  ")));
           const btn = el("button", "rv-ok");
@@ -822,7 +870,7 @@ const totalVenues = venueNames.length;
             let cls = "ps-item";
             if (unackedIds.has(b.id)) cls += " conflict";
             const item = el("div", cls);
-            item.appendChild(el("div", "ps-time", b.dataset.clock));
+            item.appendChild(el("div", "ps-time", fmtClock(b.dataset.clock)));
             const main = el("div", "ps-main");
             main.appendChild(el("div", "t", b.dataset.title));
             const meta = el("div", "m");
