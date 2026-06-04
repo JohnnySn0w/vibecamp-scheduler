@@ -265,9 +265,10 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         on twitter!
       </p>
       <div class="controls">
-        <span class="hint">↔ drag to scroll · click events to build a PDF schedule</span>
+        <span class="hint">↔ drag to scroll · click events to build your schedule</span>
       </div>
       <p class="search-note">Searching spotlights matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</p>
+      <p class="watch-note">📌 New events get added even after Vibecamp kicks off — check back through the weekend so you don't miss anything.</p>
     </header>
 
     <main>
@@ -1354,6 +1355,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .count { font-size: .85rem; color: var(--subtext1); background: var(--surface0); padding: .45rem .8rem; border-radius: 999px; white-space: nowrap; }
       .hint { font-size: .8rem; color: var(--overlay1); }
       .search-note { margin: .7rem auto 0; max-width: 40rem; font-size: .8rem; color: var(--overlay1); text-align: center; }
+      .watch-note { margin: .55rem auto 0; max-width: 42rem; font-size: .95rem; color: var(--subtext1); text-align: center; }
 
       main { max-width: 1240px; margin: 0 auto; padding: 1.2rem 1.5rem 6rem; }
       .scroll-hint {
