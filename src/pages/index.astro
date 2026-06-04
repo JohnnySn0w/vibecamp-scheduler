@@ -253,13 +253,14 @@ const totalVenues = venueNames.length;
           <input id="zoom" type="range" min="0.1" max="2" step="0.05" value="1" aria-label="Zoom timeline" />
           <span class="zoom-icon" aria-hidden="true">⊕</span>
         </label>
+        <button id="view-toggle" class="view-toggle" type="button">Compact view</button>
         <button id="collapse-all" class="collapse-all" type="button">Collapse all</button>
       </div>
       <div class="timeline-wrap">
         <!-- static venue axis (does not scroll horizontally) -->
         <div class="vaxis">
-          <div class="vaxis-head">Venue</div>
-          <div class="vaxis-rows" style={`height:${lanesHeight}px`}>
+          <div class="vaxis-head" id="axis-head">Venue</div>
+          <div class="vaxis-rows" id="venue-rows" style={`height:${lanesHeight}px`}>
             {venueRows.map((v) => (
               <button type="button" class={`vlabel ${v.alt ? "alt" : ""}`} data-venue={v.name} data-h={v.height} style={`top:${v.yOffset}px;height:${v.height}px`}>
                 <span class="vchevron" aria-hidden="true">▾</span>
@@ -268,6 +269,7 @@ const totalVenues = venueNames.length;
               </button>
             ))}
           </div>
+          <div class="vaxis-rows" id="track-rows" hidden></div>
         </div>
 
         <div class="scroll" id="scroll">
@@ -406,8 +408,8 @@ const totalVenues = venueNames.length;
         count.textContent = visible + (visible === 1 ? " event" : " events");
         empty.hidden = visible !== 0;
         searchClear.hidden = q === "";
-        // collapse venues with no matches, then jump to the first visible match
-        relayoutY(q !== "");
+        // venue view: collapse venues with no matches (tracks view: layout is fixed)
+        if (viewMode === "venues") layoutVenues(q !== "");
         if (q) {
           const firstMatch = bars.find((b) => !b.classList.contains("dim") && b.offsetParent !== null);
           if (firstMatch) {
@@ -434,15 +436,29 @@ const totalVenues = venueNames.length;
         const w = (baseWidth * z) + "px";
         chart.style.width = w; daylabels.style.width = w;
       }
-      zoom.addEventListener("input", () => setZoom(+zoom.value));
+      zoom.addEventListener("input", () => {
+        setZoom(+zoom.value);
+        try { localStorage.setItem("vc-zoom", zoom.value); } catch (e) {}
+      });
+      // restore saved zoom level on load (the slider position alone wasn't enough)
+      try { const z = localStorage.getItem("vc-zoom"); if (z) zoom.value = z; } catch (e) {}
+      setZoom(+zoom.value);
 
-      // ---- collapsible venues (Y-axis relayout) ----
-      const ROW = 54;          // LANE_H (46) + LANE_GAP (8)
-      const VGAP = 12;         // VENUE_GAP
+      // ---- layout engine: "venues" (default) or compact "tracks" ----
+      const LH = 46, LG = 8, ROW = LH + LG;   // lane height / gap
+      const VGAP = 12;                          // gap between venues
       const COLLAPSED_H = 30;
+      const BG_MIN = 150;   // minutes: events this long become the background layer in compact view
       const lanesEl = document.querySelector(".lanes");
-      const vaxisRows = document.querySelector(".vaxis-rows");
+      const venueRowsEl = document.getElementById("venue-rows");
+      const trackRowsEl = document.getElementById("track-rows");
+      const axisHead = document.getElementById("axis-head");
+      const collapseAllBtn = document.getElementById("collapse-all");
+      const viewToggleBtn = document.getElementById("view-toggle");
       const manualCollapsed = new Set();
+      let viewMode = "venues";
+
+      // venue model
       const vlabels = Array.from(document.querySelectorAll(".vlabel"));
       const vbands = Array.from(document.querySelectorAll(".vband"));
       const venues = vlabels.map((label, i) => ({
@@ -451,19 +467,49 @@ const totalVenues = venueNames.length;
       const vByName = new Map(venues.map((v) => [v.name, v]));
       for (const b of bars) { const v = vByName.get(b.dataset.venue); if (v) v.bars.push(b); }
 
-      function relayoutY(searchActive) {
+      // compact "tracks" model: long events → background layer, the rest packed into tracks
+      const left = (b) => +b.dataset.bx;
+      const right = (b) => +b.dataset.bx + (+b.dataset.bw);
+      const bgSet = new Set();
+      const fg = [];
+      for (const b of bars) {
+        if ((+b.dataset.end - +b.dataset.start) >= BG_MIN) bgSet.add(b);
+        else fg.push(b);
+      }
+      fg.sort((a, b) => left(a) - left(b) || right(a) - right(b));
+      const trackEnds = [], trackCounts = [], trackOf = new Map();
+      for (const b of fg) {
+        let t = trackEnds.findIndex((end) => end <= left(b) + 0.5);
+        if (t === -1) { t = trackEnds.length; trackEnds.push(0); trackCounts.push(0); }
+        trackEnds[t] = right(b); trackOf.set(b, t); trackCounts[t]++;
+      }
+      const K = Math.max(1, trackEnds.length);
+      const trackAreaH = K * ROW - LG;
+      const tbands = [];
+      for (let i = 0; i < K; i++) {
+        const lbl = document.createElement("div");
+        lbl.className = "tlabel" + (i % 2 ? " alt" : "");
+        lbl.style.top = (i * ROW) + "px"; lbl.style.height = LH + "px";
+        const n = document.createElement("span"); n.className = "vlabel-name"; n.textContent = "Track " + (i + 1);
+        const c = document.createElement("span"); c.className = "vlabel-count"; c.textContent = trackCounts[i];
+        lbl.append(n, c); trackRowsEl.appendChild(lbl);
+        const band = document.createElement("span");
+        band.className = "tband" + (i % 2 ? " alt" : "");
+        band.style.top = (i * ROW) + "px"; band.style.height = LH + "px"; band.style.display = "none";
+        lanesEl.appendChild(band); tbands.push(band);
+      }
+
+      function layoutVenues(searchActive) {
+        for (const b of bars) { b.classList.remove("bgbar"); b.style.height = ""; }
         let y = 0;
         for (const v of venues) {
           const matches = searchActive ? v.bars.filter((b) => !b.classList.contains("dim")).length : v.bars.length;
-          // during search, venues with no matches are hidden entirely (no row, no gap)
           if (searchActive && matches === 0) {
-            v.label.style.display = "none";
-            v.band.style.display = "none";
+            v.label.style.display = "none"; v.band.style.display = "none";
             for (const b of v.bars) b.style.display = "none";
             continue;
           }
-          v.label.style.display = "";
-          v.band.style.display = "";
+          v.label.style.display = ""; v.band.style.display = "";
           const collapsed = manualCollapsed.has(v.name);
           const h = collapsed ? COLLAPSED_H : v.h;
           v.label.style.top = y + "px"; v.label.style.height = h + "px";
@@ -471,26 +517,49 @@ const totalVenues = venueNames.length;
           v.label.classList.toggle("collapsed", collapsed);
           v.label.setAttribute("aria-expanded", String(!collapsed));
           for (const b of v.bars) {
-            if (collapsed) { b.style.display = "none"; }
+            if (collapsed) b.style.display = "none";
             else { b.style.display = ""; b.style.top = (y + (+b.dataset.sublane) * ROW) + "px"; }
           }
           y += h + VGAP;
         }
         const total = Math.max(0, y - VGAP);
         lanesEl.style.height = total + "px";
-        vaxisRows.style.height = total + "px";
+        venueRowsEl.style.height = total + "px";
       }
+
+      function layoutTracks() {
+        for (const b of bars) {
+          b.style.display = "";
+          if (bgSet.has(b)) { b.classList.add("bgbar"); b.style.top = "0px"; b.style.height = trackAreaH + "px"; }
+          else { b.classList.remove("bgbar"); b.style.height = ""; b.style.top = (trackOf.get(b) * ROW) + "px"; }
+        }
+        lanesEl.style.height = trackAreaH + "px";
+        trackRowsEl.style.height = trackAreaH + "px";
+      }
+
+      function setView(mode) {
+        viewMode = mode;
+        try { localStorage.setItem("vc-view", mode); } catch (e) {}
+        const tracks = mode === "tracks";
+        venueRowsEl.hidden = tracks;
+        trackRowsEl.hidden = !tracks;
+        for (const b of vbands) b.style.display = tracks ? "none" : "";
+        for (const b of tbands) b.style.display = tracks ? "" : "none";
+        axisHead.textContent = tracks ? (K + " tracks · " + bgSet.size + " bg") : "Venue";
+        collapseAllBtn.style.display = tracks ? "none" : "";
+        viewToggleBtn.textContent = tracks ? "Venue view" : "Compact view";
+        if (tracks) layoutTracks(); else layoutVenues(search.value.trim() !== "");
+      }
+      viewToggleBtn.addEventListener("click", () => setView(viewMode === "tracks" ? "venues" : "tracks"));
+
       for (const v of venues) {
         v.label.addEventListener("click", () => {
           if (manualCollapsed.has(v.name)) manualCollapsed.delete(v.name);
           else manualCollapsed.add(v.name);
-          relayoutY(search.value.trim() !== "");
+          layoutVenues(search.value.trim() !== "");
           syncCollapseAll();
         });
       }
-
-      // collapse / expand all
-      const collapseAllBtn = document.getElementById("collapse-all");
       function syncCollapseAll() {
         const allCollapsed = venues.every((v) => manualCollapsed.has(v.name));
         collapseAllBtn.textContent = allCollapsed ? "Expand all" : "Collapse all";
@@ -499,11 +568,13 @@ const totalVenues = venueNames.length;
         const allCollapsed = venues.every((v) => manualCollapsed.has(v.name));
         if (allCollapsed) manualCollapsed.clear();
         else for (const v of venues) manualCollapsed.add(v.name);
-        relayoutY(search.value.trim() !== "");
+        layoutVenues(search.value.trim() !== "");
         syncCollapseAll();
       });
 
-      relayoutY(false);
+      let savedView = "venues";
+      try { savedView = localStorage.getItem("vc-view") || "venues"; } catch (e) {}
+      setView(savedView);
       syncCollapseAll();
 
       const el = (tag, cls, text) => {
@@ -839,17 +910,27 @@ const totalVenues = venueNames.length;
 
       .vband { position: absolute; left: 0; background: transparent; }
       .vband.alt { background: rgba(49,50,68,.30); }
+      /* compact "tracks" view: row bands (chart) + row labels (axis) */
+      .tband { position: absolute; left: 0; width: 100%; z-index: 0; background: transparent; }
+      .tband.alt { background: rgba(49,50,68,.30); }
+      .tlabel {
+        position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .35rem;
+        padding: 0 .5rem 0 .75rem;
+      }
+      .tlabel.alt { background: rgba(49,50,68,.30); }
 
       .tl-toolbar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 .7rem; }
       .zoom { display: flex; align-items: center; gap: .45rem; }
       .zoom input { width: 170px; accent-color: var(--mauve); cursor: pointer; }
       .zoom-icon { color: var(--overlay1); font-size: .95rem; }
       .zoom-label { font-size: .8rem; font-weight: 600; color: var(--subtext0); }
-      .collapse-all {
+      .collapse-all, .view-toggle {
         border: 1px solid var(--surface1); background: var(--surface0); color: var(--subtext1);
         border-radius: 999px; padding: .35rem .85rem; font-size: .8rem; font-weight: 600; cursor: pointer; font-family: inherit;
       }
-      .collapse-all:hover { background: var(--surface1); color: var(--text); }
+      .collapse-all:hover, .view-toggle:hover { background: var(--surface1); color: var(--text); }
+      .view-toggle { border-color: var(--mauve); color: var(--mauve); }
+      .view-toggle:hover { background: color-mix(in srgb, var(--mauve) 18%, var(--mantle)); color: var(--lavender); }
 
       .chart { position: relative; }
       .daylabels { position: relative; height: 52px; }
@@ -875,7 +956,7 @@ const totalVenues = venueNames.length;
       .grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--surface0); opacity: .5; }
 
       .bar {
-        position: absolute; height: 46px; padding: 5px 9px; text-align: left;
+        position: absolute; height: 46px; padding: 5px 9px; text-align: left; z-index: 2;
         border: none; border-radius: .55rem; cursor: pointer; overflow: hidden;
         background: color-mix(in srgb, var(--c) 22%, var(--mantle));
         border-left: 3px solid var(--c); color: var(--text); font-family: inherit;
@@ -910,6 +991,24 @@ const totalVenues = venueNames.length;
       .bar-cap {
         position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
         font-size: 1rem; font-weight: 800; color: var(--c); line-height: 1;
+      }
+
+      /* compact view: long events as a faint hatched background layer (short events sit on top) */
+      .bar.bgbar {
+        z-index: 1; justify-content: flex-start; padding-top: 5px; border-radius: .4rem;
+        background:
+          repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--c) 15%, transparent) 6px 12px),
+          color-mix(in srgb, var(--c) 8%, var(--mantle));
+        border-left-color: color-mix(in srgb, var(--c) 45%, transparent);
+      }
+      .bar.bgbar:hover {
+        background:
+          repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--c) 22%, transparent) 6px 12px),
+          color-mix(in srgb, var(--c) 14%, var(--mantle));
+      }
+      .bar.bgbar .bar-time, .bar.bgbar .bar-title {
+        position: sticky; left: 4px; width: max-content; max-width: calc(100% - 8px);
+        color: color-mix(in srgb, var(--c) 72%, var(--subtext0));
       }
 
       .empty { text-align: center; color: var(--subtext0); padding: 3rem 0; font-size: 1.05rem; }
