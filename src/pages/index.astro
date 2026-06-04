@@ -233,7 +233,6 @@ const totalVenues = venueNames.length;
         on twitter!
       </p>
       <div class="controls">
-        <span id="count" class="count">{totalEvents} events</span>
         <span class="hint">↔ drag to scroll · click events to build a PDF schedule</span>
       </div>
       <p class="search-note">Searching spotlights matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</p>
@@ -247,17 +246,18 @@ const totalVenues = venueNames.length;
           <input id="search" type="search" placeholder="Filter events, hosts, or places…" autocomplete="off" />
           <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
         </div>
+        <span id="count" class="count">{totalEvents} events</span>
         <label class="zoom">
           <span class="zoom-label">Zoom</span>
           <span class="zoom-icon" aria-hidden="true">⊖</span>
           <input id="zoom" type="range" min="0.1" max="2" step="0.05" value="1" aria-label="Zoom timeline" />
           <span class="zoom-icon" aria-hidden="true">⊕</span>
         </label>
-        <button id="view-toggle" class="view-toggle" type="button">Location view</button>
-        <button id="howto-btn" class="view-toggle" type="button">How to use?</button>
-        <button id="randomize-btn" class="view-toggle" type="button">🎲 Randomize</button>
-        <button id="clock-toggle" class="view-toggle" type="button">Clock: 24h</button>
-        <button id="collapse-all" class="collapse-all" type="button">Collapse all</button>
+        <button id="view-toggle" class="view-toggle" type="button">📍 Location view</button>
+        <button id="howto-btn" class="view-toggle" type="button">❔ How to use?</button>
+        <button id="randomize-btn" class="view-toggle" type="button"><span class="die">🎲</span> Randomize</button>
+        <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
+        <button id="collapse-all" class="collapse-all" type="button">⊟ Collapse all</button>
       </div>
       <div class="timeline-wrap">
         <!-- static venue axis (does not scroll horizontally) -->
@@ -643,7 +643,7 @@ const totalVenues = venueNames.length;
         for (const b of tbands) b.style.display = tracks ? "" : "none";
         axisHead.textContent = tracks ? (TROWS + " rows · " + bgSet.size + " bg") : "Location";
         collapseAllBtn.style.display = tracks ? "none" : "";
-        viewToggleBtn.textContent = tracks ? "Location view" : "Row view";
+        viewToggleBtn.textContent = tracks ? "📍 Location view" : "☰ Row view";
         if (tracks) layoutTracks(); else layoutVenues(search.value.trim() !== "");
       }
       viewToggleBtn.addEventListener("click", () => setView(viewMode === "tracks" ? "venues" : "tracks"));
@@ -658,7 +658,7 @@ const totalVenues = venueNames.length;
       }
       function syncCollapseAll() {
         const allCollapsed = venues.every((v) => manualCollapsed.has(v.name));
-        collapseAllBtn.textContent = allCollapsed ? "Expand all" : "Collapse all";
+        collapseAllBtn.textContent = allCollapsed ? "⊞ Expand all" : "⊟ Collapse all";
       }
       collapseAllBtn.addEventListener("click", () => {
         const allCollapsed = venues.every((v) => manualCollapsed.has(v.name));
@@ -758,6 +758,13 @@ const totalVenues = venueNames.length;
 
       // ---- randomize: build a random conflict-free schedule ----
       document.getElementById("randomize-btn").addEventListener("click", () => {
+        const die = document.querySelector("#randomize-btn .die");
+        if (die) {
+          die.classList.remove("rolling");
+          void die.offsetWidth;            // reflow so the animation can re-trigger
+          die.classList.add("rolling");
+          die.addEventListener("animationend", () => die.classList.remove("rolling"), { once: true });
+        }
         bars.forEach((b) => b.classList.remove("selected", "conflict"));
         ackedOverlaps.clear();
         const picked = [];
@@ -772,7 +779,7 @@ const totalVenues = venueNames.length;
 
       // ---- clock-format toggle (re-labels every displayed time + the open panel) ----
       const clockToggle = document.getElementById("clock-toggle");
-      const setClockLabel = () => { clockToggle.textContent = use12hr ? "Clock: 12h" : "Clock: 24h"; };
+      const setClockLabel = () => { clockToggle.textContent = use12hr ? "🕐 Clock: 12h" : "🕐 Clock: 24h"; };
       setClockLabel();
       clockToggle.addEventListener("click", () => {
         use12hr = !use12hr;
@@ -1063,6 +1070,17 @@ const totalVenues = venueNames.length;
       .collapse-all:hover, .view-toggle:hover { background: var(--surface1); color: var(--text); }
       .view-toggle { border-color: var(--mauve); color: var(--mauve); }
       .view-toggle:hover { background: color-mix(in srgb, var(--mauve) 18%, var(--mantle)); color: var(--lavender); }
+      .die { display: inline-block; transform-origin: 50% 55%; }
+      .die.rolling { animation: die-roll .55s cubic-bezier(.36,.07,.19,.97) both; }
+      @keyframes die-roll {
+        0%   { transform: rotate(0deg)    scale(1);   }
+        20%  { transform: rotate(-22deg)  scale(1.18);}
+        40%  { transform: rotate(18deg)   scale(1.18);}
+        60%  { transform: rotate(-14deg)  scale(1.12);}
+        80%  { transform: rotate(10deg)   scale(1.06);}
+        100% { transform: rotate(0deg)    scale(1);   }
+      }
+      @media (prefers-reduced-motion: reduce) { .die.rolling { animation: none; } }
 
       .chart { position: relative; }
       .daylabels { position: relative; height: 52px; }
