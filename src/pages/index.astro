@@ -254,8 +254,8 @@ const totalVenues = venueNames.length;
           <span class="zoom-icon" aria-hidden="true">⊕</span>
         </label>
         <button id="view-toggle" class="view-toggle" type="button">📍 Location view</button>
-        <button id="howto-btn" class="view-toggle" type="button">❔ How to use?</button>
         <button id="randomize-btn" class="view-toggle" type="button"><span class="die">🎲</span> Randomize</button>
+        <button id="core-btn" class="view-toggle" type="button">✦ Core events</button>
         <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
         <button id="collapse-all" class="collapse-all" type="button">⊟ Collapse all</button>
       </div>
@@ -305,7 +305,7 @@ const totalVenues = venueNames.length;
               ))}
               {bars.map((e, i) => (
                 <button
-                  class={`bar ${e.crossesDay ? "multi" : ""}`}
+                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary === "Vibecamp Trials" ? "trials" : ""}`}
                   id={`ev${i}`}
                   data-bx={e.gleft} data-bw={e.barW}
                   style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
@@ -353,13 +353,15 @@ const totalVenues = venueNames.length;
     </aside>
 
     <!-- selection tray -->
-    <div id="tray" class="tray" hidden>
+    <div id="tray" class="tray">
       <span class="tray-count"><b id="tray-n">0</b> selected</span>
+      <span id="tray-hint" class="tray-hint">— click events to build your schedule</span>
       <span id="tray-warn" class="tray-warn" hidden></span>
       <span class="tray-spacer"></span>
+      <button id="howto-btn" class="tray-btn ghost">❔ How to use?</button>
       <button id="tray-review" class="tray-btn ghost" hidden>Review overlaps</button>
-      <button id="tray-clear" class="tray-btn ghost">Clear</button>
-      <button id="tray-pdf" class="tray-btn primary">⎙ Generate PDF schedule</button>
+      <button id="tray-clear" class="tray-btn ghost" hidden>Clear</button>
+      <button id="tray-pdf" class="tray-btn primary" hidden>⎙ Generate PDF schedule</button>
     </div>
 
     <!-- overlap review modal -->
@@ -716,8 +718,11 @@ const totalVenues = venueNames.length;
       // ---- selection + overlap detection ----
       const tray = document.getElementById("tray");
       const trayN = document.getElementById("tray-n");
+      const trayHint = document.getElementById("tray-hint");
       const trayWarn = document.getElementById("tray-warn");
       const trayReview = document.getElementById("tray-review");
+      const trayClear = document.getElementById("tray-clear");
+      const trayPdf = document.getElementById("tray-pdf");
       let conflictPairs = [];
       const ackedOverlaps = new Set();
       const pairKey = (a, b) => [a.id, b.id].sort().join("|");
@@ -739,8 +744,11 @@ const totalVenues = venueNames.length;
           }
         }
         const nConflict = bars.filter((b) => b.classList.contains("conflict")).length;
+        const has = sel.length > 0;
         trayN.textContent = sel.length;
-        tray.hidden = sel.length === 0;
+        trayHint.hidden = has;                 // empty-state prompt only when nothing picked
+        trayClear.hidden = !has;
+        trayPdf.hidden = !has;
         trayReview.hidden = conflictPairs.length === 0;
         if (nConflict > 0) {
           trayWarn.hidden = false;
@@ -774,6 +782,13 @@ const totalVenues = venueNames.length;
             b.classList.add("selected"); picked.push(b);
           }
         }
+        recompute(); refreshToggle();
+      });
+
+      // ---- core events: add the mealtimes + opening/closing ceremonies to the schedule ----
+      const CORE = new Set(["Breakfast", "Lunch", "Dinner", "Opening Ceremonies", "Closing Ceremonies"]);
+      document.getElementById("core-btn").addEventListener("click", () => {
+        for (const b of bars) if (CORE.has(b.dataset.title)) b.classList.add("selected");
         recompute(); refreshToggle();
       });
 
@@ -938,6 +953,42 @@ const totalVenues = venueNames.length;
         scroll.scrollLeft = startL - dx;
       });
       window.addEventListener("pointerup", () => { down = false; scroll.classList.remove("grabbing"); });
+
+      // ---- sparkles inside "Vibecamp Trials" — it's Michael's event, so it's special ----
+      // The bar is very wide AND (in Row view) a background layer beneath the foreground
+      // events, so sparkles drawn into it get occluded. Instead we draw them into a
+      // transparent, click-through overlay that mirrors the bar's box but stacks on top.
+      // The overlay's overflow:hidden keeps every sparkle inside the bar's bounds.
+      (function sparkleTrials() {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const host = document.querySelector(".bar.trials");
+        if (!host) return;
+        const scrollEl = document.getElementById("scroll");
+        const ov = document.createElement("div");
+        ov.className = "spark-overlay";
+        host.offsetParent.appendChild(ov);    // sibling of the bars, inside .lanes
+        const GLYPHS = ["✦", "✧", "⋆", "✶", "·"];
+        setInterval(() => {
+          const hidden = host.classList.contains("dim") || host.style.display === "none";
+          ov.style.display = hidden ? "none" : "";
+          if (hidden) return;
+          // keep the overlay aligned to the bar (geometry shifts on zoom / view change)
+          ov.style.left = host.offsetLeft + "px"; ov.style.top = host.offsetTop + "px";
+          ov.style.width = host.offsetWidth + "px"; ov.style.height = host.offsetHeight + "px";
+          const br = host.getBoundingClientRect(), sr = scrollEl.getBoundingClientRect();
+          const visL = Math.max(br.left, sr.left), visR = Math.min(br.right, sr.right);
+          if (visR - visL < 8 || br.bottom < sr.top || br.top > sr.bottom) return; // off-screen
+          const localL = visL - br.left, localR = visR - br.left;
+          const s = document.createElement("span");
+          s.className = "sparkle";
+          s.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+          s.style.left = (localL + Math.random() * (localR - localL)) + "px";
+          s.style.top = (3 + Math.random() * Math.max(1, host.offsetHeight - 13)) + "px";
+          s.style.fontSize = (0.5 + Math.random() * 0.5) + "rem";
+          ov.appendChild(s);
+          s.addEventListener("animationend", () => s.remove(), { once: true });
+        }, 340);
+      })();
       // (vertical wheel is left to scroll the page — the schedule is tall, so we no
       //  longer hijack vertical scroll into horizontal. Trackpad/shift+wheel still
       //  scroll the timeline horizontally natively, and drag-to-scroll works on desktop.)
@@ -1058,7 +1109,12 @@ const totalVenues = venueNames.length;
       }
       .tlabel.alt { background: rgba(49,50,68,.30); }
 
-      .tl-toolbar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 .7rem; }
+      .tl-toolbar {
+        display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: 0 0 .9rem;
+        padding: .7rem .9rem; border-radius: .9rem;
+        background: rgba(24,24,37,.6); border: 1px solid var(--surface1);
+        box-shadow: 0 8px 28px rgba(17,17,27,.35); backdrop-filter: blur(8px);
+      }
       .zoom { display: flex; align-items: center; gap: .45rem; }
       .zoom input { width: 170px; accent-color: var(--mauve); cursor: pointer; }
       .zoom-icon { color: var(--overlay1); font-size: .95rem; }
@@ -1081,6 +1137,23 @@ const totalVenues = venueNames.length;
         100% { transform: rotate(0deg)    scale(1);   }
       }
       @media (prefers-reduced-motion: reduce) { .die.rolling { animation: none; } }
+
+      /* "Vibecamp Trials" sparkles — drawn into a click-through overlay that mirrors the
+         bar's box and stacks above the foreground; overflow:hidden keeps them inside. */
+      .spark-overlay { position: absolute; overflow: hidden; pointer-events: none; z-index: 7; border-radius: .4rem; }
+      .sparkle {
+        position: absolute; pointer-events: none; z-index: 3; line-height: 1;
+        color: var(--yellow); opacity: 0; will-change: transform, opacity;
+        text-shadow: 0 0 6px var(--yellow), 0 0 10px color-mix(in srgb, var(--peach) 70%, transparent);
+        animation: sparkle-pop 1.4s ease-in-out forwards;
+      }
+      @keyframes sparkle-pop {
+        0%   { opacity: 0;  transform: translateY(4px)  scale(.3) rotate(0deg); }
+        30%  { opacity: 1;  transform: translateY(0)    scale(1)  rotate(20deg); }
+        70%  { opacity: .9; transform: translateY(-3px) scale(.9) rotate(-10deg); }
+        100% { opacity: 0;  transform: translateY(-7px) scale(.2) rotate(15deg); }
+      }
+      @media (prefers-reduced-motion: reduce) { .sparkle { display: none; } }
 
       .chart { position: relative; }
       .daylabels { position: relative; height: 52px; }
@@ -1216,6 +1289,7 @@ const totalVenues = venueNames.length;
       }
       .tray-count { font-size: .9rem; color: var(--subtext1); white-space: nowrap; }
       .tray-count b { color: var(--text); }
+      .tray-hint { font-size: .82rem; color: var(--overlay1); white-space: nowrap; }
       .tray-warn { font-size: .76rem; font-weight: 600; color: var(--crust); background: var(--red); padding: .22rem .6rem; border-radius: 999px; white-space: nowrap; }
       .tray-spacer { flex: 1; min-width: .2rem; }
       .tray-btn { border: none; border-radius: 999px; padding: .45rem .9rem; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
