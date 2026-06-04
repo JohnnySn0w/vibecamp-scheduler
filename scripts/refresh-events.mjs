@@ -43,6 +43,20 @@ function durLabel(start, end) {
   return parts.length ? parts.join(" ") : "0m";
 }
 
+// The feed is in UTC; the camp is in Maryland → display in Eastern time.
+// Intl handles EST/EDT automatically per date (June = EDT, UTC-4).
+const TZ = "America/New_York";
+const easternFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: TZ, hour12: false,
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", weekday: "short",
+});
+function eastern(d) {
+  const p = Object.fromEntries(easternFmt.formatToParts(d).map((x) => [x.type, x.value]));
+  const hour = p.hour === "24" ? "00" : p.hour; // normalize midnight
+  return { date: `${p.year}-${p.month}-${p.day}`, time: `${hour}:${p.minute}`, day: p.weekday };
+}
+
 const main = async () => {
   console.log(`Fetching ${ICS_URL} …`);
   const res = await fetch(ICS_URL, { headers: { "User-Agent": "vibecamp-timeline/1.0" } });
@@ -78,19 +92,30 @@ const main = async () => {
   for (const e of events) {
     if (!e.DTSTART) continue;
     const { dt: start, hasTime } = parseDt(e.DTSTART);
-    if (!start || start.getUTCFullYear() !== YEAR) continue;
+    if (!start) continue;
     const { dt: end } = e.DTEND ? parseDt(e.DTEND) : { dt: null };
+
+    let date, day, startStr, endStr;
+    if (hasTime) {
+      const es = eastern(start);               // convert UTC → Eastern (may shift the day)
+      date = es.date; day = es.day; startStr = es.time;
+      endStr = end ? eastern(end).time : "";
+    } else {
+      // genuine all-day (date-only) events are floating — do not shift across zones
+      date = `${start.getUTCFullYear()}-${pad(start.getUTCMonth() + 1)}-${pad(start.getUTCDate())}`;
+      day = DAYS[(start.getUTCDay() + 6) % 7];
+      startStr = "all-day"; endStr = "";
+    }
+    if (!date.startsWith(String(YEAR))) continue; // filter on the Eastern-local year
+
     rows.push({
-      date: `${start.getUTCFullYear()}-${pad(start.getUTCMonth() + 1)}-${pad(start.getUTCDate())}`,
-      day: DAYS[(start.getUTCDay() + 6) % 7],
-      start: hasTime ? `${pad(start.getUTCHours())}:${pad(start.getUTCMinutes())}` : "all-day",
-      end: end && hasTime ? `${pad(end.getUTCHours())}:${pad(end.getUTCMinutes())}` : "",
+      date, day, start: startStr, end: endStr,
       dur: durLabel(start, end),
       summary: unescapeIcs(e.SUMMARY || "").replace(/\n/g, " ").trim(),
       location: unescapeIcs(e.LOCATION || "").trim(),
       desc: unescapeIcs(e.DESCRIPTION || "").trim(),
       org: (e.CN || "").trim(),
-      iso: start.toISOString().replace(/\.000Z$/, "Z"),
+      iso: start.toISOString().replace(/\.000Z$/, "Z"), // UTC instant, for chronological sort
     });
   }
   rows.sort((a, b) => a.iso.localeCompare(b.iso));
