@@ -245,6 +245,14 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
     <meta property="og:description" content="The whole Vibecamp 2026 schedule on one continuous timeline." />
     <meta property="og:image" content="https://vibecamp.mahan.io/vibecamp_logo.png" />
     <meta name="twitter:card" content="summary" />
+    <script is:inline>
+      // set theme before first paint to avoid a flash of the wrong palette
+      (function () {
+        var t = "system";
+        try { t = localStorage.getItem("vc-theme") || "system"; } catch (e) {}
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
   </head>
   <body>
     <div class="aurora"></div>
@@ -281,6 +289,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           <button id="view-toggle" class="view-toggle" type="button">📍 Location view</button>
           <button id="map-btn" class="view-toggle" type="button">🗺 Map</button>
           <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
+          <button id="theme-toggle" class="view-toggle" type="button">🌗 Theme: System</button>
           <button id="collapse-all" class="collapse-all" type="button">⊟ Collapse all</button>
         </div>
         <div class="tb-group tb-select">
@@ -920,6 +929,22 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       });
       if (use12hr) applyClockFormat();   // restore a saved 12h preference on load
 
+      // ---- theme toggle: System → Light → Dark (System follows the OS) ----
+      const themeToggle = document.getElementById("theme-toggle");
+      const THEME_LABELS = { system: "🌗 Theme: System", light: "☀ Theme: Light", dark: "🌙 Theme: Dark" };
+      const THEME_ORDER = ["system", "light", "dark"];
+      let theme = document.documentElement.getAttribute("data-theme") || "system";
+      const applyTheme = () => {
+        document.documentElement.setAttribute("data-theme", theme);
+        themeToggle.textContent = THEME_LABELS[theme] || THEME_LABELS.system;
+      };
+      applyTheme();
+      themeToggle.addEventListener("click", () => {
+        theme = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+        try { localStorage.setItem("vc-theme", theme); } catch (e) {}
+        applyTheme();
+      });
+
       // ---- overlap review modal ----
       const review = document.getElementById("review");
       const reviewList = document.getElementById("review-list");
@@ -1225,7 +1250,9 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
     </script>
 
     <style is:global>
+      /* --- dark (Catppuccin Mocha) — the default --- */
       :root {
+        color-scheme: dark;
         --base: #1e1e2e; --mantle: #181825; --crust: #11111b;
         --surface0: #313244; --surface1: #45475a; --surface2: #585b70;
         --overlay0: #6c7086; --overlay1: #7f849c; --overlay2: #9399b2;
@@ -1234,6 +1261,46 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         --sky: #89dceb; --teal: #94e2d5; --green: #a6e3a1;
         --yellow: #f9e2af; --peach: #fab387; --maroon: #eba0ac;
         --red: #f38ba8; --mauve: #cba6f7; --pink: #f5c2e7;
+        /* semantic surfaces (translucent — swap with the palette) */
+        --glass: rgba(24,24,37,.6);      /* floating toolbars */
+        --panel-bg: rgba(24,24,37,.97);  /* side panel, modals, drawer */
+        --stripe: var(--stripe);    /* zebra striping on rows/bands */
+        --input-bg: rgba(49,50,68,.55);  /* search field */
+      }
+      /* --- light (Catppuccin Latte) — explicit choice + system-follows-OS --- */
+      :root[data-theme="light"],
+      :root[data-theme="system"] { color-scheme: light dark; }
+      @media (prefers-color-scheme: light) {
+        :root[data-theme="system"] {
+          color-scheme: light;
+          --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+          --surface0: #ccd0da; --surface1: #bcc0cc; --surface2: #acb0be;
+          --overlay0: #9ca0b0; --overlay1: #8c8fa1; --overlay2: #7c7f93;
+          --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85;
+          --blue: #1e66f5; --lavender: #7287fd; --sapphire: #209fb5;
+          --sky: #04a5e5; --teal: #179299; --green: #40a02b;
+          --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
+          --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
+          --glass: rgba(230,233,239,.72);
+          --panel-bg: rgba(239,241,245,.98);
+          --stripe: rgba(76,79,105,.07);
+          --input-bg: rgba(255,255,255,.7);
+        }
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+        --surface0: #ccd0da; --surface1: #bcc0cc; --surface2: #acb0be;
+        --overlay0: #9ca0b0; --overlay1: #8c8fa1; --overlay2: #7c7f93;
+        --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85;
+        --blue: #1e66f5; --lavender: #7287fd; --sapphire: #209fb5;
+        --sky: #04a5e5; --teal: #179299; --green: #40a02b;
+        --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
+        --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
+        --glass: rgba(230,233,239,.72);
+        --panel-bg: rgba(239,241,245,.98);
+        --stripe: rgba(76,79,105,.07);
+        --input-bg: rgba(255,255,255,.7);
       }
       * { box-sizing: border-box; }
       /* the `hidden` attribute must win over component display rules (.review/.tray/etc.) */
@@ -1266,7 +1333,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .search-icon { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--overlay1); font-size: 1.1rem; }
       #search {
         width: 100%; padding: .7rem 2.4rem .7rem 2.4rem; border-radius: .8rem;
-        border: 1px solid var(--surface1); background: rgba(49,50,68,.55); color: var(--text);
+        border: 1px solid var(--surface1); background: var(--input-bg); color: var(--text);
         font-size: .98rem; backdrop-filter: blur(6px); transition: border-color .18s, box-shadow .18s;
       }
       #search::placeholder { color: var(--overlay0); }
@@ -1310,7 +1377,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         color: inherit; font: inherit; text-align: left; cursor: pointer;
         transition: background .12s;
       }
-      .vlabel.alt { background: rgba(49,50,68,.30); }
+      .vlabel.alt { background: var(--stripe); }
       .vlabel:hover { background: rgba(137,180,250,.12); }
       .vchevron { flex: 0 0 auto; font-size: 1.15rem; line-height: 1; color: var(--overlay2); transition: transform .15s; }
       .vlabel.collapsed .vchevron { transform: rotate(-90deg); }
@@ -1329,20 +1396,20 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .scroll::-webkit-scrollbar-track { background: var(--mantle); }
 
       .vband { position: absolute; left: 0; background: transparent; }
-      .vband.alt { background: rgba(49,50,68,.30); }
+      .vband.alt { background: var(--stripe); }
       /* compact "tracks" view: row bands (chart) + row labels (axis) */
       .tband { position: absolute; left: 0; width: 100%; z-index: 0; background: transparent; }
-      .tband.alt { background: rgba(49,50,68,.30); }
+      .tband.alt { background: var(--stripe); }
       .tlabel {
         position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .35rem;
         padding: 0 .5rem 0 .75rem;
       }
-      .tlabel.alt { background: rgba(49,50,68,.30); }
+      .tlabel.alt { background: var(--stripe); }
 
       /* split toolbar: Utility | Select events — side-by-side on desktop, stacked on mobile */
       .toolbars {
         display: flex; align-items: stretch; margin: 0 0 .9rem; overflow: hidden;
-        border-radius: .9rem; background: rgba(24,24,37,.6); border: 1px solid var(--surface1);
+        border-radius: .9rem; background: var(--glass); border: 1px solid var(--surface1);
         box-shadow: 0 8px 28px rgba(17,17,27,.35); backdrop-filter: blur(8px);
       }
       .tb-group { display: flex; align-items: center; align-content: flex-start; gap: .7rem; flex-wrap: wrap; padding: .7rem .9rem; }
@@ -1355,7 +1422,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         main { display: flex; flex-direction: column; }
         .toolbars { display: contents; }
         .tb-group {
-          border-radius: .9rem; background: rgba(24,24,37,.6); border: 1px solid var(--surface1);
+          border-radius: .9rem; background: var(--glass); border: 1px solid var(--surface1);
           box-shadow: 0 8px 28px rgba(17,17,27,.35); backdrop-filter: blur(8px);
         }
         .tb-select   { order: 1; border-left: none; margin: 0 0 .9rem; }
@@ -1450,7 +1517,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
 
       .lanes { position: relative; margin: 2px 0 14px; }
       .band { position: absolute; top: 0; bottom: 0; background: transparent; }
-      .band.alt { background: rgba(49,50,68,.30); }
+      .band.alt { background: var(--stripe); }
       .divider { position: absolute; top: -2px; bottom: 0; width: 2px; background: var(--surface1); }
       .grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--surface0); opacity: .5; }
 
@@ -1517,7 +1584,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .panel {
         position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
         width: min(640px, calc(100vw - 2rem)); z-index: 20;
-        background: rgba(24,24,37,.96); border: 1px solid var(--surface1);
+        background: var(--panel-bg); border: 1px solid var(--surface1);
         border-radius: 1rem; padding: 1rem 1.2rem 1.1rem; backdrop-filter: blur(10px);
         box-shadow: 0 16px 48px rgba(17,17,27,.6);
       }
@@ -1558,7 +1625,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .tray {
         position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 30;
         display: flex; align-items: center; gap: .7rem;
-        background: rgba(24,24,37,.97); border: 1px solid var(--surface1);
+        background: var(--panel-bg); border: 1px solid var(--surface1);
         border-radius: 999px; padding: .5rem .6rem .5rem 1.1rem;
         box-shadow: 0 12px 40px rgba(17,17,27,.6); backdrop-filter: blur(10px);
         max-width: calc(100vw - 1.5rem);
@@ -1733,7 +1800,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           display: inline-flex; align-items: center; justify-content: center;
           position: absolute; left: 50%; bottom: -23px; transform: translateX(-50%);
           width: 66px; height: 24px; padding: 0; border-radius: 0 0 .8rem .8rem;
-          background: rgba(24,24,37,.97); border: 1px solid var(--surface1); border-top: none;
+          background: var(--panel-bg); border: 1px solid var(--surface1); border-top: none;
           color: var(--subtext1); font-size: .95rem; line-height: 1;
           box-shadow: 0 8px 16px rgba(17,17,27,.5);
         }
