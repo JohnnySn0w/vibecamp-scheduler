@@ -360,8 +360,8 @@ const totalVenues = venueNames.length;
       <span class="tray-spacer"></span>
       <button id="howto-btn" class="tray-btn ghost">❔ How to use?</button>
       <button id="tray-review" class="tray-btn ghost" hidden>Review overlaps</button>
-      <button id="tray-clear" class="tray-btn ghost" hidden>Clear</button>
-      <button id="tray-pdf" class="tray-btn primary" hidden>⎙ Generate PDF schedule</button>
+      <button id="tray-clear" class="tray-btn ghost" disabled>Clear</button>
+      <button id="tray-pdf" class="tray-btn primary" disabled>⎙ Generate PDF schedule</button>
     </div>
 
     <!-- overlap review modal -->
@@ -747,8 +747,8 @@ const totalVenues = venueNames.length;
         const has = sel.length > 0;
         trayN.textContent = sel.length;
         trayHint.hidden = has;                 // empty-state prompt only when nothing picked
-        trayClear.hidden = !has;
-        trayPdf.hidden = !has;
+        trayClear.disabled = !has;             // stay visible, just inert until events are picked
+        trayPdf.disabled = !has;
         trayReview.hidden = conflictPairs.length === 0;
         if (nConflict > 0) {
           trayWarn.hidden = false;
@@ -1297,6 +1297,7 @@ const totalVenues = venueNames.length;
       .tray-btn.ghost:hover { background: var(--surface1); color: var(--text); }
       .tray-btn.primary { background: var(--mauve); color: var(--crust); }
       .tray-btn.primary:hover { background: var(--lavender); }
+      .tray-btn:disabled { opacity: .4; cursor: default; pointer-events: none; }
 
       /* overlap review modal */
       .review {
