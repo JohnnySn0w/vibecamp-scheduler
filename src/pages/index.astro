@@ -979,15 +979,18 @@ const totalVenues = venueNames.length;
           const visL = Math.max(br.left, sr.left), visR = Math.min(br.right, sr.right);
           if (visR - visL < 8 || br.bottom < sr.top || br.top > sr.bottom) return; // off-screen
           const localL = visL - br.left, localR = visR - br.left;
-          const s = document.createElement("span");
-          s.className = "sparkle";
-          s.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-          s.style.left = (localL + Math.random() * (localR - localL)) + "px";
-          s.style.top = (3 + Math.random() * Math.max(1, host.offsetHeight - 13)) + "px";
-          s.style.fontSize = (0.5 + Math.random() * 0.5) + "rem";
-          ov.appendChild(s);
-          s.addEventListener("animationend", () => s.remove(), { once: true });
-        }, 340);
+          const burst = 2 + Math.floor(Math.random() * 2);   // 2-3 sparkles per tick
+          for (let k = 0; k < burst; k++) {
+            const s = document.createElement("span");
+            s.className = "sparkle";
+            s.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+            s.style.left = (localL + Math.random() * (localR - localL)) + "px";
+            s.style.top = (3 + Math.random() * Math.max(1, host.offsetHeight - 13)) + "px";
+            s.style.fontSize = (0.55 + Math.random() * 0.55) + "rem";
+            ov.appendChild(s);
+            s.addEventListener("animationend", () => s.remove(), { once: true });
+          }
+        }, 150);
       })();
       // (vertical wheel is left to scroll the page — the schedule is tall, so we no
       //  longer hijack vertical scroll into horizontal. Trackpad/shift+wheel still
