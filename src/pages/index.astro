@@ -385,10 +385,16 @@ const totalVenues = venueNames.length;
         <h3>How to use this schedule</h3>
         <ul class="howto-body">
           <li><b>Move around:</b> drag (or swipe on mobile) to scroll along the timeline. Use <b>Zoom</b> to scale the time axis in and out.</li>
-          <li><b>Two views:</b> <b>Location view</b> groups events by venue; <b>Row view</b> packs them compactly into rows, with long multi-day events shown as a striped layer underneath the shorter ones.</li>
-          <li><b>Row labels</b> show how many events sit in each row.</li>
+          <li><b>Two views:</b> <b>Location view</b> groups events by venue; <b>Row view</b> packs them compactly into rows, with long events shown as a striped layer underneath the shorter ones.</li>
           <li><b>Search</b> to spotlight matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</li>
-          <li><b>Build a schedule:</b> click events to add them, then generate a printable PDF. If any of your picks overlap, you'll be asked to review them first.</li>
+          <li><b>Build a schedule:</b> click an event to look at it, add the ones you want, then generate a printable PDF. Overlapping picks get flagged for review first.</li>
+        </ul>
+        <div class="howto-divider"></div>
+        <p class="howto-subhead">Extra features</p>
+        <ul class="howto-body">
+          <li><b>🎲 Randomize</b> builds a random conflict-free schedule you can tweak from.</li>
+          <li><b>Clock toggle</b> switches every time between 24-hour and am/pm (PDF included).</li>
+          <li><b>Row labels</b> show how many events sit in each row.</li>
         </ul>
         <div class="review-actions">
           <span class="tray-spacer"></span>
@@ -494,7 +500,7 @@ const totalVenues = venueNames.length;
       const LH = 46, LG = 8, ROW = LH + LG;   // lane height / gap
       const VGAP = 12;                          // gap between venues
       const COLLAPSED_H = 30;
-      const BG_MIN = 150;   // minutes: events this long become the background layer in compact view
+      const BG_MIN = 180;   // minutes (3h): events this long become the background layer in compact view
       const lanesEl = document.querySelector(".lanes");
       const venueRowsEl = document.getElementById("venue-rows");
       const trackRowsEl = document.getElementById("track-rows");
@@ -689,7 +695,9 @@ const totalVenues = venueNames.length;
         pToggle.classList.toggle("on", on);
       };
       const show = (b) => {
+        if (currentBar && currentBar !== b) currentBar.classList.remove("viewing");
         currentBar = b;
+        b.classList.add("viewing");   // glow the event you're looking at, in its own color
         set("p-title", b.dataset.title);
         set("p-time", fmtClock(b.dataset.time));
         set("p-day", b.dataset.day);
@@ -699,10 +707,11 @@ const totalVenues = venueNames.length;
         refreshToggle();
         panel.hidden = false;
       };
+      const closePanel = () => { panel.hidden = true; if (currentBar) currentBar.classList.remove("viewing"); };
       // click opens the info popup (selection happens via the panel button)
       bars.forEach((b) => b.addEventListener("click", () => show(b)));
-      document.getElementById("panel-close").addEventListener("click", () => { panel.hidden = true; });
-      pToggle.addEventListener("click", () => { if (currentBar) { toggleSelect(currentBar); panel.hidden = true; } });
+      document.getElementById("panel-close").addEventListener("click", closePanel);
+      pToggle.addEventListener("click", () => { if (currentBar) { toggleSelect(currentBar); closePanel(); } });
 
       // ---- selection + overlap detection ----
       const tray = document.getElementById("tray");
@@ -838,7 +847,7 @@ const totalVenues = venueNames.length;
       howto.addEventListener("click", (e) => { if (e.target === howto) closeHowto(); });  // click backdrop to close
 
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") { closeReview(); closeHowto(); panel.hidden = true; }
+        if (e.key === "Escape") { closeReview(); closeHowto(); closePanel(); }
       });
 
       // ---- build printable schedule & open print dialog (Save as PDF) ----
@@ -1172,6 +1181,8 @@ const totalVenues = venueNames.length;
         display: none; align-items: center; justify-content: center; line-height: 1; z-index: 3;
       }
       .bar.selected { outline: 2px solid var(--green); outline-offset: -1px; z-index: 5; }
+      /* event you're currently looking at (panel open): glow in its own color */
+      .bar.viewing { box-shadow: 0 0 0 2px var(--c), 0 0 16px 2px color-mix(in srgb, var(--c) 65%, transparent); z-index: 6; }
       .bar.selected .bar-check { display: flex; }
       .bar.conflict { outline: 2px solid var(--red); }
       .bar.conflict .bar-check { background: var(--red); }
@@ -1235,6 +1246,8 @@ const totalVenues = venueNames.length;
       .rv-btn.primary:hover { background: var(--lavender); }
       .howto-body { margin: .2rem 0 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .6rem; font-size: .9rem; color: var(--subtext0); line-height: 1.45; }
       .howto-body b { color: var(--text); font-weight: 600; }
+      .howto-divider { border-top: 1px solid var(--surface1); margin: 1.15rem 0 .85rem; }
+      .howto-subhead { margin: 0 0 .65rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--overlay1); }
 
       /* printable schedule — hidden on screen, revealed when printing */
       .print-schedule { display: none; }
