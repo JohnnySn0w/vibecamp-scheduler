@@ -1043,6 +1043,16 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       scroll.addEventListener("scroll", setSheen, { passive: true });
       setSheen();
 
+      // ---- mobile: fade the schedule bar in on first downscroll, then keep it shown ----
+      const trayMQ = window.matchMedia("(max-width: 560px)");
+      let trayRevealed = false;
+      const maybeRevealTray = () => {
+        if (trayRevealed || !trayMQ.matches) return;
+        if (window.scrollY > 60) { tray.classList.add("revealed"); trayRevealed = true; }
+      };
+      window.addEventListener("scroll", maybeRevealTray, { passive: true });
+      maybeRevealTray();
+
       // ---- sparkles inside "Vibecamp Trials" — it's Michael's event, so it's special ----
       // The bar is very wide AND (in Row view) a background layer beneath the foreground
       // events, so sparkles drawn into it get occluded. Instead we draw them into a
@@ -1546,11 +1556,15 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         .vaxis-head { padding: 0 .5rem .5rem; font-size: .6rem; letter-spacing: .06em; }
         .vlabel { padding: 0 .4rem; gap: .25rem; }
         .vlabel-count { font-size: .62rem; padding: .06rem .34rem; }
-        /* schedule-manager bar: span the width and wrap its controls instead of running off-screen */
+        /* schedule-manager bar: span the width and wrap its controls instead of running off-screen.
+           Starts hidden (so it doesn't overlap the title) and fades in on first downscroll. */
         .tray {
-          top: .6rem; left: .6rem; right: .6rem; transform: none; max-width: none;
+          top: .6rem; left: .6rem; right: .6rem; max-width: none;
           justify-content: center; border-radius: .9rem; padding: .55rem .65rem; gap: .4rem .5rem;
+          opacity: 0; transform: translateY(-12px); pointer-events: none;
+          transition: opacity .45s ease, transform .45s ease;
         }
+        .tray.revealed { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .tray-spacer { display: none; }
         .tray-hint { white-space: normal; }
       }
