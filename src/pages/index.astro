@@ -1222,8 +1222,19 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .tb-select { flex: 1.6 1 420px; border-left: 1px solid var(--surface1); }
       .tb-head { width: 100%; font-size: .7rem; text-transform: uppercase; letter-spacing: .13em; font-weight: 700; color: var(--overlay1); }
       @media (max-width: 820px) {
-        .toolbars { flex-direction: column; }
-        .tb-select { border-left: none; border-top: 1px solid var(--surface1); }
+        /* stacked + reordered: Select events on top, then the schedule, with Utility
+           (view tweaks) tucked underneath the timeline where you adjust them */
+        main { display: flex; flex-direction: column; }
+        .toolbars { display: contents; }
+        .tb-group {
+          border-radius: .9rem; background: rgba(24,24,37,.6); border: 1px solid var(--surface1);
+          box-shadow: 0 8px 28px rgba(17,17,27,.35); backdrop-filter: blur(8px);
+        }
+        .tb-select   { order: 1; border-left: none; margin: 0 0 .9rem; }
+        .scroll-hint { order: 2; }
+        .timeline-wrap { order: 3; }
+        #empty       { order: 4; }
+        .tb-utility  { order: 5; margin: .9rem 0 0; }
       }
       .zoom { display: flex; align-items: center; gap: .45rem; }
       .zoom input { width: 170px; accent-color: var(--mauve); cursor: pointer; }
