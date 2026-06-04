@@ -253,7 +253,7 @@ const totalVenues = venueNames.length;
           <input id="zoom" type="range" min="0.1" max="2" step="0.05" value="1" aria-label="Zoom timeline" />
           <span class="zoom-icon" aria-hidden="true">⊕</span>
         </label>
-        <button id="view-toggle" class="view-toggle" type="button">Compact view</button>
+        <button id="view-toggle" class="view-toggle" type="button">Location view</button>
         <button id="collapse-all" class="collapse-all" type="button">Collapse all</button>
       </div>
       <div class="timeline-wrap">
@@ -499,8 +499,22 @@ const totalVenues = venueNames.length;
         lanesEl.appendChild(band); tbands.push(band);
       }
 
+      // per-venue layout: FG (short) events sub-lane-packed, long events as a background layer
+      const fgSubLane = new Map();
+      for (const v of venues) {
+        v.fgBars = v.bars.filter((b) => !bgSet.has(b)).sort((a, b) => left(a) - left(b) || right(a) - right(b));
+        v.bgBars = v.bars.filter((b) => bgSet.has(b));
+        const ends = [];
+        for (const b of v.fgBars) {
+          let l = ends.findIndex((e) => e <= left(b) + 0.5);
+          if (l === -1) { l = ends.length; ends.push(0); }
+          ends[l] = right(b); fgSubLane.set(b, l);
+        }
+        v.fgLanes = Math.max(1, ends.length);
+        v.h = v.fgLanes * ROW - LG;
+      }
+
       function layoutVenues(searchActive) {
-        for (const b of bars) { b.classList.remove("bgbar"); b.style.height = ""; }
         let y = 0;
         for (const v of venues) {
           const matches = searchActive ? v.bars.filter((b) => !b.classList.contains("dim")).length : v.bars.length;
@@ -516,9 +530,14 @@ const totalVenues = venueNames.length;
           v.band.style.top = y + "px"; v.band.style.height = h + "px";
           v.label.classList.toggle("collapsed", collapsed);
           v.label.setAttribute("aria-expanded", String(!collapsed));
-          for (const b of v.bars) {
+          for (const b of v.fgBars) {
+            b.classList.remove("bgbar"); b.style.height = "";
             if (collapsed) b.style.display = "none";
-            else { b.style.display = ""; b.style.top = (y + (+b.dataset.sublane) * ROW) + "px"; }
+            else { b.style.display = ""; b.style.top = (y + fgSubLane.get(b) * ROW) + "px"; }
+          }
+          for (const b of v.bgBars) {
+            if (collapsed) { b.classList.remove("bgbar"); b.style.height = ""; b.style.display = "none"; }
+            else { b.classList.add("bgbar"); b.style.display = ""; b.style.top = y + "px"; b.style.height = h + "px"; }
           }
           y += h + VGAP;
         }
@@ -545,9 +564,9 @@ const totalVenues = venueNames.length;
         trackRowsEl.hidden = !tracks;
         for (const b of vbands) b.style.display = tracks ? "none" : "";
         for (const b of tbands) b.style.display = tracks ? "" : "none";
-        axisHead.textContent = tracks ? (K + " tracks · " + bgSet.size + " bg") : "Venue";
+        axisHead.textContent = tracks ? (K + " tracks · " + bgSet.size + " bg") : "Location";
         collapseAllBtn.style.display = tracks ? "none" : "";
-        viewToggleBtn.textContent = tracks ? "Venue view" : "Compact view";
+        viewToggleBtn.textContent = tracks ? "Location view" : "Track view";
         if (tracks) layoutTracks(); else layoutVenues(search.value.trim() !== "");
       }
       viewToggleBtn.addEventListener("click", () => setView(viewMode === "tracks" ? "venues" : "tracks"));
@@ -572,8 +591,8 @@ const totalVenues = venueNames.length;
         syncCollapseAll();
       });
 
-      let savedView = "venues";
-      try { savedView = localStorage.getItem("vc-view") || "venues"; } catch (e) {}
+      let savedView = "tracks";   // track view is the default
+      try { savedView = localStorage.getItem("vc-view") || "tracks"; } catch (e) {}
       setView(savedView);
       syncCollapseAll();
 
