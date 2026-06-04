@@ -233,11 +233,6 @@ const totalVenues = venueNames.length;
         on twitter!
       </p>
       <div class="controls">
-        <div class="search-wrap">
-          <span class="search-icon">⌕</span>
-          <input id="search" type="search" placeholder="Filter events, hosts, or places…" autocomplete="off" />
-          <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
-        </div>
         <span id="count" class="count">{totalEvents} events</span>
         <span class="hint">↔ drag to scroll · click events to build a PDF schedule</span>
       </div>
@@ -247,6 +242,11 @@ const totalVenues = venueNames.length;
     <main>
       <p class="scroll-hint">More events that way! <span class="scroll-arrow">→</span></p>
       <div class="tl-toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="search" type="search" placeholder="Filter events, hosts, or places…" autocomplete="off" />
+          <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
+        </div>
         <label class="zoom">
           <span class="zoom-label">Zoom</span>
           <span class="zoom-icon" aria-hidden="true">⊖</span>
@@ -254,6 +254,7 @@ const totalVenues = venueNames.length;
           <span class="zoom-icon" aria-hidden="true">⊕</span>
         </label>
         <button id="view-toggle" class="view-toggle" type="button">Location view</button>
+        <button id="howto-btn" class="view-toggle" type="button">How to use?</button>
         <button id="collapse-all" class="collapse-all" type="button">Collapse all</button>
       </div>
       <div class="timeline-wrap">
@@ -371,6 +372,25 @@ const totalVenues = venueNames.length;
           <span class="tray-spacer"></span>
           <button id="review-cancel" class="rv-btn ghost">Back</button>
           <button id="review-pdf" class="rv-btn primary">⎙ Create PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- how-to guide modal -->
+    <div id="howto" class="review" hidden>
+      <div class="review-card">
+        <button id="howto-close" class="review-x" aria-label="Close">✕</button>
+        <h3>How to use this schedule</h3>
+        <ul class="howto-body">
+          <li><b>Move around:</b> drag (or swipe on mobile) to scroll along the timeline. Use <b>Zoom</b> to scale the time axis in and out.</li>
+          <li><b>Two views:</b> <b>Location view</b> groups events by venue; <b>Row view</b> packs them compactly into rows, with long multi-day events shown as a striped layer underneath the shorter ones.</li>
+          <li><b>Row labels</b> show how many events sit in each row.</li>
+          <li><b>Search</b> to spotlight matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</li>
+          <li><b>Build a schedule:</b> click events to add them, then generate a printable PDF. If any of your picks overlap, you'll be asked to review them first.</li>
+        </ul>
+        <div class="review-actions">
+          <span class="tray-spacer"></span>
+          <button id="howto-ok" class="rv-btn primary">Got it</button>
         </div>
       </div>
     </div>
@@ -510,9 +530,10 @@ const totalVenues = venueNames.length;
         const lbl = document.createElement("div");
         lbl.className = "tlabel" + (i % 2 ? " alt" : "");
         lbl.style.top = (i * ROW) + "px"; lbl.style.height = LH + "px";
-        const n = document.createElement("span"); n.className = "vlabel-name"; n.textContent = "Track " + (i + 1);
-        const c = document.createElement("span"); c.className = "vlabel-count"; c.textContent = (trackCounts[i] || 0) + (bgLaneCounts[i] || 0);
-        lbl.append(n, c); trackRowsEl.appendChild(lbl);
+        const count = (trackCounts[i] || 0) + (bgLaneCounts[i] || 0);
+        const c = document.createElement("span"); c.className = "vlabel-count"; c.textContent = count;
+        const n = document.createElement("span"); n.className = "vlabel-name"; n.textContent = "events";
+        lbl.append(c, n); trackRowsEl.appendChild(lbl);   // count first, then "events"
         const band = document.createElement("span");
         band.className = "tband" + (i % 2 ? " alt" : "");
         band.style.top = (i * ROW) + "px"; band.style.height = LH + "px"; band.style.display = "none";
@@ -592,9 +613,9 @@ const totalVenues = venueNames.length;
         trackRowsEl.hidden = !tracks;
         for (const b of vbands) b.style.display = tracks ? "none" : "";
         for (const b of tbands) b.style.display = tracks ? "" : "none";
-        axisHead.textContent = tracks ? (TROWS + " tracks · " + bgSet.size + " bg") : "Location";
+        axisHead.textContent = tracks ? (TROWS + " rows · " + bgSet.size + " bg") : "Location";
         collapseAllBtn.style.display = tracks ? "none" : "";
-        viewToggleBtn.textContent = tracks ? "Location view" : "Track view";
+        viewToggleBtn.textContent = tracks ? "Location view" : "Row view";
         if (tracks) layoutTracks(); else layoutVenues(search.value.trim() !== "");
       }
       viewToggleBtn.addEventListener("click", () => setView(viewMode === "tracks" ? "venues" : "tracks"));
@@ -659,7 +680,7 @@ const totalVenues = venueNames.length;
       // click opens the info popup (selection happens via the panel button)
       bars.forEach((b) => b.addEventListener("click", () => show(b)));
       document.getElementById("panel-close").addEventListener("click", () => { panel.hidden = true; });
-      pToggle.addEventListener("click", () => { if (currentBar) { toggleSelect(currentBar); refreshToggle(); } });
+      pToggle.addEventListener("click", () => { if (currentBar) { toggleSelect(currentBar); panel.hidden = true; } });
 
       // ---- selection + overlap detection ----
       const tray = document.getElementById("tray");
@@ -759,8 +780,17 @@ const totalVenues = venueNames.length;
         renderReview();
       });
       document.getElementById("review-pdf").addEventListener("click", () => { closeReview(); doPrint(); });
+
+      // ---- how-to guide modal ----
+      const howto = document.getElementById("howto");
+      const closeHowto = () => { howto.hidden = true; };
+      document.getElementById("howto-btn").addEventListener("click", () => { howto.hidden = false; });
+      document.getElementById("howto-close").addEventListener("click", closeHowto);
+      document.getElementById("howto-ok").addEventListener("click", closeHowto);
+      howto.addEventListener("click", (e) => { if (e.target === howto) closeHowto(); });  // click backdrop to close
+
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") { closeReview(); panel.hidden = true; }
+        if (e.key === "Escape") { closeReview(); closeHowto(); panel.hidden = true; }
       });
 
       // ---- build printable schedule & open print dialog (Save as PDF) ----
@@ -844,12 +874,9 @@ const totalVenues = venueNames.length;
         scroll.scrollLeft = startL - dx;
       });
       window.addEventListener("pointerup", () => { down = false; scroll.classList.remove("grabbing"); });
-      // wheel: translate vertical scroll into horizontal
-      scroll.addEventListener("wheel", (e) => {
-        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-          scroll.scrollLeft += e.deltaY; e.preventDefault();
-        }
-      }, { passive: false });
+      // (vertical wheel is left to scroll the page — the schedule is tall, so we no
+      //  longer hijack vertical scroll into horizontal. Trackpad/shift+wheel still
+      //  scroll the timeline horizontally natively, and drag-to-scroll works on desktop.)
     </script>
 
     <style is:global>
@@ -1158,6 +1185,8 @@ const totalVenues = venueNames.length;
       .rv-btn.ghost:hover { background: var(--surface1); color: var(--text); }
       .rv-btn.primary { background: var(--mauve); color: var(--crust); }
       .rv-btn.primary:hover { background: var(--lavender); }
+      .howto-body { margin: .2rem 0 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .6rem; font-size: .9rem; color: var(--subtext0); line-height: 1.45; }
+      .howto-body b { color: var(--text); font-weight: 600; }
 
       /* printable schedule — hidden on screen, revealed when printing */
       .print-schedule { display: none; }
