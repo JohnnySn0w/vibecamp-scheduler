@@ -494,21 +494,24 @@ const totalVenues = venueNames.length;
       // short events so their edges peek out from under the short events on top.
       const BG_PEEK = 8;
       const bgArr = bars.filter((b) => bgSet.has(b)).sort((a, b) => left(a) - left(b) || right(a) - right(b));
-      const bgEnds = [], bgLaneOf = new Map();
+      const bgEnds = [], bgLaneCounts = [], bgLaneOf = new Map();
       for (const b of bgArr) {
         let l = bgEnds.findIndex((end) => end <= left(b) + 0.5);
-        if (l === -1) { l = bgEnds.length; bgEnds.push(0); }
-        bgEnds[l] = right(b); bgLaneOf.set(b, l);
+        if (l === -1) { l = bgEnds.length; bgEnds.push(0); bgLaneCounts.push(0); }
+        bgEnds[l] = right(b); bgLaneOf.set(b, l); bgLaneCounts[l]++;
       }
       const bgLanes = bgEnds.length;
-      const compactAreaH = Math.max(trackAreaH, bgLanes > 0 ? bgLanes * ROW - LG : 0);
+      // total rows = the short-event tracks PLUS any extra rows the long-event
+      // underneath layer needs. Label every row so the labels don't stop short.
+      const TROWS = Math.max(K, bgLanes);
+      const compactAreaH = TROWS * ROW - LG;
       const tbands = [];
-      for (let i = 0; i < K; i++) {
+      for (let i = 0; i < TROWS; i++) {
         const lbl = document.createElement("div");
         lbl.className = "tlabel" + (i % 2 ? " alt" : "");
         lbl.style.top = (i * ROW) + "px"; lbl.style.height = LH + "px";
         const n = document.createElement("span"); n.className = "vlabel-name"; n.textContent = "Track " + (i + 1);
-        const c = document.createElement("span"); c.className = "vlabel-count"; c.textContent = trackCounts[i];
+        const c = document.createElement("span"); c.className = "vlabel-count"; c.textContent = (trackCounts[i] || 0) + (bgLaneCounts[i] || 0);
         lbl.append(n, c); trackRowsEl.appendChild(lbl);
         const band = document.createElement("span");
         band.className = "tband" + (i % 2 ? " alt" : "");
@@ -589,7 +592,7 @@ const totalVenues = venueNames.length;
         trackRowsEl.hidden = !tracks;
         for (const b of vbands) b.style.display = tracks ? "none" : "";
         for (const b of tbands) b.style.display = tracks ? "" : "none";
-        axisHead.textContent = tracks ? (K + " tracks · " + bgSet.size + " bg") : "Location";
+        axisHead.textContent = tracks ? (TROWS + " tracks · " + bgSet.size + " bg") : "Location";
         collapseAllBtn.style.display = tracks ? "none" : "";
         viewToggleBtn.textContent = tracks ? "Location view" : "Track view";
         if (tracks) layoutTracks(); else layoutVenues(search.value.trim() !== "");
