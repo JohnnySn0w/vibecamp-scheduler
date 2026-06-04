@@ -440,8 +440,12 @@ const totalVenues = venueNames.length;
         setZoom(+zoom.value);
         try { localStorage.setItem("vc-zoom", zoom.value); } catch (e) {}
       });
-      // restore saved zoom level on load (the slider position alone wasn't enough)
-      try { const z = localStorage.getItem("vc-zoom"); if (z) zoom.value = z; } catch (e) {}
+      // restore saved zoom; with no saved preference, default mobile to a far-out
+      // overview (near max zoom-out) since the timeline is very wide on a phone.
+      let savedZoom = null;
+      try { savedZoom = localStorage.getItem("vc-zoom"); } catch (e) {}
+      const isMobile = window.matchMedia("(max-width: 560px)").matches;
+      zoom.value = savedZoom != null ? savedZoom : (isMobile ? "0.2" : "1");
       setZoom(+zoom.value);
 
       // ---- layout engine: "venues" (default) or compact "tracks" ----
@@ -826,6 +830,7 @@ const totalVenues = venueNames.length;
       const scroll = document.getElementById("scroll");
       let down = false, startX = 0, startL = 0, moved = 0;
       scroll.addEventListener("pointerdown", (e) => {
+        if (e.pointerType !== "mouse") return;   // touch/pen: use native scrolling (don't hijack vertical page scroll)
         if (e.target.closest(".bar")) return;
         down = true; startX = e.clientX; startL = scroll.scrollLeft; moved = 0;
         scroll.classList.add("grabbing");
@@ -1209,7 +1214,14 @@ const totalVenues = venueNames.length;
         .ps-foot { margin-top: 18pt; padding-top: 8pt; border-top: 1pt solid #e6e9ef; font-size: 7.5pt; color: #acb0be; text-align: center; }
       }
 
-      @media (max-width: 560px) { .hero { padding-top: 2.6rem; } }
+      @media (max-width: 560px) {
+        .hero { padding-top: 2.6rem; }
+        /* narrower row-track headers on mobile so the timeline gets the space */
+        .vaxis { flex-basis: 96px; }
+        .vaxis-head { padding: 0 .5rem .5rem; font-size: .6rem; letter-spacing: .06em; }
+        .vlabel { padding: 0 .4rem; gap: .25rem; }
+        .vlabel-count { font-size: .62rem; padding: .06rem .34rem; }
+      }
     </style>
   </body>
 </html>
