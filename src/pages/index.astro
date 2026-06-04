@@ -726,9 +726,13 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           if (bgSet.has(b)) {
             // underneath layer: one row per long event, slightly taller than a
             // short event so its top/bottom edges peek out from under the events on top.
+            // The top lane must not peek UP — there's only the ruler above it, and
+            // an upward peek covers the hour-time labels.
             b.classList.add("bgbar");
-            b.style.top = (bgLaneOf.get(b) * ROW - BG_PEEK) + "px";
-            b.style.height = (LH + 2 * BG_PEEK) + "px";
+            const lane = bgLaneOf.get(b);
+            const peekUp = lane > 0 ? BG_PEEK : 0;
+            b.style.top = (lane * ROW - peekUp) + "px";
+            b.style.height = (LH + peekUp + BG_PEEK) + "px";
           } else {
             b.classList.remove("bgbar"); b.style.height = "";
             b.style.top = (trackOf.get(b) * ROW) + "px";
