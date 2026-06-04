@@ -392,13 +392,14 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
 
     <!-- selection tray -->
     <div id="tray" class="tray">
+      <button id="tray-toggle" class="tray-min" type="button" aria-label="Minimize schedule bar">▾</button>
       <span class="tray-count"><b id="tray-n">0</b> selected</span>
       <span id="tray-hint" class="tray-hint">— click events to build your schedule</span>
       <span id="tray-warn" class="tray-warn" hidden></span>
       <span class="tray-spacer"></span>
       <button id="howto-btn" class="tray-btn ghost">❔ How to use?</button>
       <button id="tray-review" class="tray-btn ghost" hidden>Review overlaps</button>
-      <label class="tray-check" title="Include the camp map on the last page of the PDF">
+      <label class="tray-check" title="Include the camp map at the top of the PDF">
         <input type="checkbox" id="map-pdf" checked /> 🗺 Map in PDF
       </label>
       <button id="tray-clear" class="tray-btn ghost" disabled>Clear</button>
@@ -427,15 +428,23 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         <button id="howto-close" class="review-x" aria-label="Close">✕</button>
         <h3>How to use this schedule</h3>
         <ul class="howto-body">
-          <li><b>Move around:</b> drag (or swipe on mobile) to scroll along the timeline. Use <b>Zoom</b> to scale the time axis in and out.</li>
+          <li><b>Move around:</b> drag (or swipe on mobile) to scroll along the timeline. <b>Zoom</b> scales the time axis in and out, centered on whatever's in the middle of your view.</li>
+          <li><b>Two toolbars:</b> <b>Utility</b> holds the view controls (zoom, search, view, clock, map); <b>Select events</b> holds the picking tools. On mobile they sit above and below the timeline.</li>
           <li><b>Two views:</b> <b>Location view</b> groups events by venue; <b>Row view</b> packs them compactly into rows, with long events shown as a striped layer underneath the shorter ones.</li>
           <li><b>Search</b> to spotlight matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</li>
-          <li><b>Build a schedule:</b> click an event to look at it, add the ones you want, then generate a printable PDF. Overlapping picks get flagged for review first.</li>
+          <li><b>Build a schedule:</b> click an event to look at it and add it, or pick in bulk (below). Then <b>Generate PDF</b> for a printable schedule — overlapping picks get flagged for review first.</li>
+        </ul>
+        <div class="howto-divider"></div>
+        <p class="howto-subhead">Picking events fast</p>
+        <ul class="howto-body">
+          <li><b>✦ Core events</b> adds the meals plus the opening &amp; closing ceremonies in one tap.</li>
+          <li><b>Select by type</b> checkboxes pick or clear a whole category at once (dance, music, food, games…). A dash means only some of that type are currently selected.</li>
+          <li><b>🎲 Randomize</b> builds a random conflict-free schedule you can tweak from.</li>
         </ul>
         <div class="howto-divider"></div>
         <p class="howto-subhead">Extra features</p>
         <ul class="howto-body">
-          <li><b>🎲 Randomize</b> builds a random conflict-free schedule you can tweak from.</li>
+          <li><b>🗺 Map</b> opens the camp map; tick <b>Map in PDF</b> in the schedule bar to print it at the top of your schedule.</li>
           <li><b>Clock toggle</b> switches every time between 24-hour and am/pm (PDF included).</li>
           <li><b>Row labels</b> show how many events sit in each row.</li>
         </ul>
@@ -820,6 +829,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           trayWarn.hidden = true;
         }
         syncCatChecks();
+        updateTrayToggle();
       }
 
       document.getElementById("tray-clear").addEventListener("click", () => {
@@ -1061,6 +1071,17 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       };
       window.addEventListener("scroll", maybeRevealTray, { passive: true });
       maybeRevealTray();
+
+      // ---- mobile: minimize/drawer toggle for the schedule bar ----
+      const trayToggle = document.getElementById("tray-toggle");
+      function updateTrayToggle() {
+        const collapsed = tray.classList.contains("collapsed");
+        const n = bars.filter((b) => b.classList.contains("selected")).length;
+        trayToggle.textContent = collapsed ? (n > 0 ? `🗓 ${n} ▸` : "🗓 ▸") : "▾";
+        trayToggle.setAttribute("aria-label", collapsed ? "Open schedule bar" : "Minimize schedule bar");
+      }
+      trayToggle.addEventListener("click", () => { tray.classList.toggle("collapsed"); updateTrayToggle(); });
+      updateTrayToggle();
 
       // ---- sparkles inside "Vibecamp Trials" — it's Michael's event, so it's special ----
       // The bar is very wide AND (in Row view) a background layer beneath the foreground
@@ -1447,6 +1468,12 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .tray-count { font-size: .9rem; color: var(--subtext1); white-space: nowrap; }
       .tray-count b { color: var(--text); }
       .tray-hint { font-size: .82rem; color: var(--overlay1); white-space: nowrap; }
+      .tray-min {
+        display: none; align-items: center; gap: .25rem; border: none; cursor: pointer; font-family: inherit;
+        background: var(--surface0); color: var(--subtext1); border-radius: 999px;
+        padding: .3rem .6rem; font-size: .85rem; font-weight: 700;
+      }
+      .tray-min:hover { background: var(--surface1); color: var(--text); }
       .tray-warn { font-size: .76rem; font-weight: 600; color: var(--crust); background: var(--red); padding: .22rem .6rem; border-radius: 999px; white-space: nowrap; }
       .tray-spacer { flex: 1; min-width: .2rem; }
       .tray-btn { border: none; border-radius: 999px; padding: .45rem .9rem; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
@@ -1587,6 +1614,10 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         .tray.revealed { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .tray-spacer { display: none; }
         .tray-hint { white-space: normal; }
+        /* minimize/drawer: collapse to a small pill on the right showing the count */
+        .tray-min { display: inline-flex; order: -1; }
+        .tray.collapsed { left: auto; right: .6rem; width: auto; padding: .35rem .5rem; }
+        .tray.collapsed > :not(.tray-min) { display: none; }
       }
     </style>
   </body>
