@@ -1076,8 +1076,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       const trayToggle = document.getElementById("tray-toggle");
       function updateTrayToggle() {
         const collapsed = tray.classList.contains("collapsed");
-        const n = bars.filter((b) => b.classList.contains("selected")).length;
-        trayToggle.textContent = collapsed ? (n > 0 ? `🗓 ${n} ▸` : "🗓 ▸") : "▾";
+        trayToggle.textContent = collapsed ? "▾" : "▴";
         trayToggle.setAttribute("aria-label", collapsed ? "Open schedule bar" : "Minimize schedule bar");
       }
       trayToggle.addEventListener("click", () => { tray.classList.toggle("collapsed"); updateTrayToggle(); });
@@ -1608,16 +1607,23 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         .tray {
           top: .6rem; left: .6rem; right: .6rem; max-width: none;
           flex-wrap: wrap; justify-content: center; border-radius: .9rem; padding: .55rem .65rem; gap: .4rem .5rem;
-          opacity: 0; transform: translateY(-12px); pointer-events: none;
-          transition: opacity .45s ease, transform .45s ease;
+          opacity: 0; transform: translateY(0); pointer-events: none;
+          transition: opacity .4s ease, transform .38s ease;
         }
-        .tray.revealed { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .tray.revealed { opacity: 1; pointer-events: auto; }
         .tray-spacer { display: none; }
         .tray-hint { white-space: normal; }
-        /* minimize/drawer: collapse to a small pill on the right showing the count */
-        .tray-min { display: inline-flex; order: -1; }
-        .tray.collapsed { left: auto; right: .6rem; width: auto; padding: .35rem .5rem; }
-        .tray.collapsed > :not(.tray-min) { display: none; }
+        /* pull-tab hanging off the bottom of the bar; when collapsed the bar slides up
+           off the top and the tab is left hanging from the top edge of the window */
+        .tray-min {
+          display: inline-flex; align-items: center; justify-content: center;
+          position: absolute; left: 50%; bottom: -23px; transform: translateX(-50%);
+          width: 66px; height: 24px; padding: 0; border-radius: 0 0 .8rem .8rem;
+          background: rgba(24,24,37,.97); border: 1px solid var(--surface1); border-top: none;
+          color: var(--subtext1); font-size: .95rem; line-height: 1;
+          box-shadow: 0 8px 16px rgba(17,17,27,.5);
+        }
+        .tray.collapsed { transform: translateY(calc(-100% - .6rem)); }
       }
     </style>
   </body>
