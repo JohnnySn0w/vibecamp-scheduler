@@ -441,7 +441,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         <div class="export-opts">
           <button id="export-ics" class="export-opt" type="button">
             <span class="export-emoji">📅</span>
-            <span class="export-txt"><b>Add to calendar <span class="wip-badge">🚧 under construction</span></b><small>Downloads an <code>.ics</code> file — <b>open it</b> to add the events to Apple, Google or Outlook calendar. Times in Eastern (ET). <b>Still works</b>, but calendar import is a bit finicky right now — we're on it, check back in a little while.</small></span>
+            <span class="export-txt"><b>Add to calendar <span class="wip-badge">🚧 under construction</span></b><small>On iPhone/iPad (Safari) this opens the Calendar app to add your events. Elsewhere it downloads an <code>.ics</code> — <b>open it</b> to import into Apple, Google or Outlook. Times in Eastern (ET). <b>Still tightening this up</b> — check back in a little while.</small></span>
           </button>
           <button id="export-pdf" class="export-opt" type="button">
             <span class="export-emoji">⎙</span>
@@ -1134,16 +1134,29 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         lines.push("END:VCALENDAR");
         return lines.map(icsFold).join("\r\n");
       }
+      // Real iOS Safari only — not Chrome/Firefox/Edge/etc. on iOS (those are WebKit
+      // shells that DON'T open the native calendar and must fall back to download).
+      const ua = navigator.userAgent;
+      const onIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isIOSSafari = onIOS && /Safari/.test(ua) && !/(CriOS|FxiOS|EdgiOS|OPiOS|GSA|DuckDuckGo|Brave|YaBrowser)/.test(ua);
+
       function downloadICS() {
         const sel = bars
           .filter((b) => b.classList.contains("selected"))
           .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
-        // Plain named-.ics download is the reliable path: calendar apps register
-        // to *open* .ics files (a file/VIEW action), not to *receive* a shared file
-        // (a SEND action) — so the OS "open with" after download lists them, while
-        // the Web Share sheet does not. Don't navigate to the blob (saves nameless).
-        const blob = new Blob([buildICS(sel)], { type: "text/calendar;charset=utf-8" });
+        const ics = buildICS(sel);
+
+        if (isIOSSafari) {
+          // iOS Safari opens the native "Add to Calendar" sheet for a text/calendar
+          // resource. A data: URL carries the events inline so no server is needed.
+          window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
+          return;
+        }
+        // Everyone else: a properly-named .ics download. Calendar apps register to
+        // *open* .ics files, so the OS "open with" after download lists them.
+        // (Don't navigate to a blob — some mobile browsers save it nameless.)
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url; a.download = "vibecamp-schedule.ics"; a.rel = "noopener";
