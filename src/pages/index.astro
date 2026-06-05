@@ -441,7 +441,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         <div class="export-opts">
           <button id="export-ics" class="export-opt" type="button">
             <span class="export-emoji">📅</span>
-            <span class="export-txt"><b>Add to calendar</b><small>Downloads an <code>.ics</code> file — <b>open it</b> to add the events to Apple, Google or Outlook calendar. Times in Eastern (ET).</small></span>
+            <span class="export-txt"><b>Add to calendar <span class="wip-badge">🚧 under construction</span></b><small>Downloads an <code>.ics</code> file — <b>open it</b> to add the events to Apple, Google or Outlook calendar. Times in Eastern (ET). <b>Still works</b>, but calendar import is a bit finicky right now — we're on it, check back in a little while.</small></span>
           </button>
           <button id="export-pdf" class="export-opt" type="button">
             <span class="export-emoji">⎙</span>
@@ -1707,6 +1707,13 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .export-emoji { font-size: 1.5rem; line-height: 1.4; flex: none; }
       .export-txt { display: flex; flex-direction: column; gap: .2rem; }
       .export-txt b { font-size: .98rem; }
+      .wip-badge {
+        display: inline-block; margin-left: .4rem; vertical-align: middle;
+        font-size: .64rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+        color: var(--peach); background: color-mix(in srgb, var(--peach) 16%, var(--mantle));
+        border: 1px solid color-mix(in srgb, var(--peach) 45%, transparent);
+        border-radius: 999px; padding: .08rem .45rem; white-space: nowrap;
+      }
       .export-txt small { font-size: .82rem; color: var(--subtext0); line-height: 1.35; }
       .export-txt code { background: var(--mantle); padding: 0 .25rem; border-radius: 4px; font-size: .9em; }
       .export-mapchk { display: flex; align-items: center; gap: .45rem; margin: .9rem .15rem 0; font-size: .85rem; color: var(--subtext1); cursor: pointer; }
