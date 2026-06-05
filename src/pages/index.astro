@@ -439,13 +439,9 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         <h3>Export your schedule</h3>
         <p class="review-sub">Take your <b id="export-n">0</b>-event schedule with you.</p>
         <div class="export-opts">
-          <button id="export-sub" class="export-opt" type="button">
-            <span class="export-emoji">🔔</span>
-            <span class="export-txt"><b>Subscribe (one tap)</b><small>One tap on <b>iPhone (any browser)</b>, Mac &amp; Outlook — opens your calendar and adds all your picks at once, as a read-only Vibecamp layer. Times in Eastern (ET).</small></span>
-          </button>
           <button id="export-ics" class="export-opt" type="button">
             <span class="export-emoji">📅</span>
-            <span class="export-txt"><b>Add to calendar</b><small><b>On iPhone/iPad (Safari)</b> this adds everything to Calendar in one tap. On other browsers it downloads an <code>.ics</code> — <b>open it</b> (or import it in your calendar app) to add the events. Apple, Google &amp; Outlook all read it. Times in Eastern (ET).</small></span>
+            <span class="export-txt"><b>Add to calendar</b><small><b>On your phone</b>, opens your calendar app to add all your picks in one tap. <b>On desktop</b>, downloads an <code>.ics</code> to open. Apple, Google &amp; Outlook all read it. Times in Eastern (ET).</small></span>
           </button>
           <button id="export-pdf" class="export-opt" type="button">
             <span class="export-emoji">⎙</span>
@@ -1138,10 +1134,11 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         lines.push("END:VCALENDAR");
         return lines.map(icsFold).join("\r\n");
       }
-      // Real iOS Safari only — not Chrome/Firefox/Edge/etc. on iOS (those are WebKit
-      // shells that DON'T open the native calendar and must fall back to download).
       const ua = navigator.userAgent;
       const onIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isAndroid = /Android/.test(ua);
+      const isPhone = onIOS || isAndroid;   // an actual mobile device (not just a narrow viewport)
+      // Real iOS Safari (not Chrome/Firefox/Edge on iOS) — only it shows the native add sheet.
       const isIOSSafari = onIOS && /Safari/.test(ua) && !/(CriOS|FxiOS|EdgiOS|OPiOS|GSA|DuckDuckGo|Brave|YaBrowser)/.test(ua);
 
       // ---- calendar Worker (vccal.mahan.io): serves text/calendar headers so the
@@ -1175,24 +1172,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         } catch (e) { return null; }
       }
 
-      async function downloadICS() {
-        const sel = bars
-          .filter((b) => b.classList.contains("selected"))
-          .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
-        if (!sel.length) return;
-        const ics = buildICS(sel);
-
-        // Preferred: the calendar Worker (real text/calendar headers everywhere).
-        if (await workerReachable()) {
-          const u = await workerCalUrl(ics);
-          if (u) { window.location.href = u; return; }
-        }
-        // Fallback — iOS Safari opens the native add sheet for a text/calendar data: URL.
-        if (isIOSSafari) {
-          window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
-          return;
-        }
-        // Fallback — a properly-named .ics download (open it to import into your calendar).
+      function fileDownloadICS(ics) {
         const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -1200,17 +1180,28 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
-      // One-tap subscribe: webcal:// hands the SAME Worker URL to the OS calendar
-      // app (subscribe), instead of downloading. Works on iOS (any browser), Mac,
-      // Outlook. Needs the Worker (it's the feed), so falls back to the file import.
-      async function subscribeCal() {
-        const sel = bars.filter((b) => b.classList.contains("selected")).sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+
+      // "Add to calendar" — routes by platform:
+      //   phone (iOS + Android) → webcal:// hands the Worker feed to the calendar app (one tap)
+      //   desktop → download the .ics to open
+      async function downloadICS() {
+        const sel = bars
+          .filter((b) => b.classList.contains("selected"))
+          .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
-        if (await workerReachable()) {
-          const u = await workerCalUrl(buildICS(sel));
+        const ics = buildICS(sel);
+
+        if (isPhone && await workerReachable()) {
+          const u = await workerCalUrl(ics);
           if (u) { window.location.href = u.replace(/^https:/, "webcal:"); return; }
         }
-        downloadICS(); // worker offline / payload too big → import the file instead
+        // iOS Safari without the Worker: native add sheet via a text/calendar data: URL.
+        if (isIOSSafari) {
+          window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
+          return;
+        }
+        // Desktop (and any mobile fallback): download a named .ics to open.
+        fileDownloadICS(ics);
       }
       workerReachable(); // warm the reachability check on load
 
@@ -1221,8 +1212,6 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         if (!bars.some((b) => b.classList.contains("selected"))) return;
         document.getElementById("export-n").textContent =
           bars.filter((b) => b.classList.contains("selected")).length;
-        // Subscribe only works through the Worker; hide it if we know it's down.
-        document.getElementById("export-sub").hidden = (_workerUp === false);
         exportModal.hidden = false;
       }
       // Export gates on overlaps first: if any are unresolved, review before exporting.
@@ -1233,7 +1222,6 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       });
       document.getElementById("export-close").addEventListener("click", closeExport);
       exportModal.addEventListener("click", (e) => { if (e.target === exportModal) closeExport(); });
-      document.getElementById("export-sub").addEventListener("click", () => { subscribeCal(); closeExport(); });
       document.getElementById("export-ics").addEventListener("click", () => { downloadICS(); closeExport(); });
       document.getElementById("export-pdf").addEventListener("click", () => { closeExport(); doPrint(); });
 
