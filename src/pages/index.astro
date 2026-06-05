@@ -1184,17 +1184,23 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       // "Add to calendar" — routes by platform:
       //   phone (iOS + Android) → webcal:// hands the Worker feed to the calendar app (one tap)
       //   desktop → download the .ics to open
-      async function downloadICS() {
+      //
+      // IMPORTANT: launching the webcal:// scheme must happen SYNCHRONOUSLY inside the
+      // tap gesture. iOS Safari (and Android for app-scheme handoff) silently blocks a
+      // navigation that occurs after an `await`. So we precompute the webcal URL when the
+      // export modal opens (openExport) and stash it in `pendingCalUrl`; the click handler
+      // below just reads it and navigates — no awaits in the gesture path.
+      let pendingCalUrl = null;
+      function downloadICS() {
         const sel = bars
           .filter((b) => b.classList.contains("selected"))
           .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
-        const ics = buildICS(sel);
 
-        if (isPhone && await workerReachable()) {
-          const u = await workerCalUrl(ics);
-          if (u) { window.location.href = u.replace(/^https:/, "webcal:"); return; }
-        }
+        // Phone: jump straight to the precomputed webcal URL (synchronous = not blocked).
+        if (isPhone && pendingCalUrl) { window.location.href = pendingCalUrl; return; }
+
+        const ics = buildICS(sel);
         // iOS Safari without the Worker: native add sheet via a text/calendar data: URL.
         if (isIOSSafari) {
           window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
@@ -1213,6 +1219,22 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         document.getElementById("export-n").textContent =
           bars.filter((b) => b.classList.contains("selected")).length;
         exportModal.hidden = false;
+
+        // Precompute the phone "add to calendar" webcal URL while the modal is open, so the
+        // button tap can navigate synchronously (iOS blocks app-scheme launches after await).
+        pendingCalUrl = null;
+        if (isPhone) {
+          const sel = bars
+            .filter((b) => b.classList.contains("selected"))
+            .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+          const ics = buildICS(sel);
+          workerReachable().then((up) => {
+            if (!up) return;
+            return workerCalUrl(ics).then((u) => {
+              if (u) pendingCalUrl = u.replace(/^https:/, "webcal:");
+            });
+          });
+        }
       }
       // Export gates on overlaps first: if any are unresolved, review before exporting.
       document.getElementById("tray-export").addEventListener("click", () => {
