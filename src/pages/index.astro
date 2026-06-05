@@ -441,7 +441,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         <div class="export-opts">
           <button id="export-ics" class="export-opt" type="button">
             <span class="export-emoji">📅</span>
-            <span class="export-txt"><b>Add to calendar</b><small>Download an <code>.ics</code> file — imports into Apple&nbsp;Calendar, Google&nbsp;Calendar or Outlook. Times in Eastern (ET).</small></span>
+            <span class="export-txt"><b>Add to calendar</b><small>Downloads an <code>.ics</code> file — <b>open it</b> to add the events to Apple, Google or Outlook calendar. Times in Eastern (ET).</small></span>
           </button>
           <button id="export-pdf" class="export-opt" type="button">
             <span class="export-emoji">⎙</span>
@@ -1134,34 +1134,19 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         lines.push("END:VCALENDAR");
         return lines.map(icsFold).join("\r\n");
       }
-      async function downloadICS() {
+      function downloadICS() {
         const sel = bars
           .filter((b) => b.classList.contains("selected"))
           .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
-        const ics = buildICS(sel);
-        const filename = "vibecamp-schedule.ics";
-
-        // Capability check (not UA sniffing): if the browser can share a file,
-        // use the native share sheet — on mobile that surfaces "Add to Calendar".
-        let file = null;
-        try { file = new File([ics], filename, { type: "text/calendar" }); } catch (e) {}
-        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: "Vibecamp schedule" });
-            return;
-          } catch (e) {
-            if (e && e.name === "AbortError") return; // user dismissed — don't also download
-            // any other share failure → fall through to the download below
-          }
-        }
-
-        // Fallback: a properly-named .ics download (desktop + browsers without
-        // file share). Don't navigate to the blob — some browsers save it nameless.
-        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        // Plain named-.ics download is the reliable path: calendar apps register
+        // to *open* .ics files (a file/VIEW action), not to *receive* a shared file
+        // (a SEND action) — so the OS "open with" after download lists them, while
+        // the Web Share sheet does not. Don't navigate to the blob (saves nameless).
+        const blob = new Blob([buildICS(sel)], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = filename; a.rel = "noopener";
+        a.href = url; a.download = "vibecamp-schedule.ics"; a.rel = "noopener";
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
