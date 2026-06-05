@@ -427,7 +427,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           <button id="review-allok" class="rv-btn ghost">Mark all OK</button>
           <span class="tray-spacer"></span>
           <button id="review-cancel" class="rv-btn ghost">Back</button>
-          <button id="review-pdf" class="rv-btn primary">⎙ Create PDF</button>
+          <button id="review-continue" class="rv-btn primary">Continue to export →</button>
         </div>
       </div>
     </div>
@@ -445,7 +445,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           </button>
           <button id="export-pdf" class="export-opt" type="button">
             <span class="export-emoji">⎙</span>
-            <span class="export-txt"><b>PDF schedule</b><small>A printable one-page schedule. Overlapping picks get flagged for review first.</small></span>
+            <span class="export-txt"><b>PDF schedule</b><small>A printable one-page schedule. Any unresolved overlaps are flagged on the page.</small></span>
           </button>
         </div>
         <label class="export-mapchk" title="Include the camp map at the top of the PDF">
@@ -964,7 +964,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           (a, b) => (+a.dataset.start) - (+b.dataset.start)
         );
         reviewSub.textContent = evs.length
-          ? `${evs.length} event${evs.length > 1 ? "s" : ""} with overlaps. Marking an event OK clears every overlap it's part of — resolved ones are simply left out of the PDF.`
+          ? `${evs.length} event${evs.length > 1 ? "s" : ""} with overlaps. Marking an event OK clears every overlap it's part of — resolved ones won't be flagged.`
           : "No overlaps — you're all clear.";
         for (const e of evs) {
           const mine = pairsOf(e);
@@ -1004,7 +1004,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         for (const [a, b] of conflictPairs) ackedOverlaps.add(pairKey(a, b));
         renderReview();
       });
-      document.getElementById("review-pdf").addEventListener("click", () => { closeReview(); doPrint(); });
+      document.getElementById("review-continue").addEventListener("click", () => { closeReview(); openExport(); });
 
       // ---- how-to guide modal ----
       const howto = document.getElementById("howto");
@@ -1085,15 +1085,6 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         window.print();
       }
 
-      // run the existing conflict-gate → review-or-print flow (shared by the PDF paths)
-      function startPdf() {
-        const hasSel = bars.some((b) => b.classList.contains("selected"));
-        if (!hasSel) return;
-        const unresolved = conflictPairs.some(([a, b]) => !ackedOverlaps.has(pairKey(a, b)));
-        if (unresolved) openReview();  // make the user review conflicts first
-        else doPrint();
-      }
-
       // ---- build a calendar .ics from the selected events ----
       const icsEsc = (s) => (s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
       // RFC 5545 line folding: split octets >75 onto continuation lines (leading space)
@@ -1143,15 +1134,26 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         lines.push("END:VCALENDAR");
         return lines.map(icsFold).join("\r\n");
       }
+      const isIOS = () =>
+        /iP(hone|ad|od)/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS poses as Mac
       function downloadICS() {
         const sel = bars
           .filter((b) => b.classList.contains("selected"))
           .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
-        const blob = new Blob([buildICS(sel)], { type: "text/calendar;charset=utf-8" });
+        const ics = buildICS(sel);
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
+        if (isIOS()) {
+          // iOS Safari ignores the download attribute — navigating to the blob lets
+          // iOS recognise text/calendar and offer "Add All" to Calendar.
+          window.location.href = url;
+          setTimeout(() => URL.revokeObjectURL(url), 30000);
+          return;
+        }
         const a = document.createElement("a");
-        a.href = url; a.download = "vibecamp-schedule.ics";
+        a.href = url; a.download = "vibecamp-schedule.ics"; a.rel = "noopener";
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
@@ -1159,16 +1161,22 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       // ---- export modal ----
       const exportModal = document.getElementById("export");
       const closeExport = () => { exportModal.hidden = true; };
-      document.getElementById("tray-export").addEventListener("click", () => {
+      function openExport() {
         if (!bars.some((b) => b.classList.contains("selected"))) return;
         document.getElementById("export-n").textContent =
           bars.filter((b) => b.classList.contains("selected")).length;
         exportModal.hidden = false;
+      }
+      // Export gates on overlaps first: if any are unresolved, review before exporting.
+      document.getElementById("tray-export").addEventListener("click", () => {
+        if (!bars.some((b) => b.classList.contains("selected"))) return;
+        const unresolved = conflictPairs.some(([a, b]) => !ackedOverlaps.has(pairKey(a, b)));
+        if (unresolved) openReview(); else openExport();
       });
       document.getElementById("export-close").addEventListener("click", closeExport);
       exportModal.addEventListener("click", (e) => { if (e.target === exportModal) closeExport(); });
       document.getElementById("export-ics").addEventListener("click", () => { downloadICS(); closeExport(); });
-      document.getElementById("export-pdf").addEventListener("click", () => { closeExport(); startPdf(); });
+      document.getElementById("export-pdf").addEventListener("click", () => { closeExport(); doPrint(); });
 
       // drag-to-scroll the continuous track
       const scroll = document.getElementById("scroll");
