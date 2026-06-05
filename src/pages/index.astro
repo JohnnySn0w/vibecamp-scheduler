@@ -439,6 +439,10 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         <h3>Export your schedule</h3>
         <p class="review-sub">Take your <b id="export-n">0</b>-event schedule with you.</p>
         <div class="export-opts">
+          <button id="export-sub" class="export-opt" type="button">
+            <span class="export-emoji">🔔</span>
+            <span class="export-txt"><b>Subscribe (one tap)</b><small>One tap on <b>iPhone (any browser)</b>, Mac &amp; Outlook — opens your calendar and adds all your picks at once, as a read-only Vibecamp layer. Times in Eastern (ET).</small></span>
+          </button>
           <button id="export-ics" class="export-opt" type="button">
             <span class="export-emoji">📅</span>
             <span class="export-txt"><b>Add to calendar</b><small><b>On iPhone/iPad (Safari)</b> this adds everything to Calendar in one tap. On other browsers it downloads an <code>.ics</code> — <b>open it</b> (or import it in your calendar app) to add the events. Apple, Google &amp; Outlook all read it. Times in Eastern (ET).</small></span>
@@ -1196,6 +1200,18 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
+      // One-tap subscribe: webcal:// hands the SAME Worker URL to the OS calendar
+      // app (subscribe), instead of downloading. Works on iOS (any browser), Mac,
+      // Outlook. Needs the Worker (it's the feed), so falls back to the file import.
+      async function subscribeCal() {
+        const sel = bars.filter((b) => b.classList.contains("selected")).sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+        if (!sel.length) return;
+        if (await workerReachable()) {
+          const u = await workerCalUrl(buildICS(sel));
+          if (u) { window.location.href = u.replace(/^https:/, "webcal:"); return; }
+        }
+        downloadICS(); // worker offline / payload too big → import the file instead
+      }
       workerReachable(); // warm the reachability check on load
 
       // ---- export modal ----
@@ -1205,6 +1221,8 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         if (!bars.some((b) => b.classList.contains("selected"))) return;
         document.getElementById("export-n").textContent =
           bars.filter((b) => b.classList.contains("selected")).length;
+        // Subscribe only works through the Worker; hide it if we know it's down.
+        document.getElementById("export-sub").hidden = (_workerUp === false);
         exportModal.hidden = false;
       }
       // Export gates on overlaps first: if any are unresolved, review before exporting.
@@ -1215,6 +1233,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       });
       document.getElementById("export-close").addEventListener("click", closeExport);
       exportModal.addEventListener("click", (e) => { if (e.target === exportModal) closeExport(); });
+      document.getElementById("export-sub").addEventListener("click", () => { subscribeCal(); closeExport(); });
       document.getElementById("export-ics").addEventListener("click", () => { downloadICS(); closeExport(); });
       document.getElementById("export-pdf").addEventListener("click", () => { closeExport(); doPrint(); });
 
