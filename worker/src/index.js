@@ -49,15 +49,16 @@ async function gunzipCapped(bytes) {
 
 export default {
   async fetch(request) {
+    const isHead = request.method === "HEAD";
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-    if (request.method !== "GET") return new Response("Method not allowed", { status: 405, headers: CORS });
+    if (request.method !== "GET" && !isHead) return new Response("Method not allowed", { status: 405, headers: CORS });
 
     const url = new URL(request.url);
     const d = url.searchParams.get("d");
 
     // Health check — the site pings this to know the Worker is up before using it.
     if (!d) {
-      return new Response("ok", { status: 200, headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" } });
+      return new Response(isHead ? null : "ok", { status: 200, headers: { ...CORS, "Content-Type": "text/plain; charset=utf-8" } });
     }
 
     if (d.length > MAX_INPUT) return new Response("Payload too large", { status: 413, headers: CORS });
@@ -72,7 +73,7 @@ export default {
     // Only ever serve calendar data, as an attachment (never inline HTML) — no XSS surface.
     if (!ics.startsWith("BEGIN:VCALENDAR")) return new Response("Bad request", { status: 400, headers: CORS });
 
-    return new Response(ics, {
+    return new Response(isHead ? null : ics, {
       status: 200,
       headers: {
         ...CORS,
