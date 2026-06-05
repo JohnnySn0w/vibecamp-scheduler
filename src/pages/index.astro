@@ -1134,28 +1134,20 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         lines.push("END:VCALENDAR");
         return lines.map(icsFold).join("\r\n");
       }
-      const isIOS = () =>
-        /iP(hone|ad|od)/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS poses as Mac
       function downloadICS() {
         const sel = bars
           .filter((b) => b.classList.contains("selected"))
           .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
-        const ics = buildICS(sel);
-        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        // A properly-named .ics download is the most reliable path across mobile
+        // browsers (Firefox/Chrome/Safari all hand it to the calendar on open).
+        // Don't navigate to the blob — some mobile browsers then save it nameless.
+        const blob = new Blob([buildICS(sel)], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
-        if (isIOS()) {
-          // iOS Safari ignores the download attribute — navigating to the blob lets
-          // iOS recognise text/calendar and offer "Add All" to Calendar.
-          window.location.href = url;
-          setTimeout(() => URL.revokeObjectURL(url), 30000);
-          return;
-        }
         const a = document.createElement("a");
         a.href = url; a.download = "vibecamp-schedule.ics"; a.rel = "noopener";
         document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
 
       // ---- export modal ----
