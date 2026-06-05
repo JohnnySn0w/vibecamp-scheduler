@@ -1,0 +1,9 @@
+name = "vccal"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Bind the dedicated subdomain. mahan.io must be on this Cloudflare account
+# (it is). This auto-creates the DNS record + TLS cert for vccal.mahan.io.
+routes = [
+  { pattern = "vccal.mahan.io", custom_domain = true },
+]

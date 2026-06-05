@@ -1140,22 +1140,55 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       const onIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
       const isIOSSafari = onIOS && /Safari/.test(ua) && !/(CriOS|FxiOS|EdgiOS|OPiOS|GSA|DuckDuckGo|Brave|YaBrowser)/.test(ua);
 
-      function downloadICS() {
+      // ---- calendar Worker (vccal.mahan.io): serves text/calendar headers so the
+      // .ics lands in the calendar across browsers. Until it's live, the ping fails
+      // and we silently fall back to the client-side paths below. ----
+      const CAL_WORKER = "https://vccal.mahan.io";
+      let _workerUp = null;
+      async function workerReachable() {
+        if (_workerUp !== null) return _workerUp;
+        try {
+          const opts = { method: "GET", mode: "cors" };
+          if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) opts.signal = AbortSignal.timeout(2500);
+          const r = await fetch(CAL_WORKER + "/?ping=1", opts);
+          _workerUp = r.ok;
+        } catch (e) { _workerUp = false; }
+        return _workerUp;
+      }
+      async function gzipB64url(str) {
+        const cs = new CompressionStream("gzip");
+        const w = cs.writable.getWriter();
+        w.write(new TextEncoder().encode(str)); w.close();
+        const buf = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+        let bin = ""; for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+        return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+      async function workerCalUrl(ics) {
+        if (typeof CompressionStream === "undefined") return null;
+        try {
+          const u = CAL_WORKER + "/vibecamp-schedule.ics?d=" + await gzipB64url(ics);
+          return u.length > 7500 ? null : u; // too long to navigate safely → fall back
+        } catch (e) { return null; }
+      }
+
+      async function downloadICS() {
         const sel = bars
           .filter((b) => b.classList.contains("selected"))
           .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
         if (!sel.length) return;
         const ics = buildICS(sel);
 
+        // Preferred: the calendar Worker (real text/calendar headers everywhere).
+        if (await workerReachable()) {
+          const u = await workerCalUrl(ics);
+          if (u) { window.location.href = u; return; }
+        }
+        // Fallback — iOS Safari opens the native add sheet for a text/calendar data: URL.
         if (isIOSSafari) {
-          // iOS Safari opens the native "Add to Calendar" sheet for a text/calendar
-          // resource. A data: URL carries the events inline so no server is needed.
           window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
           return;
         }
-        // Everyone else: a properly-named .ics download. Calendar apps register to
-        // *open* .ics files, so the OS "open with" after download lists them.
-        // (Don't navigate to a blob — some mobile browsers save it nameless.)
+        // Fallback — a properly-named .ics download (open it to import into your calendar).
         const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -1163,6 +1196,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
+      workerReachable(); // warm the reachability check on load
 
       // ---- export modal ----
       const exportModal = document.getElementById("export");
