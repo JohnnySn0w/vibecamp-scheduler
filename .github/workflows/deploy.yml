@@ -78,7 +78,10 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add src/known-events.json
             git commit -m "chore(data): update event baseline [skip ci]"
-            git push origin HEAD:main
+            # Best-effort: if the repo's Actions permissions are read-only the push
+            # fails, but the build must not — this run already has a correct baseline
+            # in memory; it just won't persist to the next run.
+            git push origin HEAD:main || echo "::warning::baseline push failed (check Settings → Actions → Workflow permissions = Read and write); deploy continues"
           else
             echo "Event baseline unchanged — nothing to commit."
           fi
