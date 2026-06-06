@@ -372,10 +372,12 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
                   data-venue={(e.location && e.location.trim()) ? e.location.trim() : "Unlisted"}
                   data-sublane={e.subLane}
                   data-cats={e.cats.join(" ")}
+                  data-new={e.new ? "1" : null}
                 >
                   <span class="bar-check" aria-hidden="true">✓</span>
                   <span class="bar-time">{e.timeLabel}</span>
                   <span class="bar-title">{e.summary || "Untitled event"}</span>
+                  {e.new && <span class="bar-new" aria-label="Newly added event">New</span>}
                   {e.crossesDay && <span class="bar-cap" aria-hidden="true">›</span>}
                 </button>
               ))}
@@ -1641,6 +1643,16 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
         font-size: 1rem; font-weight: 800; color: var(--c); line-height: 1;
       }
+      /* "New" pill — events added after the schedule froze (June 18+) */
+      .bar-new {
+        position: absolute; top: 4px; right: 5px; z-index: 5;
+        padding: 1px 5px; border-radius: 999px;
+        font-size: .56rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+        color: var(--crust); background: var(--green);
+        box-shadow: 0 1px 4px rgba(17,17,27,.5);
+        pointer-events: none;
+      }
+      .bar.multi .bar-new { right: 22px; }   /* clear the › day-continuation cap */
 
       /* compact view: long events as a faint hatched background layer (short events sit on top) */
       .bar.bgbar {

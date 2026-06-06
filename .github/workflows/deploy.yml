@@ -12,9 +12,10 @@ on:
   schedule:
     - cron: "17 13 * * *"
 
-# Permissions required by the GitHub Pages deploy action
+# Permissions required by the GitHub Pages deploy action.
+# `contents: write` lets the build commit the rolling event baseline back to the repo.
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -65,6 +66,22 @@ jobs:
         # If the feed is unreachable, fall back to the committed snapshot so a
         # transient outage never breaks the daily deploy.
         run: npm run refresh:data || echo "::warning::feed fetch failed; using committed events.json"
+
+      - name: Persist event baseline
+        # During the pre-June-18 tracking window, refresh:data folds new UIDs into
+        # src/known-events.json. Commit it back so the baseline survives to the next
+        # run. [skip ci] keeps this commit from triggering a redundant deploy.
+        # From June 18 the baseline is frozen, so this is a no-op (nothing to commit).
+        run: |
+          if ! git diff --quiet -- src/known-events.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src/known-events.json
+            git commit -m "chore(data): update event baseline [skip ci]"
+            git push origin HEAD:main
+          else
+            echo "Event baseline unchanged — nothing to commit."
+          fi
 
       - name: Build static site
         run: npm run build

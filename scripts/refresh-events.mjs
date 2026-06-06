@@ -2,13 +2,19 @@
 // Run via `npm run refresh:data` (or `npm run refresh` to also rebuild).
 // No browser involved, so the server's missing CORS headers don't matter.
 
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const ICS_URL = "https://backend-2-6ri5.onrender.com/events.ics";
 const YEAR = 2026;
-const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "events.json");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = join(ROOT, "src", "events.json");
+// Rolling baseline of event UIDs. Built up on every run through June 17 (the
+// "tracking window"); frozen from June 18 onward, when any UID not already in it
+// is flagged `new:true` so the site can show a "New" pill on late additions.
+const BASELINE = join(ROOT, "src", "known-events.json");
+const NEW_FROM = "2026-06-18"; // first Eastern date that earns "New" pills
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const pad = (n) => String(n).padStart(2, "0");
@@ -116,9 +122,46 @@ const main = async () => {
       desc: unescapeIcs(e.DESCRIPTION || "").trim(),
       org: (e.CN || "").trim(),
       iso: start.toISOString().replace(/\.000Z$/, "Z"), // UTC instant, for chronological sort
+      uid: (e.UID || "").trim(),
     });
   }
   rows.sort((a, b) => a.iso.localeCompare(b.iso));
+
+  // Stable identity per event: prefer the feed UID, fall back to a content key.
+  const keyOf = (r) => r.uid || `${r.summary}@@${r.iso}@@${r.location}`;
+
+  // What's "today" in camp-local (Eastern) terms — that's what gates the window.
+  // VC_TODAY (YYYY-MM-DD) overrides it for testing the New-pill behavior.
+  const todayET = process.env.VC_TODAY || eastern(new Date()).date;
+  const tracking = todayET < NEW_FROM;
+
+  // Load the rolling baseline of known UIDs (empty on first ever run).
+  let baseline = new Set();
+  if (existsSync(BASELINE)) {
+    try { baseline = new Set(JSON.parse(readFileSync(BASELINE, "utf-8")).uids || []); }
+    catch { /* corrupt/missing → start fresh */ }
+  }
+
+  if (tracking) {
+    // Still pre-June-18: fold every current event into the baseline and persist it.
+    const before = baseline.size;
+    for (const r of rows) baseline.add(keyOf(r));
+    writeFileSync(
+      BASELINE,
+      JSON.stringify({ note: `Event UIDs known on/before ${NEW_FROM}; frozen from then on.`, updated: todayET, count: baseline.size, uids: [...baseline].sort() }, null, 2) + "\n",
+      "utf-8",
+    );
+    for (const r of rows) r.new = false;
+    console.log(`Tracking window (today ${todayET} < ${NEW_FROM}): baseline ${before} → ${baseline.size} UIDs. No "New" pills yet.`);
+  } else {
+    // June 18+: baseline is frozen; anything not in it is New.
+    let n = 0;
+    for (const r of rows) { r.new = !baseline.has(keyOf(r)); if (r.new) n++; }
+    console.log(`Live window (today ${todayET} ≥ ${NEW_FROM}): ${n} of ${rows.length} flagged New against a ${baseline.size}-UID baseline.`);
+  }
+
+  // UID was only needed for identity; drop it from the shipped JSON.
+  for (const r of rows) delete r.uid;
 
   writeFileSync(OUT, JSON.stringify(rows, null, 2) + "\n", "utf-8");
   console.log(`Wrote ${rows.length} ${YEAR} events → ${OUT}`);

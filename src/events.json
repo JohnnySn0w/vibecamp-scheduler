@@ -7,9 +7,23 @@
     "dur": "4d 12h",
     "summary": "First Aid, Glitter, Electrolytes, and Sunscreen",
     "location": "",
-    "desc": "What it says on the tin! Come find me for first aid, picaridin bug spray/lotion, glitter in many forms, sunscreen, salt stick tabs and electrolytes packets. I'm the second most tattooed person at VibeCamp and will be carrying a pink hiking backpack all event. You can also grab a volunteer and radio for me OR go to The White House in more dire circumstances for first aid and assistance.",
+    "desc": "What it says on the tin! Come find me for first aid, picaridin bug spray/lotion, glitter in many forms, sunscreen, salt stick tabs and electrolytes packets. I'll be carrying a pink hiking backpack all event and wearing a pink sun hat. You can also grab a volunteer and radio for me OR go to The White House in more dire circumstances for first aid and assistance.",
     "org": "May 💐",
-    "iso": "2026-06-17T05:11:00Z"
+    "iso": "2026-06-17T05:11:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-17",
+    "day": "Wed",
+    "start": "16:00",
+    "end": "16:00",
+    "dur": "4d",
+    "summary": "Help Me Find Claude",
+    "location": "I don't know! That's why I'm looking.",
+    "desc": "Claude has escaped at vibecamp, I think, I can't be sure, but please look for him",
+    "org": "Skye",
+    "iso": "2026-06-17T20:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-17",
@@ -21,7 +35,8 @@
     "location": "Collingswood, NJ",
     "desc": "Back by popular demand! Party the night before Vibecamp at Wes & Gina's place in South Jersey right across the river from Philly. We'll have drinks, snacks, and probably smoked meat.\n\nPool will be open, so bring swimwear! The hot tub broke and we ordered a new one, but unsure if it will be here in time. Fingers crossed.\n\nAttendance is limited to 40. We throw this party every year and always hit the attendance cap, so please reserve space ahead of time here: https://forms.gle/HFRZEZ2j6u9yUncr9. I'll sent out an email ahead of time letting you know if you're on the list.",
     "org": "Wes",
-    "iso": "2026-06-17T23:00:00Z"
+    "iso": "2026-06-17T23:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -33,7 +48,8 @@
     "location": "follow the USPS hat",
     "desc": "I will be Around with a USPS hat—if you have a message of love, appreciation, hatred, or just a dumb joke, find me and entrust me with the message and recipient. i can keep you anon and/or only give your name if it's received well.\n\n(you can also ask me to make up a compliment for the recipient, which i am Pretty Decent At)",
     "org": "Sammy",
-    "iso": "2026-06-18T04:05:00Z"
+    "iso": "2026-06-18T04:05:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -45,19 +61,8 @@
     "location": "Big Top Paved Lot",
     "desc": "Bring or make a building to contribute to the construction of Vibe City.\n\nA space will be set aside/a tarp will be laid on the ground outdoors. Bring your building at any time during camp and add it to the city.\n\nIt should be something that will stand (in whatever orientation you intend) on uneven ground.\n\nIt should be something waterproof - or intentionally non-waterproof - in case of rain.\n\nIt should be something that will not blow away in case of wind.\n\nIt should be something that will not be hazardous to children if they play around the city - sharp edges, falling over, metal getting too hot in the sun, etc.\n\nBeyond that it can be whatever you want. It can be two inches tall or ten feet tall. \nIt could be a block of wood you draw windows on.\nIt could be clay.\nIt could be Lego.\nIt could be a Monopoly hotel glued to a rock.\nIt could be a rock.\nIt could be a weighted cardboard tube with messages and words written on it.\nIt could be old computer equipment.\nIt could be a stuffed animal.\nIt could be a pineapple.\nIt could be tchotchkes and bubble gum.\nIt could be you, standing in the form of a temporary building for an hour.\nWhatever you want to add to Vibe City.\n\nWhatever you bring, you can attempt to reclaim it after camp is over, but I would not recommend being too precious about getting it back.\nAny abandoned buildings after camp may get stored for next year, or may be up-for-grabs, or tossed.\n\nYou can construct your building beforehand and bring it with you, or you can construct it onsite. \nSome materials may be available.\nIf you're not sure what to bring, you can bring materials for others to construct with.\n\nBuild away.",
     "org": "Brett",
-    "iso": "2026-06-18T16:01:00Z"
-  },
-  {
-    "date": "2026-06-18",
-    "day": "Thu",
-    "start": "17:00",
-    "end": "18:00",
-    "dur": "1h",
-    "summary": "Billy Joel Sing-Along",
-    "location": "The Big Top",
-    "desc": "Anyone who likes to join others in song, come sing along with us to the works of Billy Joel. We’ll have some of his songs to start us off, but are open to suggestions from the group as we proceed. This is for people who like to sing and especially like to sing with others.\nHosted by Ted (@TMWestervelt) and Misha (@mishapathy)\n(Date and time will be changed nearer to Vibecamp!)",
-    "org": "Misha",
-    "iso": "2026-06-18T21:00:00Z"
+    "iso": "2026-06-18T16:01:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -69,7 +74,21 @@
     "location": "Outdoor Eatery and Tablespace",
     "desc": "First time here? Don't (really) know anyone?\n\nYOU'RE NOT ALONE! This is my first time here too. I don't know anyone, I'm not on Twitter, (how did I even end up here?) But I wanna make friends and have fun!\n\nJoin me for a casual hangout and chat, meet some fellow newcomers, and be Armed With Friends for the rest of Vibecamp.\n\nFolks who are *not* new to VC are very welcome to join us and say hi! We'd love to meet you too.\n\n--\n\nTime/location will be changed if it clashes with official events",
     "org": "Helen",
-    "iso": "2026-06-18T21:00:00Z"
+    "iso": "2026-06-18T21:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-18",
+    "day": "Thu",
+    "start": "17:00",
+    "end": "18:00",
+    "dur": "1h",
+    "summary": "Billy Joel Sing-Along",
+    "location": "The Big Top",
+    "desc": "Anyone who likes to join others in song, come sing along with us to the works of Billy Joel. We’ll have some of his songs to start us off, but are open to suggestions from the group as we proceed. This is for people who like to sing and especially like to sing with others.\nHosted by Ted (@TMWestervelt) and Misha (@mishapathy)\n(Date and time will be changed nearer to Vibecamp!)",
+    "org": "Misha",
+    "iso": "2026-06-18T21:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -81,7 +100,8 @@
     "location": "Dining Hall",
     "desc": "Come eat at the Eating Place",
     "org": "brundolf",
-    "iso": "2026-06-18T22:00:00Z"
+    "iso": "2026-06-18T22:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -93,7 +113,8 @@
     "location": "Pavilion",
     "desc": "You know what it is. Grab a mic and rock out. Sing anything on Youtube.\n\nListed at 7pm for now. Pushed back to 8pm if it conflicts with opening ceremonies",
     "org": "Wes",
-    "iso": "2026-06-18T23:00:00Z"
+    "iso": "2026-06-18T23:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -105,7 +126,8 @@
     "location": "Amphitheater",
     "desc": "The official kickoff of Vibecamp V\n\nBackup location is Big Top if it rains!",
     "org": "brundolf",
-    "iso": "2026-06-19T00:00:00Z"
+    "iso": "2026-06-19T00:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -117,7 +139,8 @@
     "location": "Outdoor Eatery and Tablespace",
     "desc": "Play with Slime! \nI'll bring the slime, God will provide the time. \n\nQ: What is the slime? \nA: Just google \"slime\" on amazon and you'll get the idea. Note - that Elmers slime bucket is NOT glue, its just the same company. \nQ: Will the slime be dirty? \nA: We will enforce and provide resources for hand sanitization and ritual purification (accepting any and all suggestions as to how to purify the spirit in preparation for conference with his Holy Slimeitude, including props, in fact, bring props if you can for this purpose).\nQ: Will it be slimy? \nA: It had better be. \nQ: Is there talking? Are we allowed to talk? \nA: Yes. Suggested conversation topics include: slime, texture-qualia, how to optimize your slime time, the many faces of God, slime, analytic philosophy of language, texture-writ-large, slime, and cooking.",
     "org": "Avi",
-    "iso": "2026-06-19T01:00:00Z"
+    "iso": "2026-06-19T01:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -129,19 +152,8 @@
     "location": "Barn Theater",
     "desc": "Let's hold hands and dance!\n\nFolk Dancing - Traditional group dances done in circles. Simple to start, instruction provided. Best opportunity to hold hands with Twitter friends.  I'll teach you everything you need to know. Folks, this is LINDY.Original vibecamp 1 set. (If Opening Ceremonies is delayed, this event will be pushed back.)\n\nAlmost immediately following the Opening Ceremony if you’re ready to jump right in and start holding hands and breaking ice.\n\nIf you can walk forwards and backwards and count to eight, this is for you! Dancing is a vigorous activity, bring water, & expect to sweat. For more fun, wear clothing that spins nicely. There will be physical contact from the elbow to the hand.",
     "org": "DancingHorse16",
-    "iso": "2026-06-19T01:30:00Z"
-  },
-  {
-    "date": "2026-06-18",
-    "day": "Thu",
-    "start": "22:00",
-    "end": "00:00",
-    "dur": "2h",
-    "summary": "LIMINAL",
-    "location": "Pavilion",
-    "desc": "opening night dance! shake off your travel stiffness and descend into the liminal with DJ performances by ABSTRACTWEAPON (and maybe others? DM me) \n\ntime will be adjusted to accommodate opening ceremonies closer to the event\n\nI'm currently planning a 2 hour set that ends at midnight, but if others want to play on thursday night, let me know and we can stretch the event out later.",
-    "org": "Ra",
-    "iso": "2026-06-19T02:00:00Z"
+    "iso": "2026-06-19T01:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -153,7 +165,21 @@
     "location": "Teahouse",
     "desc": "Come get yo ass ROOTED in our fourth-annual opening night kava service courtesy of GSV Bemusement Park, Touch Fucking Moonflower, and Big Buddhi. We got 5 lbs of the good stuff, a bunch of coconut shells, and a blender to make the line go faster.\n\nKava is a root native to the islands of the Pacific. It tastes like spicy dirt and imparts a pleasantly relaxed and slightly tipsy head and bodyspace due to its active alkaloids, kavalactones. It's great for conversation. Kava is GABAnergic and dopaminergic, and has a reverse tolerance, which we don't quite pharmacologically understand. Just don't mix it with alcohol, and be careful about mixing it with benzodiazepines.\n\nBULA!!!!",
     "org": "big buddhi",
-    "iso": "2026-06-19T02:00:00Z"
+    "iso": "2026-06-19T02:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-18",
+    "day": "Thu",
+    "start": "22:00",
+    "end": "00:00",
+    "dur": "2h",
+    "summary": "LIMINAL",
+    "location": "Pavilion",
+    "desc": "opening night dance! shake off your travel stiffness and descend into the liminal with DJ performances by ABSTRACTWEAPON (and maybe others? DM me) \n\ntime will be adjusted to accommodate opening ceremonies closer to the event\n\nI'm currently planning a 2 hour set that ends at midnight, but if others want to play on thursday night, let me know and we can stretch the event out later.",
+    "org": "Ra",
+    "iso": "2026-06-19T02:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-18",
@@ -165,7 +191,8 @@
     "location": "",
     "desc": "You get my meat, in your mouth\n\nNear the teahouse. If you go to the not pool side and yell meat I'll hear ya",
     "org": "MagusGenji",
-    "iso": "2026-06-19T03:00:00Z"
+    "iso": "2026-06-19T03:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -177,7 +204,8 @@
     "location": "Forest Cozy Space",
     "desc": "He's been dead long enough. Bring him back, but worse this time",
     "org": "Ken",
-    "iso": "2026-06-19T04:00:00Z"
+    "iso": "2026-06-19T04:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -189,7 +217,21 @@
     "location": "Teahouse",
     "desc": "Suitable for any first year undergraduate of engineering, communications, or nursing. Suggested prerequisites include devoted practice in breathwork or tantra, agile-scrum certification, familiarity with basic categorical algebra, and one-to-two years of food service experience or equivalent in either Anglican or Islamic jurisprudence.\n\nFree discussion permitted.\n\n𝘯𝘰𝘵𝘦: 𝘩𝘰𝘴𝘵 𝘪𝘴 𝘶𝘯𝘭𝘪𝘬𝘦𝘭𝘺 𝘵𝘰 𝘣𝘦 𝘱𝘳𝘦𝘴𝘦𝘯𝘵.",
     "org": "𝘌𝘛𝘏𝘈𝘕 ☀︎ ☁︎",
-    "iso": "2026-06-19T07:05:00Z"
+    "iso": "2026-06-19T07:05:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "06:09",
+    "end": "08:09",
+    "dur": "2h",
+    "summary": "Run.",
+    "location": "WH to outside",
+    "desc": "Go for a run. Meet at WH to stretch and then we run. Aiming for 6 miles out/6 miles back, though depending on how I feel that day. Bring water, wear sunscreen, aim for 9:00/mi, and feel free to stop anytime.",
+    "org": "Hazel",
+    "iso": "2026-06-19T10:09:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -201,7 +243,8 @@
     "location": "",
     "desc": "A place for families w/ kids to gather and do kid things. Parents can rotate childcare shifts to roam and enjoy the vibes. Those without children are welcome to stop by and play or take a childcare shift. Families generally spend the mornings together as the children are early risers and there are fewer scheduled events in the AM. There will be a hired babysitter Friday and Saturday evening. \n\nThe aim is to make vibecamp family friendly and invigorating for all ages. Kiddie Camp works to prevent one parent from being the de facto caretaker or remove the need to find an all-weekend babysitter.  \n\nCentered around the Family Cabin, Cabin U. Toys and activities are provided as a collaborative effort among parents.",
     "org": "DancingHorse16",
-    "iso": "2026-06-19T11:30:00Z"
+    "iso": "2026-06-19T11:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -213,19 +256,8 @@
     "location": "Dining Hall",
     "desc": "Fruit, bagels, and coffee?",
     "org": "brundolf",
-    "iso": "2026-06-19T12:00:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "09:00",
-    "end": "11:00",
-    "dur": "2h",
-    "summary": "Hair braiding workshop!",
-    "location": "Outdoor Eatery and Tablespace",
-    "desc": "Come get your hair braided!  Other Apes groom each other for social bonding , why can't we?\n I can do most simple and medium complexity styles, more difficult than that , we can try but we'll be figuring it out together. If your hair is shorter than ~chin length, it may not be possible.\n\nIf you have any experience braiding hair, even if it's just your own, and are interested in helping, I'd love to have you. I can do some teaching too, assuming enough long-haired volenteers.\n\nI will have supplies and will be disinfecting supplies between participants.",
-    "org": "Cynthia",
-    "iso": "2026-06-19T13:00:00Z"
+    "iso": "2026-06-19T12:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -237,7 +269,8 @@
     "location": "Teahouse",
     "desc": "contribute your art skills to a community created tarot deck you can OWN\n\nhow it works:\n\n0. art supplies and a list of cards will be provided\n1. select the card(s) you want to contribute & draw them with whatever materials you want. you can choose more than one card!\n2. put your finished artwork in the box & cross your card(s) off the list so others know which cards are still needed\n3. at the end of fivecamp, i'll scan everyone's pieces and make a printed deck\n\nthere'll also be a signup sheet for preorders :~) preorders will be sold at cost",
     "org": "ER!S",
-    "iso": "2026-06-19T13:00:00Z"
+    "iso": "2026-06-19T13:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -249,7 +282,21 @@
     "location": "Central Field",
     "desc": "I'll bring a few sets of pads and a point sparring intro lesson if needed. \n\nYou bring yourself, maybe a light costuming to suite your 5-yr old ninja self (or not), and get your warmup for the day!",
     "org": "Cayce",
-    "iso": "2026-06-19T13:00:00Z"
+    "iso": "2026-06-19T13:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "09:00",
+    "end": "11:00",
+    "dur": "2h",
+    "summary": "Hair braiding workshop!",
+    "location": "Outdoor Eatery and Tablespace",
+    "desc": "Come get your hair braided!  Other Apes groom each other for social bonding , why can't we?\n I can do most simple and medium complexity styles, more difficult than that , we can try but we'll be figuring it out together. If your hair is shorter than ~chin length, it may not be possible.\n\nIf you have any experience braiding hair, even if it's just your own, and are interested in helping, I'd love to have you. I can do some teaching too, assuming enough long-haired volenteers.\n\nI will have supplies and will be disinfecting supplies between participants.",
+    "org": "Cynthia",
+    "iso": "2026-06-19T13:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -261,19 +308,8 @@
     "location": "Forest Cozy Space",
     "desc": "I'm not hosting a formal event. Come find me if you want to learn. \n\nIf you don't know who I am, I am literally covered in tattoos, more than anyone else in attendance",
     "org": "Fractal Auth",
-    "iso": "2026-06-19T13:48:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "10:00",
-    "end": "09:00",
-    "dur": "1d 23h",
-    "summary": "Vibecamp Trials",
-    "location": "",
-    "desc": "Wow hello you! Yes you! Do you like tasks? silly ones, fun ones? Are you curious about TPOT ideals and what this whole shindig is about? I have an event for you!\n\nVibecamp Trials will be a 4+1 series of trials that up to 80 players will be able to work together and complete. There will be a complementary set of badges to earn, and a vibecamp-logo engraved case to hold them in. \nTrials will start Friday, and end before closing on Sunday. As the inaugural year, things are setup to be fun but fairly casual, expect to spend about an hour running around the campgrounds gathering information and looking for things.\n\nFind out more and get a preview at @VibecampTrials",
-    "org": "ᴛⷮIͥMⷨEͤ ВⷡAͣRͬDͩ",
-    "iso": "2026-06-19T14:00:00Z"
+    "iso": "2026-06-19T13:48:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -285,7 +321,8 @@
     "location": "Teahouse",
     "desc": "If you've ever seen the art of Ruth Asawa, I figured out how she makes her sculptures and I can teach you! (If you haven't, its hollow forms made of interlocking loops of a long wire). It's pretty simple, all you need to bring is your hands (I'll bring the copper wire). if you're familiar with crochet it will be more intuitive but I think anyone can do it! :)",
     "org": "Summer",
-    "iso": "2026-06-19T14:00:00Z"
+    "iso": "2026-06-19T14:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -297,7 +334,21 @@
     "location": "Pavilion",
     "desc": "Touch and Buddhi will lead a whirlwind tour through 5,000 years of global prostration practices. From Indian wrestling warm ups, to Chinese Ch'an bowing, to Burpees, Sun Salutation variations, and full prāṇām, we'll get high, get low, get jacked, and get humble. Come ready to sweat, kiss the ground, greet the sun, and learn some deep time movement history.",
     "org": "big buddhi",
-    "iso": "2026-06-19T14:00:00Z"
+    "iso": "2026-06-19T14:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "10:00",
+    "end": "09:00",
+    "dur": "1d 23h",
+    "summary": "Vibecamp Trials",
+    "location": "",
+    "desc": "Wow hello you! Yes you! Do you like tasks? silly ones, fun ones? Are you curious about TPOT ideals and what this whole shindig is about? I have an event for you!\n\nVibecamp Trials will be a 4+1 series of trials that up to 80 players will be able to work together and complete. There will be a complementary set of badges to earn, and a vibecamp-logo engraved case to hold them in. \nTrials will start Friday, and end before closing on Sunday. As the inaugural year, things are setup to be fun but fairly casual, expect to spend about an hour running around the campgrounds gathering information and looking for things.\n\nFind out more and get a preview at @VibecampTrials",
+    "org": "ᴛⷮIͥMⷨEͤ ВⷡAͣRͬDͩ",
+    "iso": "2026-06-19T14:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -307,33 +358,10 @@
     "dur": "1h 30m",
     "summary": "VIBErant Colors",
     "location": "Meeting Room",
-    "desc": "There's a region of human color perception that lies outside what any screen can reproduce. The sRGB triangle in the CIE color space covers maybe a third of what your eye can actually see, and the gaps are largest in the deep cyans and the saturated greens. Most of us live our lives looking at screens without noticing we're looking at a compressed, duller version of a thing's color.\n\nI've put together a small collection of vibrant colors that you can see only with your own eyes! I'll have a morpho butterfly and sunset moth, azurite and dioptase, some jewel beetles and abalone shells, and a lab spectroscopy set up with 12 gasses and some spectroscopes so you can see individual color wavelengths. The hydrogen Balmer-β line at 486 nm is a cyan more saturated than anything a screen has ever shown you.",
+    "desc": "There's a region of human color perception that lies outside what any screen can reproduce. The sRGB triangle in the CIE color space covers maybe a third of what your eye can actually see, and the gaps are largest in the deep cyans and the saturated greens. Most of us live our lives looking at screens without noticing we're looking at a compressed, duller version of a thing's color.\n\nI've put together a small collection of vibrant colors that you can see only with your own eyes! I'll have a morpho butterfly and sunset moth, azurite and dioptase, a jewel beetle and abalone shells, and a lab spectroscopy set up with 12 gasses and some spectroscopes so you can see individual color wavelengths. The hydrogen Balmer-β line at 486 nm is a cyan more saturated than anything a screen has ever shown you.",
     "org": "Bijan (rgbqcd)",
-    "iso": "2026-06-19T14:30:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "11:00",
-    "end": "12:00",
-    "dur": "1h",
-    "summary": "Rumba Dancing Workshop",
-    "location": "Pavilion",
-    "desc": "Come learn the basics of the Latin rhythm ballroom dance, no experience or partner required. We will practice the basics of footwork, frame, & rhythm for Rumba.\n\nThis is a high contact activity - Rumba is a partner dance.\n\nIt is also the first in a series - there will be two more lessons on different styles of dance in preparation for a social ballroom dance party.",
-    "org": "Ian Hines",
-    "iso": "2026-06-19T15:00:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "11:00",
-    "end": "13:00",
-    "dur": "2h",
-    "summary": "Lunch",
-    "location": "Dining Hall",
-    "desc": "Come Eat at the Eating Place",
-    "org": "brundolf",
-    "iso": "2026-06-19T15:00:00Z"
+    "iso": "2026-06-19T14:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -345,7 +373,47 @@
     "location": "Dining Hall",
     "desc": "IT'S BACK! THE THRILLING EVENT THAT MAKES POASTERS OF LURKERS AND DELIGHTS EVEN THE MOST JADED TWITTER VETERAN! COME EXPERIENCE THE COMBINED POWERS OF BEING WEIRD ON THE INTERNET AND ACTUALLY TALKING TO OTHER HUMAN BEINGS! \n\nWe will meet in front of the Dining Hall and move out onto the lawn. I, your humble divinely appointed TWIRL dictator-for-life Lysander, shall lead you through this legendary event. All are welcome, especially those who are hesitant or blocked about posting, and those who hardly know me.",
     "org": "Lysander",
-    "iso": "2026-06-19T15:00:00Z"
+    "iso": "2026-06-19T15:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "11:00",
+    "end": "12:00",
+    "dur": "1h",
+    "summary": "Rumba Dancing Workshop",
+    "location": "Pavilion",
+    "desc": "Come learn the basics of the Latin rhythm ballroom dance, no experience or partner required. We will practice the basics of footwork, frame, & rhythm for Rumba.\n\nThis is a high contact activity - Rumba is a partner dance.\n\nIt is also the first in a series - there will be two more lessons on different styles of dance in preparation for a social ballroom dance party.",
+    "org": "Ian Hines",
+    "iso": "2026-06-19T15:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "11:00",
+    "end": "12:00",
+    "dur": "1h",
+    "summary": "can you sneak past my metal detector?",
+    "location": "Outdoor Eatery and Tablespace",
+    "desc": "I have a metal detector security wand, can you sneak your shiny metal past my supernatural goblin senses?",
+    "org": "Ra",
+    "iso": "2026-06-19T15:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "11:00",
+    "end": "13:00",
+    "dur": "2h",
+    "summary": "Lunch",
+    "location": "Dining Hall",
+    "desc": "Come Eat at the Eating Place",
+    "org": "brundolf",
+    "iso": "2026-06-19T15:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -357,19 +425,8 @@
     "location": "Teahouse",
     "desc": "Come get a henna tattoo in the tea house! Choose from a booklet of designs or come with an idea of what you want. It's a great time to test run your next tattoo! \n\nI will be demoing preparation of henna at the beginning of the hour if you want to come and learn how to prepare your own. There will be an opportunity to do your own henna tattoo if you feel so inclined!",
     "org": "Katie (Oyster Baby)",
-    "iso": "2026-06-19T16:00:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "12:00",
-    "end": "13:00",
-    "dur": "1h",
-    "summary": "can you sneak past my metal detector?",
-    "location": "Outdoor Eatery and Tablespace",
-    "desc": "I have a metal detector security wand, can you sneak your shiny metal past my supernatural goblin senses?",
-    "org": "Ra",
-    "iso": "2026-06-19T16:00:00Z"
+    "iso": "2026-06-19T16:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -381,19 +438,8 @@
     "location": "Pavilion",
     "desc": "ATTENTION SWOLEDIER! Think you're buff enough to join the elite ranks of the prompting army? Are you so physically and mentally jacked you can fend off infohazards and AI psychosis on the epistemic battlefield? Then prove it by doing a vibe workout in front of Claude and everybody and earn yourself a handsome and sexy Claude Squad tank top (while supplies last)! And did I forget to mention... free creatine!",
     "org": "David Shimel",
-    "iso": "2026-06-19T16:00:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "12:00",
-    "end": "13:00",
-    "dur": "1h",
-    "summary": "What Is To Be Done?",
-    "location": "Barn Theater",
-    "desc": "Exploring the case for a g0v-like parallel polis in the US. Short presentation and then open discussion",
-    "org": "Joe",
-    "iso": "2026-06-19T16:00:00Z"
+    "iso": "2026-06-19T16:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -405,7 +451,21 @@
     "location": "Meeting Room",
     "desc": "Slow down and co-create a container of shared support and witnessing. I’ll lead us through a few relational practices and then leave time for a group Open Circle, an emergent, shared ritual where one person at a time holds the space. That might mean sharing what’s alive for you, asking for reflection or support, constructing a social experiment using the group intelligence for a real-time nervous system update, or simply sitting with the group in stillness.\n\nI’ve hosted 50+ of these in NYC and it’s different each time. Come through to see what we can make together.\n\nFlavors of meditation, authentic relating, and circling involved.",
     "org": "Zack",
-    "iso": "2026-06-19T16:00:00Z"
+    "iso": "2026-06-19T16:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "12:00",
+    "end": "13:00",
+    "dur": "1h",
+    "summary": "What Is To Be Done?",
+    "location": "Barn Theater",
+    "desc": "Exploring the case for a g0v-like parallel polis in the US. Short presentation and then open discussion",
+    "org": "Joe",
+    "iso": "2026-06-19T16:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -417,7 +477,8 @@
     "location": "Side Room 3",
     "desc": "Come play the best social deduction game, where even death is not the end.\n\nIf you're good, solve the puzzle and find the demon.\nIf you're evil, confuse the puzzle solvers and kill everyone.\n\nLie to your friends, lie to strangers. \nAnd remember: kill with grace, and die with dignity.\n\nBeginners welcome.\n\nUp to 15 players.\n\nSide room inside the Big Top. Three game times on Friday.",
     "org": "Brett",
-    "iso": "2026-06-19T16:15:00Z"
+    "iso": "2026-06-19T16:15:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -429,7 +490,8 @@
     "location": "Outdoor Eatery and Tablespace",
     "desc": "The folks at Good Shepherd Rescue are hosting a petting zoo for us!\n\nWe'll have a pony, 2 goats, 3 bunnies, 2 ducks, a sheep, and a pig. Come give them pets and carrots!",
     "org": "Max [Superb Owl]",
-    "iso": "2026-06-19T17:00:00Z"
+    "iso": "2026-06-19T17:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -441,7 +503,8 @@
     "location": "Pavilion",
     "desc": "i love these cards, and i want to share them with you!\n\ncome learn tarot in a fun, hands-on way, & help me celebrate my 19 year(!) anniversary with the practice\n\nno experience or belief necessary to start playing\n\nno rote memorization (or belief) required to keep  learning\n\nthe workshop lasts an hour, after which there'll be an AMA and more games",
     "org": "ER!S",
-    "iso": "2026-06-19T17:00:00Z"
+    "iso": "2026-06-19T17:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -453,7 +516,8 @@
     "location": "Side Room 1",
     "desc": "Act out ridiculous scenes and prompts with others, with no script or preparation! Get ready to \"yes, and,\" go with the flow, and have a silly time. \n\nNot much planned structure, I'll just come along with several different games to try out, and some one-off prompts a la \"Make Some Noise\".\n\nThere may be a second session with enough demand!\n\nRain location is the Big Top.",
     "org": "Gubes",
-    "iso": "2026-06-19T17:00:00Z"
+    "iso": "2026-06-19T17:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -465,7 +529,8 @@
     "location": "Far Field",
     "desc": "Come learn the basics of aerial silks, lyra, static trapeze, or whatever apparatus we decide to have rigged in the moment! Or, if you already know your way around a fabric, come teach us tricks! Strictly BYO sequined catsuit, you cannot wear mine. (Leggings and tighter fitting clothing recommended, but not necessary)",
     "org": "Passeridae",
-    "iso": "2026-06-19T18:00:00Z"
+    "iso": "2026-06-19T18:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -477,7 +542,8 @@
     "location": "Side Room 3",
     "desc": "Come play the best social deduction game, where even death is not the end.\n\nIf you're good, solve the puzzle and find the demon.\nIf you're evil, confuse the puzzle solvers and kill everyone.\n\nLie to your friends, lie to strangers. \nAnd remember: kill with grace, and die with dignity.\n\nBeginners welcome.\n\nUp to 15 players.\n\nSide room inside the Big Top. Three game times on Friday.",
     "org": "Brett",
-    "iso": "2026-06-19T18:15:00Z"
+    "iso": "2026-06-19T18:15:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -489,19 +555,8 @@
     "location": "Pavilion",
     "desc": "Come hang out with me while I sing my silly AI folk music and talk about Suno and GenAI.\n\nevent time may change as we get closer",
     "org": "Ra",
-    "iso": "2026-06-19T18:30:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "15:00",
-    "end": "18:00",
-    "dur": "3h",
-    "summary": "Perfume Bar",
-    "location": "Pavilion",
-    "desc": "Months in the making, come explore vivid perfume recreations of candies, sodas, and alcoholic beverages.\n\nSample candies in conjunction with scents to seek out special effects. Taste the corresponding candy and feel the senses resonate together. Sample blindly and try to fool your perceptions.\n\nThe best way to feel agency over the senses is to discover a map through the space. Instead of seeing flavors as hyperobjects, you will be able to explore distinct difference vectors that help explain what you're tasting. Brought to you by the Qualia Research Institute.",
-    "org": "Eliade",
-    "iso": "2026-06-19T19:00:00Z"
+    "iso": "2026-06-19T18:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -513,7 +568,8 @@
     "location": "Pool",
     "desc": "Thus have we heard, beneath a cloudless sky\nIn realms where lotus minds bloom and friendships ripple like mirrored waters,\nThere appears — not by chance, but by infinite causes —\nA gathering of radiant beings,\nFriday afternoon, by the Pool of Delight.\n\n--\n\nMusic 3-5pm or until we feel like stopping",
     "org": "Atin",
-    "iso": "2026-06-19T19:00:00Z"
+    "iso": "2026-06-19T19:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -525,7 +581,21 @@
     "location": "Far Field",
     "desc": "We will divide up into teams of 6-7. Teams will consist of one rider who body surfs on the other team members as they roll sideways downhill. As the rider slides past the last (most uphill) team member, they run to the front to extend their team's conveyor belt.  First team to the bottom wins!\n\nExpect to get some grass stains, get a little dizzy, and have a blast.\n\nVideo https://www.youtube.com/watch?v=OAG0GdLdM3w",
     "org": "DaCaveOfWonders",
-    "iso": "2026-06-19T19:00:00Z"
+    "iso": "2026-06-19T19:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "15:00",
+    "end": "18:00",
+    "dur": "3h",
+    "summary": "Perfume Bar",
+    "location": "Pavilion",
+    "desc": "Months in the making, come explore vivid perfume recreations of candies, sodas, and alcoholic beverages.\n\nSample candies in conjunction with scents to seek out special effects. Taste the corresponding candy and feel the senses resonate together. Sample blindly and try to fool your perceptions.\n\nThe best way to feel agency over the senses is to discover a map through the space. Instead of seeing flavors as hyperobjects, you will be able to explore distinct difference vectors that help explain what you're tasting. Brought to you by the Qualia Research Institute.",
+    "org": "Eliade",
+    "iso": "2026-06-19T19:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -537,7 +607,8 @@
     "location": "Pond Fire Pit",
     "desc": "I invite those with serious queries to a divinatory or reflective reading with the Thoth Tarot.\n\nLady Frieda Harris painted the Thoth Tarot under the direction of Aleister Crowley. It’s a beautiful 78-card deck that encodes occult and astrological symbolism and maps onto the Tree of Life.\n\nTarot can be a powerful self-discovery tool and can be used to gain insight into the past, present, and future. The query is the key.\n\nI use Lon Milo DuQuette's query refinement technique in my readings. The first question that pops into your head may not be the question you truly want answered.\n\nI request you meditate deeply on your query before the reading: what do you REALLY want to know?\n\nReadings will be offered on a first-come, first-served basis.",
     "org": "Adhara",
-    "iso": "2026-06-19T19:30:00Z"
+    "iso": "2026-06-19T19:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -549,7 +620,8 @@
     "location": "Rainbow Swings",
     "desc": "curious about sex? curious about magic? \nwant to make your wildest dreams come true through the power of your subconscious mind (and orgasm)?\n\ni’ll walk you through what sex magic is (and isn’t)\nwe’ll make sigils together\ndiscuss ritual design \nand answer any questions you might have about all this spooky-ooky horny magic stuff \n\npaired! poly! solo! first time! professional! - ALL A-OK!",
     "org": "Leah (Prime)",
-    "iso": "2026-06-19T19:33:00Z"
+    "iso": "2026-06-19T19:33:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -561,31 +633,8 @@
     "location": "Outdoor Eatery and Tablespace",
     "desc": "Hi! I’m bringing the board game that I made with my brothers, Small Fishes: Seas the Booty. It’s a casual cutesy party game themed around sea creature and pirates for 2-6 players. It has deception, resource management, and great art/character. It’s kind of marvel snap like if you’ve played that. The game will probably run for a little over an hour.\n\nLast year I brought a pre-release version, but this is now the full game! Grand winner will get a free copy :3",
     "org": "garvy",
-    "iso": "2026-06-19T20:00:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "16:00",
-    "end": "17:45",
-    "dur": "1h 45m",
-    "summary": "Blood on the Clocktower",
-    "location": "Side Room 3",
-    "desc": "Come play the best social deduction game, where even death is not the end.\n\nIf you're good, solve the puzzle and find the demon.\nIf you're evil, confuse the puzzle solvers and kill everyone.\n\nLie to your friends, lie to strangers. \nAnd remember: kill with grace, and die with dignity.\n\nBeginners welcome.\n\nUp to 15 players.\n\nSide room inside the Big Top. Three game times on Friday.",
-    "org": "Brett",
-    "iso": "2026-06-19T20:00:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "16:00",
-    "end": "18:00",
-    "dur": "2h",
-    "summary": "Dodgeball",
-    "location": "Far Field",
-    "desc": "Dodgeball in the field! We'll use foam balls and standard USA dodgeball rules (which I'll explain at the start of the event). If we're feeling it, we might play some fun variants in the second hour.\n\nDodgeball is a high-energy physical activity, with all of the usual risks that entails.",
-    "org": "Ari Zerner",
-    "iso": "2026-06-19T20:00:00Z"
+    "iso": "2026-06-19T20:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -597,19 +646,34 @@
     "location": "Indoor Eatery and Tablespace",
     "desc": "Supplies provided, but feel free to BYOB(eads). \n\nHave you ever wanted to make friends but wanted it to happen via a structured creative experience? We have the event for you!\n\nFor those looking to make new friends, we'll have short questionnaires to intro ourselves to one another, then use what we learn about our new friend to make them a friendship bracelet.\n\nDISCLAIMER: Making new friends encouraged but not required. Bring your friends, your enemies, or just make a bracelet for yourself.",
     "org": "daniel",
-    "iso": "2026-06-19T20:00:00Z"
+    "iso": "2026-06-19T20:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
     "day": "Fri",
-    "start": "17:00",
+    "start": "16:00",
     "end": "18:00",
-    "dur": "1h",
-    "summary": "Solstice Set-up",
-    "location": "Amphitheater",
-    "desc": "Setup & runthru for the Solstice celebration",
-    "org": "Wes",
-    "iso": "2026-06-19T21:00:00Z"
+    "dur": "2h",
+    "summary": "Dodgeball",
+    "location": "Far Field",
+    "desc": "Dodgeball in the field! We'll use foam balls and standard USA dodgeball rules (which I'll explain at the start of the event). If we're feeling it, we might play some fun variants in the second hour.\n\nDodgeball is a high-energy physical activity, with all of the usual risks that entails.",
+    "org": "Ari Zerner",
+    "iso": "2026-06-19T20:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "16:00",
+    "end": "17:45",
+    "dur": "1h 45m",
+    "summary": "Blood on the Clocktower",
+    "location": "Side Room 3",
+    "desc": "Come play the best social deduction game, where even death is not the end.\n\nIf you're good, solve the puzzle and find the demon.\nIf you're evil, confuse the puzzle solvers and kill everyone.\n\nLie to your friends, lie to strangers. \nAnd remember: kill with grace, and die with dignity.\n\nBeginners welcome.\n\nUp to 15 players.\n\nSide room inside the Big Top. Three game times on Friday.",
+    "org": "Brett",
+    "iso": "2026-06-19T20:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -621,19 +685,21 @@
     "location": "Barn Theater",
     "desc": "Bring your instrument, your voice or your  phone and join others to experience / create a unique musical performance. In C is a minimalist composition from Terry Riley consisting of performers stepping through 53 musical phrases at their own pace, together. Simple enough for anyone who can sight read basic phrases, emergently complex, haunting and beautiful. No two performances the same. Join us!",
     "org": "Myk",
-    "iso": "2026-06-19T21:00:00Z"
+    "iso": "2026-06-19T21:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
     "day": "Fri",
-    "start": "18:00",
-    "end": "19:15",
-    "dur": "1h 15m",
-    "summary": "Group Jhana Noting Meditation",
-    "location": "",
-    "desc": "We split off into groups of 3-6 and sit or lie down in circles. We take turns noting one thing we are experiencing - just one or two words. We'll do intros (5-10 min), do the meditation (rest of an hour) and debrief after for those who want to.\n\nBeen doing this weekly with Jhourney retreat alums and it's always great vibes.\n\nnot sure where to put this physically yet but maybe an outdoor space with trees or a quiet indoor space?",
-    "org": "Alex Krusz",
-    "iso": "2026-06-19T22:00:00Z"
+    "start": "17:00",
+    "end": "18:00",
+    "dur": "1h",
+    "summary": "Solstice Set-up",
+    "location": "Amphitheater",
+    "desc": "Setup & runthru for the Solstice celebration",
+    "org": "Wes",
+    "iso": "2026-06-19T21:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -645,7 +711,34 @@
     "location": "Pavilion",
     "desc": "Come learn the basics of the smooth ballroom dance, no experience or partner required. We will practice the basics of footwork, frame, & rhythm for Foxtrot.\n\nThis is a high contact activity - Foxtrot is a partner dance.\n\nIt is also the second in a series - there will be two more lessons on different styles of dance in preparation for a social ballroom dance party.",
     "org": "Ian Hines",
-    "iso": "2026-06-19T22:00:00Z"
+    "iso": "2026-06-19T22:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "18:00",
+    "end": "19:15",
+    "dur": "1h 15m",
+    "summary": "Group Jhana Noting Meditation",
+    "location": "",
+    "desc": "We split off into groups of 3-6 and sit or lie down in circles. We take turns noting one thing we are experiencing - just one or two words. We'll do intros (5-10 min), do the meditation (rest of an hour) and debrief after for those who want to.\n\nBeen doing this weekly with Jhourney retreat alums and it's always great vibes.\n\nnot sure where to put this physically yet but maybe an outdoor space with trees or a quiet indoor space?",
+    "org": "Alex Krusz",
+    "iso": "2026-06-19T22:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "18:00",
+    "end": "20:00",
+    "dur": "2h",
+    "summary": "MTG Commander",
+    "location": "Meeting Room",
+    "desc": "Let’s play commander! Bring a deck or two and let’s get some games in. Any power level welcome. I’ll try to split us up into pods of 4, depending on how many people we get. \n\nTime and location subject to change closer to Vibecamp.",
+    "org": "Price",
+    "iso": "2026-06-19T22:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -657,19 +750,8 @@
     "location": "Dining Hall",
     "desc": "Come eat at the Eating Place",
     "org": "brundolf",
-    "iso": "2026-06-19T23:00:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "19:00",
-    "end": "21:00",
-    "dur": "2h",
-    "summary": "MTG Commander",
-    "location": "Meeting Room",
-    "desc": "Let’s play commander! Bring a deck or two and let’s get some games in. Any power level welcome. I’ll try to split us up into pods of 4, depending on how many people we get. \n\nTime and location subject to change closer to Vibecamp.",
-    "org": "Price",
-    "iso": "2026-06-19T23:00:00Z"
+    "iso": "2026-06-19T23:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -681,7 +763,8 @@
     "location": "Barn Theater",
     "desc": "tonight your ghost will ask my ghost: where is the vibe\n\nwhere: the barn\nwhen: Friday sunset\n\nWhat to bring:\n 1) a ghost costume. The no-effort kind. Literally a sheet with eye holes cut out. You don’t even have to cut the eye holes out, just bring a sheet, I’ll bring scissors and you can do it there. Colours other than white strongly encouraged. \n2) a nonverbal mode of communication. Tarot cards, dried flowers, bird calls, a small harmonica.\n\nWhat we’ll do: we will gather, we will don our ghost costumes, and i will tell you a fun story. Then we will disperse out into the night and go enjoy vibecamp. We will dance in the pavilion, we will sway at the fire, we will flirt at the teahouse, we will eat midnight ramen (somehow). And nobody will know who we are.\n\nWhy: have you ever created an anonymous account and felt the warm glow of not being known? Are you hot? Ugly? Young? old? Female? Male? beneath the anon pfp, you are only your vibe. Will your friends dance with you, despite not recognising you? Will strangers welcome you into their circle? Can you swim in a bedsheet? Let’s see.\n\nEvent inspired by: the video game Journey, Scooby Doo, a crush i once had\n\n🫵🏻🚨🫵🏻: like on twitter, don’t use anonymity as an excuse to be a guy who sucks. All shift volunteers have been informed of Ghost Night and will Velma* your ass. Act excellently for the reputation of all ghostkind. Be mysterious and friendly. \n\n*Velma (verb): to apprehend somebody and whip off their ghost costume\n\n\nP.s. apart from that, you can keep the ghost costume on all weekend, anytime you want to feel anonymous.",
     "org": "bashu",
-    "iso": "2026-06-19T23:00:00Z"
+    "iso": "2026-06-19T23:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -693,7 +776,8 @@
     "location": "Amphitheater",
     "desc": "Backup location in case of rain: the Big Top\n\nBack for year 3! Join us for a musical celebration of the longest day of the year.\n\nExpect songs, speeches, and audience participation. This year we'll be working in the \"inner child\" theme of Vibecamp.\n\nWe'll be starting at 7:30pm sharp, as the program is timed to coincide with the sunset\n\nDM Wes if you play an instrument, can deal with very little rehearsal, an want to join in.",
     "org": "Wes",
-    "iso": "2026-06-19T23:30:00Z"
+    "iso": "2026-06-19T23:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -705,19 +789,8 @@
     "location": "Barn Theater",
     "desc": "Come hear a brief survey of new art forms enabled by AI and try out a few AI-themed or -designed visual novels I've written lately! Open discussion/brainstorming game jam ideas/feedback session/bring YOUR game to show off if you want, anything's possible.",
     "org": "Joe",
-    "iso": "2026-06-19T23:45:00Z"
-  },
-  {
-    "date": "2026-06-19",
-    "day": "Fri",
-    "start": "21:00",
-    "end": "23:00",
-    "dur": "2h",
-    "summary": "Welcome to the Vibe Parade",
-    "location": "Barn Theater",
-    "desc": "Hey, my parents are out of town this weekend and we're having a party. You seem cool, you wanna come?\n\nEMO NIGHT COMES TO VIBECAMP\n\nDo you have EMOTIONS? Teenage ANGST? Want to put on some eyeliner and dance and sing about it with your friends?\n\nDig out your converse and ripped skinny jeans. Yell about how it's JUST NOT FAIR. Party with your teenage self, and show them everything'll be alright.\n\nFeaturing music videos from My Chemical Romance, Avril Lavine, Fall Out Boy, Limp Bizkit, Linkin Park, Sleeping With Sirens, and everything in-between. Come re-live the best party of your life, or the one you were never invited to. You’re invited this time.",
-    "org": "brundolf",
-    "iso": "2026-06-20T01:00:00Z"
+    "iso": "2026-06-19T23:45:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -729,7 +802,21 @@
     "location": "Barn Theater",
     "desc": "I will be posted up with eyeliner at Emo Night. Come get your liner done, poserz.\n\nAccepting volunteers to handle demand!! If you know how to apply eyeliner well and want to be my backup, please DM me.",
     "org": "Katie (Oyster Baby)",
-    "iso": "2026-06-20T01:00:00Z"
+    "iso": "2026-06-20T01:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "21:00",
+    "end": "23:00",
+    "dur": "2h",
+    "summary": "Welcome to the Vibe Parade",
+    "location": "Barn Theater",
+    "desc": "Hey, my parents are out of town this weekend and we're having a party. You seem cool, you wanna come?\n\nEMO NIGHT COMES TO VIBECAMP\n\nDo you have EMOTIONS? Teenage ANGST? Want to put on some eyeliner and dance and sing about it with your friends?\n\nDig out your converse and ripped skinny jeans. Yell about how it's JUST NOT FAIR. Party with your teenage self, and show them everything'll be alright.\n\nFeaturing music videos from My Chemical Romance, Avril Lavine, Fall Out Boy, Limp Bizkit, Linkin Park, Sleeping With Sirens, and everything in-between. Come re-live the best party of your life, or the one you were never invited to. You’re invited this time.",
+    "org": "brundolf",
+    "iso": "2026-06-20T01:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -741,7 +828,21 @@
     "location": "Pavilion",
     "desc": "More traditional group dances done in circles or lines. Simple to start, instruction provided. Best opportunity to hold hands with Twitter friends. Experience 3 new dances and more ways to hold hands. \n\nIf you can walk forwards and backwards and count to eight, this is for you! Dancing is a vigorous activity, bring water, & expect to sweat. For more fun, wear clothing that spins nicely. There will be physical contact from the elbow to the hand.  \n\n(Timing changed to avoid overlap with the Solstice Event. May start a few minutes late.)",
     "org": "DancingHorse16",
-    "iso": "2026-06-20T01:00:00Z"
+    "iso": "2026-06-20T01:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-19",
+    "day": "Fri",
+    "start": "22:00",
+    "end": "23:00",
+    "dur": "1h",
+    "summary": "Mosh at the Vibe Parade",
+    "location": "Barn Theater",
+    "desc": "Hitting sad (consenting )people to sad music",
+    "org": "MagusGenji",
+    "iso": "2026-06-20T02:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -753,7 +854,8 @@
     "location": "Pavilion",
     "desc": "Placeholder event for friday night DJ performances by <PENDING> please DM me if interested in DJing!\n\nI'm only planning a short set for this and am mainly relying on other DJs to fill in the time, event may end earlier depending on how long peeps wanna play/dance for.",
     "org": "Ra",
-    "iso": "2026-06-20T03:00:00Z"
+    "iso": "2026-06-20T03:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -765,7 +867,8 @@
     "location": "Fire Pit near Cabin U",
     "desc": "It's 8 lines. Several repeat. It's been sung by drunk Scots at midnight for 300 years. \n\nYou can do this.\n\nCome learn and perform \"Auld Lang Syne,\" the world's most resilient singalong, built for emotionally-unavailable Highlanders who needed whisky and a crowd to access their feelings. \n\nWe'll cover the words, the melody, and warm up together before building to a full, cathartic performance and toasts of your choice.\n\nNo singing experience required. Sincerity strongly encouraged.",
     "org": "Chris P Wicks",
-    "iso": "2026-06-20T03:45:00Z"
+    "iso": "2026-06-20T03:45:00Z",
+    "new": false
   },
   {
     "date": "2026-06-19",
@@ -777,7 +880,8 @@
     "location": "Pool",
     "desc": "In honor of Daniel Brottman\n\nhttps://x.com/danielbrottman/status/2061819156513878280\n\nBYO cigs",
     "org": "Max [Superb Owl]",
-    "iso": "2026-06-20T03:59:00Z"
+    "iso": "2026-06-20T03:59:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -789,7 +893,8 @@
     "location": "",
     "desc": "Diet Coke. This scientific and engineering marvel stands as a testament to the indomitable human spirit as we defy nature and reach ever upward towards God. Consumed by mystics such as John Carmack and John Daly to achieve transcendental feats of accomplishment, it is now our turn to leverage it for divinatory purposes. If holy vision ye seek, look for a man in priestly vestments and enter the ritualistic circle as we dissolve the veil of revelation with the alchemical solvent known as Diet Coke.",
     "org": "David Shimel",
-    "iso": "2026-06-20T04:00:00Z"
+    "iso": "2026-06-20T04:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -801,7 +906,8 @@
     "location": "Pool",
     "desc": "clothing optional pool hours hosted by lysander. don't make it weird. please bring your own cat ears and cigarettes this time, i'll have some to give out but im not breaking the bank just so everyone can look as dope as me",
     "org": "Lysander",
-    "iso": "2026-06-20T04:00:00Z"
+    "iso": "2026-06-20T04:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -813,7 +919,8 @@
     "location": "Teahouse",
     "desc": "Post-dance, come-down ramen bar with all the fixins",
     "org": "Leah (Prime)",
-    "iso": "2026-06-20T04:30:00Z"
+    "iso": "2026-06-20T04:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -825,7 +932,8 @@
     "location": "Barn Theater",
     "desc": "Can't sleep? Up late? Up early? Come watch some cartoons! I'll be running a mix of both classic and modern shows, with some nostalgic commercials thrown in between. Somewhat freeform and unattended event as I'll just be leaving my laptop to play cartoons all night even after I go to sleep, and I'll be coming back to pick it up in the morning. Late night cartoons may be adult oriented but all showings from 6AM onward will be child friendly.\n\nTime is currently inaccurate, will go from 4:30 until 9am or until someone else needs the barn.",
     "org": "Shiiiny",
-    "iso": "2026-06-20T08:30:00Z"
+    "iso": "2026-06-20T08:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -837,7 +945,21 @@
     "location": "Pond Fire Pit",
     "desc": "Learn how to make phantograms with your phone on an early morning walk through the woods. Download the app CrossCam and I will show you how harness the third dimension with a pair of polarized glasses.",
     "org": "Eliade",
-    "iso": "2026-06-20T10:00:00Z"
+    "iso": "2026-06-20T10:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-20",
+    "day": "Sat",
+    "start": "06:09",
+    "end": "08:09",
+    "dur": "2h",
+    "summary": "Rub.",
+    "location": "WH",
+    "desc": "Go for a run. Meet at WH to stretch and then we run. Aiming for 6 miles out/6 miles back, though depending on how I feel that day. Bring water, wear sunscreen, aim for 9:00/mi, and feel free to stop anytime.",
+    "org": "Hazel",
+    "iso": "2026-06-20T10:09:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -849,7 +971,8 @@
     "location": "",
     "desc": "A place for families w/ kids to gather and do kid things. Parents can rotate childcare shifts to roam and enjoy the vibes. Those without children are welcome to stop by and play or take a childcare shift. Families generally spend the mornings together as the children are early risers and there are fewer scheduled events in the AM. There will be a hired babysitter Friday and Saturday evening. \n\nThe aim is to make vibecamp family friendly and invigorating for all ages. Kiddie Camp works to prevent one parent from being the de facto caretaker or remove the need to find an all-weekend babysitter.  \n\nCentered around the Family Cabin, Cabin U. Toys and activities are provided as a collaborative effort among parents.",
     "org": "DancingHorse16",
-    "iso": "2026-06-20T11:30:00Z"
+    "iso": "2026-06-20T11:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -861,7 +984,8 @@
     "location": "Dining Hall",
     "desc": "Fruit, bagels, and coffee?",
     "org": "brundolf",
-    "iso": "2026-06-20T12:00:00Z"
+    "iso": "2026-06-20T12:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -873,7 +997,8 @@
     "location": "Barn Theater",
     "desc": "What if being horny didn't suck? What if maybe you actually don't have to let it control you or scare you or embarrass you all the time? What if it just felt GOOD? \n\nWhether you feel overwhelmed by uncontrollable thirst or like it's never there when you want it, this workshop can help! Come learn how to stop wrestling with and repressing it and just let it flow.\n\nWe'll do a lot of the same activities as last year but we'll have more time to go even deeper with it.",
     "org": "Mary Zoso",
-    "iso": "2026-06-20T13:45:00Z"
+    "iso": "2026-06-20T13:45:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -885,7 +1010,8 @@
     "location": "Sanctuary",
     "desc": "Start your day (or end your night) by getting your blood flowing, replacing mental suffering with somatic suffering, and entering deep deep time time together. On the lawn by the pool and sanctuary.",
     "org": "Touch Fucking Moonflower",
-    "iso": "2026-06-20T14:08:00Z"
+    "iso": "2026-06-20T14:08:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -897,7 +1023,8 @@
     "location": "Dining Hall",
     "desc": "Come Eat at the Eating Place",
     "org": "brundolf",
-    "iso": "2026-06-20T15:00:00Z"
+    "iso": "2026-06-20T15:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -909,7 +1036,8 @@
     "location": "Pool",
     "desc": "Get those quads out, and get ready to RUMBLEEEE. \n\nIt's better than arm wrestling because it levels the playing field and the girls have a chance to dominate. Come for a great excuse to touch your crush or crush your enemies. No crying if you lose to either tho.\n\n(Held in the grassy area next to the pool. Please wear something you wouldn't mind getting grass stained)",
     "org": "Katie (Oyster Baby)",
-    "iso": "2026-06-20T15:00:00Z"
+    "iso": "2026-06-20T15:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -921,7 +1049,8 @@
     "location": "Pavilion",
     "desc": "Come learn the basics of the rhythm ballroom dance, no experience or partner required. We will practice the basics of footwork, frame, & rhythm for East Coast Swing.\n\nThis is a high contact activity - Swing is a partner dance.\n\nIt is also the third in a series - there will be two more lessons on different styles of dance in preparation for a social ballroom dance party.",
     "org": "Ian Hines",
-    "iso": "2026-06-20T15:00:00Z"
+    "iso": "2026-06-20T15:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -933,7 +1062,8 @@
     "location": "Far Field",
     "desc": "Come learn the basics of aerial silks, lyra, static trapeze, or whatever apparatus we decide to have rigged in the moment! Or, if you already know your way around a fabric, come teach us tricks! Strictly BYO sequined catsuit, you cannot wear mine. (Leggings and tighter fitting clothing recommended, but not necessary)",
     "org": "Passeridae",
-    "iso": "2026-06-20T16:00:00Z"
+    "iso": "2026-06-20T16:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -945,7 +1075,8 @@
     "location": "Pavilion",
     "desc": "Come learn the basics of the Irish folk dance, no experience or partner required. We'll start with the basics of footwork, then learn the steps of one or two beginner dances (as time allows) and dance them with music and calls.\n\nThis is a high contact activity.",
     "org": "Ari Zerner",
-    "iso": "2026-06-20T16:15:00Z"
+    "iso": "2026-06-20T16:15:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -957,7 +1088,8 @@
     "location": "Barn Theater",
     "desc": "Mary Zoso Sex Coach is joined by her cohosts Wes and Gina to try to make sense of sex and relationships. Come and watch OR come join in! We're going to be asking audience members to share their sex & relationship insights with us.",
     "org": "Wes",
-    "iso": "2026-06-20T16:30:00Z"
+    "iso": "2026-06-20T16:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -969,7 +1101,21 @@
     "location": "Pond Fire Pit",
     "desc": "are you uncomfortably hinged? does modern life make you want to go feral and release the combined existential angst of generations of your ancestral line? well, you're in luck, for the people crave catharsis and we will answer \n\nwe will begin with some warmups to get everyone in the mood, followed by group screaming. then, individuals will have the chance to be witnessed and celebrated by the group in their primal wholeness (optional - can also go in pairs or smaller groups)\n\nwill have some disposable earplugs folks can use if desired",
     "org": "Emily (emily_for_now)",
-    "iso": "2026-06-20T17:00:00Z"
+    "iso": "2026-06-20T17:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-20",
+    "day": "Sat",
+    "start": "13:15",
+    "end": "14:15",
+    "dur": "1h",
+    "summary": "The Other Kind of Contact Improv",
+    "location": "The Village at the Hub, behind Brother's Hut.\nEasy to spot from the Teahouse.\nSeek the crossroads. \nIykyk, or just ask a stranger.",
+    "desc": "Come learn the basics of improvised weapon selection and usage, \nwithout the need to grab a brick from the roadside while under duress.\nYou may bring household objects or pieces of common camping gear, and we can workshop how to use them if you'd like.\n Please think reasonable, not comedic, if you do.",
+    "org": "Brother Sanchez",
+    "iso": "2026-06-20T17:15:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -981,7 +1127,8 @@
     "location": "Central Field",
     "desc": "Placeholder for a potential second session of Improv Games. It'll happen if enough people star it!",
     "org": "Gubes",
-    "iso": "2026-06-20T17:30:00Z"
+    "iso": "2026-06-20T17:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -993,7 +1140,8 @@
     "location": "Meeting Room",
     "desc": "Have you ever wondered how police make their sketches? did you think \"with a pencil, duh\"? well, in either case you should come do this with me.\n\nparticipants will all be photographed with a polaroid camera. photos will be shuffled and distributed among the crowd, then you will be assigned a partner. you will use your words to describe the photo you received to your partner (for instance if the photograph had someone with hazel almond eyes you would say that same sequence of words, or something else if you prefer) and your partner will attempt to draw the subject of the photograph from your descriptions. at the end, I will return the Polaroids and the attached souls to their subjects and everyone will try to match their own photo to the shoddy police sketch (or good ones, if available). some sort of reward will be devised for getting it right.\n\nI do think with my students regularly and it's quite a bit of fun. by the end you will hopefully be more aware of the limitations of human speech in describing physical appearance, your skills as a communicator, and how horrifying we actually use these things in courts of laws.",
     "org": "Jessica Coors-Banquet",
-    "iso": "2026-06-20T17:41:00Z"
+    "iso": "2026-06-20T17:41:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1005,7 +1153,8 @@
     "location": "Far Field",
     "desc": "Dodgeball in the field! We'll use foam balls and standard USA dodgeball rules (which I'll explain at the start of the event). If we're feeling it, we might play some fun variants in the second hour.\n\nDodgeball is a high-energy physical activity, with all of the usual risks that entails.",
     "org": "Ari Zerner",
-    "iso": "2026-06-20T18:00:00Z"
+    "iso": "2026-06-20T18:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1017,7 +1166,8 @@
     "location": "Amphitheater",
     "desc": "We invite seekers and skeptics alike to an introductory workshop on ceremonial magick.\n\nMagick, not to be confused with stage magic, is “the Science and Art of causing Change to occur in conformity with Will.” \n\nCeremonial magick is part of the Western occult tradition. This workshop focuses on the foundational rituals.\n\nFrater Veritatis will open by performing the Lesser Banishing Ritual of the Pentagram, casting a circle to cleanse and consecrate our space.\n\nInside this circle, you will learn the Qabalistic Cross, a short grounding ritual that involves standing, making gestures with your hands, visualizing light, and intoning words aloud.\n\nYou will also learn some theory and history along the way, including Qabalah, Hermeticism, and the Golden Dawn.\n\nBelief is not required to experience magick. See for yourself.",
     "org": "Adhara",
-    "iso": "2026-06-20T18:02:00Z"
+    "iso": "2026-06-20T18:02:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1029,19 +1179,8 @@
     "location": "Pavilion",
     "desc": "We tend to think of agency as internal willpower - action caused by a deliberate choice against passive drifting.\n\nI want to offer a different view: agency that *responds* to opportunities and *completes* them. A view in which all action is relational, the result of interacting tension and release, yin and yang. Like in a video game, you act when the moment calls you to act, rather than having to force yourself to act. \n\nI'll have a brief presentation and then we'll open to a discussion circle. If the opportunity arises, I might be able to provide some physical demonstrations!",
     "org": "Harry",
-    "iso": "2026-06-20T18:30:00Z"
-  },
-  {
-    "date": "2026-06-20",
-    "day": "Sat",
-    "start": "15:30",
-    "end": "16:30",
-    "dur": "1h",
-    "summary": "Vibe Jam 2 Setup and Sound Check",
-    "location": "Barn Theater",
-    "desc": "Set up and sound check for Vibe Jam 2. For wiring, plugging in, stage setup, and mixing. \n\nSignups will also open at this time!\n\nBring big instruments now if you have them, so we can make sure they have space.",
-    "org": "Gubes",
-    "iso": "2026-06-20T19:30:00Z"
+    "iso": "2026-06-20T18:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1053,7 +1192,34 @@
     "location": "Pavilion",
     "desc": "Join Buddhi to explore the basic physics and relational practices that underpin dancing with others, from eye contact to contact improv and flow acrobatics. We'll use the tools we have at hand: gravity, space, levels, and levers, to explore force, power, and strategies for getting up and down off the ground. We’ll work solo, in dyads, and in groups, playing with tension and compression, self and other, symbiosis and our own uniqueness, and all of the fuzzy lines in between. Come in clothes you can move and dance and lie on the floor in. No prior experience necessary! Get ready to open up new possibilities for safe intimacy, play, and connection in your dance, and flex your Yes and No muscles.",
     "org": "big buddhi",
-    "iso": "2026-06-20T19:30:00Z"
+    "iso": "2026-06-20T19:30:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-20",
+    "day": "Sat",
+    "start": "15:30",
+    "end": "16:30",
+    "dur": "1h",
+    "summary": "Vibe Jam 2 Setup and Sound Check",
+    "location": "Barn Theater",
+    "desc": "Set up and sound check for Vibe Jam 2. For wiring, plugging in, stage setup, and mixing. \n\nSignups will also open at this time!\n\nBring big instruments now if you have them, so we can make sure they have space.",
+    "org": "Gubes",
+    "iso": "2026-06-20T19:30:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-20",
+    "day": "Sat",
+    "start": "16:00",
+    "end": "17:30",
+    "dur": "1h 30m",
+    "summary": "Infodump! At the Autmoot!",
+    "location": "Pond Fire Pit",
+    "desc": "A Very Vibecamp Pechakucha - anyone who would like to present about anything for 10 minutes, come present! No sign-up in advance, if you want to present get here on time and we'll form a queue. No projector, but if you want to bring a laptop or physical visual aid feel free! Present for up to 10 minutes, but you will be silenced at the 10 minute mark no exceptions!",
+    "org": "Myk",
+    "iso": "2026-06-20T20:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1065,19 +1231,8 @@
     "location": "Barn Theater",
     "desc": "The ultimate improv jam session is back by popular demand! Bring an instrument, meet your bandmates on stage, and make a whole song on the fly with no rehearsal! \n\nSome basic musical prowess is recommended (chords, scales if you want to solo, ability to keep rhythm, etc). \n\nBringing your own instrument is strongly encouraged, but there may be a few you can use. We should hopefully have a full drum kit, a few amplifiers, and a few microphones set up. No matter what instrument you play, you're encouraged to bring it along!\n\nSee you on stage!",
     "org": "Gubes",
-    "iso": "2026-06-20T20:30:00Z"
-  },
-  {
-    "date": "2026-06-20",
-    "day": "Sat",
-    "start": "17:00",
-    "end": "18:00",
-    "dur": "1h",
-    "summary": "Vibecamp Basketball",
-    "location": "Barn Theater Basketball Court",
-    "desc": "Did you know Vibecamp has a basketball court? \n\nI’ll bring the basketball. Let’s hoop!\n\nAll skill levels welcome!\n\nNever played? I’ll teach you how to dribble and shoot a layup!\n\nWant to chill and shoot around? Let’s play HORSE or Around the World!\n\nFeeling competitive? Let’s run pickup or 1-on-1!\n\nLove basketball but don’t feel like playing? Come talk hoops or just chill and watch people play!\n\n(also feel free to use the ball or ask to play any time during camp)",
-    "org": "Adhara",
-    "iso": "2026-06-20T21:00:00Z"
+    "iso": "2026-06-20T20:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1089,7 +1244,21 @@
     "location": "Pavilion",
     "desc": "Come ballroom dance! We will be dancing a mix of the three styles that I ran lessons for earlier this weekend: Rumba, Foxtrot, & Swing.\n\nThere will be a (brief) review at the start of the event, so feel free to come even if you don't know the dances well or at all.\n\nThese are partner dances, so expect some contact.",
     "org": "Ian Hines",
-    "iso": "2026-06-20T21:00:00Z"
+    "iso": "2026-06-20T21:00:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-20",
+    "day": "Sat",
+    "start": "17:00",
+    "end": "18:00",
+    "dur": "1h",
+    "summary": "Vibecamp Basketball",
+    "location": "Barn Theater Basketball Court",
+    "desc": "Did you know Vibecamp has a basketball court? \n\nI’ll bring the basketball. Let’s hoop!\n\nAll skill levels welcome!\n\nNever played? I’ll teach you how to dribble and shoot a layup!\n\nWant to chill and shoot around? Let’s play HORSE or Around the World!\n\nFeeling competitive? Let’s run pickup or 1-on-1!\n\nLove basketball but don’t feel like playing? Come talk hoops or just chill and watch people play!\n\n(also feel free to use the ball or ask to play any time during camp)",
+    "org": "Adhara",
+    "iso": "2026-06-20T21:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1101,7 +1270,8 @@
     "location": "Meeting Room",
     "desc": "Show and tell but you only bring your body.\n\nShow off your cool scar, weird mole, fun tattoos, etc.",
     "org": "Zack",
-    "iso": "2026-06-20T21:30:00Z"
+    "iso": "2026-06-20T21:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1113,7 +1283,8 @@
     "location": "Barn Theater",
     "desc": "Time for resetting the stage and packing/ wrapping everything up after Vibe Jam. \n\nLength subject to change; we may not need all 20 minutes.\n\nIf you have an event at the Barn Theater directly after this one, and you want to coordinate equipment use (eg maybe you want a microphone or amp still set up), come to this event.",
     "org": "Gubes",
-    "iso": "2026-06-20T22:00:00Z"
+    "iso": "2026-06-20T22:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1125,7 +1296,8 @@
     "location": "Pool",
     "desc": "Return to the golden era of sea shanties (~1870 to 1890), with songs that are designed to be sung by working sailors. The bar is low, no vocal talent required, enthusiasm suggested - this year, at the pool! \n\nWill open with a brief discussion of sociopolitical context of shanties: pro workers rights, pro sex work, anti whale.\n\nBring a cup for grog\n\n((songbook is being updated for 5camp, will update once its up))",
     "org": "Atin",
-    "iso": "2026-06-20T22:00:00Z"
+    "iso": "2026-06-20T22:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1137,7 +1309,8 @@
     "location": "Teahouse",
     "desc": "Deliver topic, receive human-written typewriter poem from @joetforhire. Might be good, might suck, you break it you buy it. Outside teahouse entrance. First come first served/limited time only",
     "org": "Joe",
-    "iso": "2026-06-20T22:30:00Z"
+    "iso": "2026-06-20T22:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1149,7 +1322,8 @@
     "location": "Dining Hall",
     "desc": "Come eat at the Eating Place",
     "org": "brundolf",
-    "iso": "2026-06-20T23:00:00Z"
+    "iso": "2026-06-20T23:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1161,7 +1335,8 @@
     "location": "Pool",
     "desc": "drinks created and served by mauve_sky and surrealistship, with love\n\nalcohol and n/a options",
     "org": "anastasia",
-    "iso": "2026-06-20T23:30:00Z"
+    "iso": "2026-06-20T23:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1173,7 +1348,8 @@
     "location": "Amphitheater",
     "desc": "Volunteers will deliver some sort of speech or other public performance on stage. The rest of the audience will boo, jeer, heckle, etc if they want to. Cheering, clapping, and other forms of positive feedback are STRICTLY FORBIDDEN.\n\nFAQ:\nQ: Even sarcastic clapping?\n\nA: Yes. If several people clap sarcastically, it sounds the same as a smaller number of sincere clappers. FORBIDDEN\n\nQ: Can we throw things?\n\nA: No, if someone got hurt I could be blamed for it. Try to avoid presenting anything that could injure someone either.\n\nQ: How often should I jeer?\n\nA: This gets into jeering theory. I will deliver a brief presentation on the matter at the event.",
     "org": "mercury",
-    "iso": "2026-06-21T00:30:00Z"
+    "iso": "2026-06-21T00:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1185,19 +1361,21 @@
     "location": "Pavilion",
     "desc": "Placeholder event for friday night DJ performances by <PENDING> please DM me if interested in DJing!\n\nI don't have a set planned for this and am relying on other DJs to fill in the time, event may end earlier depending on how long peeps wanna play/dance for.",
     "org": "Ra",
-    "iso": "2026-06-21T01:00:00Z"
+    "iso": "2026-06-21T01:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
     "day": "Sat",
-    "start": "22:30",
-    "end": "01:30",
-    "dur": "3h",
-    "summary": "Glosso In Real Life",
-    "location": "Covered area next to the Tea House",
-    "desc": "IT'S HERE (for the first time)! THE THRILLING EVENT THAT MAKES POLLING DATA OF POASTERS AND DELIGHTS ANYONE WHO'S FILLED OUT A BUZZFEED QUIZ! COME EXPERIENCE THE COMBINED POWERS OF STATISTICAL ANALYSIS AND COMPATIBILITY ALGORITHMS!\n\nWe will meet in the covered overhang right next to the Tea House, and spread out from there. I shall have Glosso invites for those who need one, and I'm certain there will be plenty for everyone. Come and find new people to rank you!\n\nNote: Attendees will receive a special Glosso achievement!",
-    "org": "Michael",
-    "iso": "2026-06-21T02:30:00Z"
+    "start": "21:00",
+    "end": "22:00",
+    "dur": "1h",
+    "summary": "The Existential Analytic of Vibecamp",
+    "location": "Outdoor Eatery and Tablespace",
+    "desc": "Calling all TOVs (Theories of Vibecamp)! \n\nWhat is the essence of Vibecamp? Why are we here, and why does it work? What makes it different and special? If Vibecamp was a game, how would you win? If Vibecamp was a metaphor for the human condition, what would it say? \n\nAll revelations and utopian visions inspired by your VC experience are welcome. \n\nFormat: lightly moderated discussion circle.",
+    "org": "Avi",
+    "iso": "2026-06-21T01:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1209,7 +1387,21 @@
     "location": "Tea House",
     "desc": "It is, indeed, marvelous. An irony free zone where everything is beautiful, and nothing hurts. Where everybody, regardless of race, creed, color, or degree of inebriation, is welcomed. Its warm, yellow glow a beacon of hope and salvation, inviting the hungry, the lost, the seriously hammered, all across VibeCamp, to come inside. A place of safety and nourishment. It is always, always faithful, always there, for you.\n\nAfter all the joys and delights of the weekend, come and find recovery and respite with breakfast food into the wee hours of the morning.",
     "org": "Michael",
-    "iso": "2026-06-21T02:30:00Z"
+    "iso": "2026-06-21T02:30:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-20",
+    "day": "Sat",
+    "start": "22:30",
+    "end": "01:30",
+    "dur": "3h",
+    "summary": "Glosso In Real Life",
+    "location": "Covered area next to the Tea House",
+    "desc": "IT'S HERE (for the first time)! THE THRILLING EVENT THAT MAKES POLLING DATA OF POASTERS AND DELIGHTS ANYONE WHO'S FILLED OUT A BUZZFEED QUIZ! COME EXPERIENCE THE COMBINED POWERS OF STATISTICAL ANALYSIS AND COMPATIBILITY ALGORITHMS!\n\nWe will meet in the covered overhang right next to the Tea House, and spread out from there. I shall have Glosso invites for those who need one, and I'm certain there will be plenty for everyone. Come and find new people to rank you!\n\nNote: Attendees will receive a special Glosso achievement!",
+    "org": "Michael",
+    "iso": "2026-06-21T02:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-20",
@@ -1221,7 +1413,8 @@
     "location": "TBD",
     "desc": "Come watch Francis Ford Coppola's insane fever dream of a film with your fellow vibecampers!",
     "org": "Paul",
-    "iso": "2026-06-21T03:00:00Z"
+    "iso": "2026-06-21T03:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-21",
@@ -1233,7 +1426,21 @@
     "location": "Sports field.",
     "desc": "We'll lie in the grass, heads together, whispering secrets to one another while we watch the Delta Aquariid shower. We expect 5-10 meteors an hour and all the stars in between—weather permitting.\nHosted by Lucia (@lcmedium) and Misha (@mishapathy)",
     "org": "Misha",
-    "iso": "2026-06-21T04:30:00Z"
+    "iso": "2026-06-21T04:30:00Z",
+    "new": false
+  },
+  {
+    "date": "2026-06-21",
+    "day": "Sun",
+    "start": "06:09",
+    "end": "08:09",
+    "dur": "2h",
+    "summary": "Run.",
+    "location": "WH",
+    "desc": "Go for a run. Meet at WH to stretch and then we run. Aiming for 6 miles out/6 miles back, though depending on how I feel that day. Bring water, wear sunscreen, aim for 9:00/mi, and feel free to stop anytime.",
+    "org": "Hazel",
+    "iso": "2026-06-21T10:09:00Z",
+    "new": false
   },
   {
     "date": "2026-06-21",
@@ -1245,7 +1452,8 @@
     "location": "Near Cabin U or eating bagels on the outdoor patio of the dining hall",
     "desc": "A place for families w/ kids to gather and do kid things. Parents can rotate childcare shifts to roam and enjoy the vibes. Those without children are welcome to stop by and play or take a childcare shift. Families generally spend the mornings together as the children are early risers and there are fewer scheduled events in the AM. There will be a hired babysitter Friday and Saturday evening. \n\nThe aim is to make vibecamp family friendly and invigorating for all ages. Kiddie Camp works to prevent one parent from being the de facto caretaker or remove the need to find an all-weekend babysitter.  \n\nCentered around the Family Cabin, Cabin U. Toys and activities are provided as a collaborative effort among parents.",
     "org": "DancingHorse16",
-    "iso": "2026-06-21T11:30:00Z"
+    "iso": "2026-06-21T11:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-21",
@@ -1257,7 +1465,8 @@
     "location": "Dining Hall",
     "desc": "Fruit, bagels, and coffee?",
     "org": "brundolf",
-    "iso": "2026-06-21T12:00:00Z"
+    "iso": "2026-06-21T12:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-21",
@@ -1269,7 +1478,8 @@
     "location": "At the coffee tent!",
     "desc": "Join us after breakfast to read, perform, or recite poetry Sunday morning! Jess and I will bring a few volumes of poetry so that you might find a poem you like and share it with your peers. If you like, consider this exchange of spoken word a secular prayer!\nHosted by Jess Coors-Banquet (@SYNESTHEIZURE) and Misha (@mishapathy)",
     "org": "Misha",
-    "iso": "2026-06-21T13:30:00Z"
+    "iso": "2026-06-21T13:30:00Z",
+    "new": false
   },
   {
     "date": "2026-06-21",
@@ -1281,7 +1491,8 @@
     "location": "Amphitheater",
     "desc": "Our final farewell to Vibecamp V",
     "org": "brundolf",
-    "iso": "2026-06-21T14:00:00Z"
+    "iso": "2026-06-21T14:00:00Z",
+    "new": false
   },
   {
     "date": "2026-06-21",
@@ -1293,7 +1504,8 @@
     "location": "Lawn by pool and sanctuary",
     "desc": "Start your day (or end your night) by getting your blood flowing, replacing mental suffering with somatic suffering, and entering deep deep time time together. On the lawn by the pool and sanctuary.",
     "org": "Touch Fucking Moonflower",
-    "iso": "2026-06-21T14:08:00Z"
+    "iso": "2026-06-21T14:08:00Z",
+    "new": false
   },
   {
     "date": "2026-06-21",
@@ -1305,6 +1517,7 @@
     "location": "Central Field",
     "desc": "Do you love spooning but hate choosing between being big spoon and little spoon? Well now you can be both! With a critical mass of people, we can all be arranged in a spooning circle, allowing us to be be both big and little spoon at last. We will achieve harmony and peace at last. Join us. Join Us.",
     "org": "Andrew Mackenzie",
-    "iso": "2026-06-22T00:00:00Z"
+    "iso": "2026-06-22T00:00:00Z",
+    "new": false
   }
 ]
