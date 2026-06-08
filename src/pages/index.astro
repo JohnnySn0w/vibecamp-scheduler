@@ -353,7 +353,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
               ))}
               {bars.map((e, i) => (
                 <button
-                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary === "Vibecamp Trials" ? "trials" : ""} ${(e.org === "Leah (Prime)" || e.summary === "Welcome to the Vibe Parade") ? "sheen" : ""}`}
+                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary && e.summary.startsWith("Vibecamp Trials") ? "trials" : ""} ${(e.org === "Leah (Prime)" || e.summary === "Welcome to the Vibe Parade") ? "sheen" : ""}`}
                   id={`ev${i}`}
                   data-bx={e.gleft} data-bw={e.barW}
                   style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
@@ -1290,41 +1290,47 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       trayToggle.addEventListener("click", () => { tray.classList.toggle("collapsed"); updateTrayToggle(); });
       updateTrayToggle();
 
-      // ---- sparkles inside "Vibecamp Trials" — it's Michael's event, so it's special ----
-      // The bar is very wide AND (in Row view) a background layer beneath the foreground
-      // events, so sparkles drawn into it get occluded. Instead we draw them into a
-      // transparent, click-through overlay that mirrors the bar's box but stacks on top.
-      // The overlay's overflow:hidden keeps every sparkle inside the bar's bounds.
+      // ---- sparkles inside the "Vibecamp Trials" events — Michael's, so they're special ----
+      // (The Trials are now split into several bars that all start with "Vibecamp Trials"; we
+      // sparkle every one of them.) Each bar is wide AND (in Row view) a background layer
+      // beneath the foreground events, so sparkles drawn into it get occluded. Instead we draw
+      // them into a transparent, click-through overlay per bar that mirrors its box but stacks
+      // on top. The overlay's overflow:hidden keeps every sparkle inside the bar's bounds.
       (function sparkleTrials() {
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        const host = document.querySelector(".bar.trials");
-        if (!host) return;
+        const hosts = [...document.querySelectorAll(".bar.trials")];
+        if (!hosts.length) return;
         const scrollEl = document.getElementById("scroll");
-        const ov = document.createElement("div");
-        ov.className = "spark-overlay";
-        host.offsetParent.appendChild(ov);    // sibling of the bars, inside .lanes
         const GLYPHS = ["✦", "✧", "⋆", "✶", "·"];
+        const pairs = hosts.map((host) => {
+          const ov = document.createElement("div");
+          ov.className = "spark-overlay";
+          (host.offsetParent || host.parentElement).appendChild(ov); // sibling of the bars, inside .lanes
+          return { host, ov };
+        });
         setInterval(() => {
-          const hidden = host.classList.contains("dim") || host.style.display === "none";
-          ov.style.display = hidden ? "none" : "";
-          if (hidden) return;
-          // keep the overlay aligned to the bar (geometry shifts on zoom / view change)
-          ov.style.left = host.offsetLeft + "px"; ov.style.top = host.offsetTop + "px";
-          ov.style.width = host.offsetWidth + "px"; ov.style.height = host.offsetHeight + "px";
-          const br = host.getBoundingClientRect(), sr = scrollEl.getBoundingClientRect();
-          const visL = Math.max(br.left, sr.left), visR = Math.min(br.right, sr.right);
-          if (visR - visL < 8 || br.bottom < sr.top || br.top > sr.bottom) return; // off-screen
-          const localL = visL - br.left, localR = visR - br.left;
-          const burst = 2 + Math.floor(Math.random() * 2);   // 2-3 sparkles per tick
-          for (let k = 0; k < burst; k++) {
-            const s = document.createElement("span");
-            s.className = "sparkle";
-            s.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-            s.style.left = (localL + Math.random() * (localR - localL)) + "px";
-            s.style.top = (3 + Math.random() * Math.max(1, host.offsetHeight - 13)) + "px";
-            s.style.fontSize = (0.55 + Math.random() * 0.55) + "rem";
-            ov.appendChild(s);
-            s.addEventListener("animationend", () => s.remove(), { once: true });
+          for (const { host, ov } of pairs) {
+            const hidden = host.classList.contains("dim") || host.style.display === "none";
+            ov.style.display = hidden ? "none" : "";
+            if (hidden) continue;
+            // keep the overlay aligned to its bar (geometry shifts on zoom / view change)
+            ov.style.left = host.offsetLeft + "px"; ov.style.top = host.offsetTop + "px";
+            ov.style.width = host.offsetWidth + "px"; ov.style.height = host.offsetHeight + "px";
+            const br = host.getBoundingClientRect(), sr = scrollEl.getBoundingClientRect();
+            const visL = Math.max(br.left, sr.left), visR = Math.min(br.right, sr.right);
+            if (visR - visL < 8 || br.bottom < sr.top || br.top > sr.bottom) continue; // off-screen
+            const localL = visL - br.left, localR = visR - br.left;
+            const burst = 2 + Math.floor(Math.random() * 2);   // 2-3 sparkles per tick
+            for (let k = 0; k < burst; k++) {
+              const s = document.createElement("span");
+              s.className = "sparkle";
+              s.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+              s.style.left = (localL + Math.random() * (localR - localL)) + "px";
+              s.style.top = (3 + Math.random() * Math.max(1, host.offsetHeight - 13)) + "px";
+              s.style.fontSize = (0.55 + Math.random() * 0.55) + "rem";
+              ov.appendChild(s);
+              s.addEventListener("animationend", () => s.remove(), { once: true });
+            }
           }
         }, 150);
       })();
