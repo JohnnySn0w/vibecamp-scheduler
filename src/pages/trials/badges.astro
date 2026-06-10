@@ -37,7 +37,7 @@ const HEARTS = [
 const BADGES = [
   {
     file: "map-territory", title: "The Map Is Not the Territory", color: "#4f9e62", // green
-    element: "Earth", sigil: "⛰",
+    element: "Earth", sigil: "⛰️",
     flavor: "Ramblewood's paths are drawn on every map of camp — but the territory keeps a few places the map won't admit to. Walk it with your eyes open.",
     docs: [
       { label: "The Surveyor's Erratum", href: "/trials/documents/#erratum" },
@@ -45,7 +45,7 @@ const BADGES = [
   },
   {
     file: "mpot-ypot", title: "MPOT Is Not YPOT", color: "#d9b13b", // yellow
-    element: "Air", sigil: "🌬",
+    element: "Air", sigil: "🌬️",
     flavor: "Words travel on the wind here. Three field documents have surfaced — each one written around something, never quite about it. Follow where the language points and bring back what it spells.",
     docs: [
       { label: "The Abraxas File",      href: "/trials/documents/#abraxas" },
@@ -120,7 +120,7 @@ const BADGES = [
       {b.docs.length > 0 ? (
         <ul class="tp-docs">
           {b.docs.map((doc) => (
-            <li><a href={doc.href}>🗂 {doc.label}</a></li>
+            <li><a href={doc.href}>🗂️ {doc.label}</a></li>
           ))}
         </ul>
       ) : (
