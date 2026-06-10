@@ -271,7 +271,9 @@
       /* ambient sparkles on the Trials card */
       .choice-spark { position: absolute; inset: 0; pointer-events: none; }
       .choice-spark i {
-        position: absolute; font-style: normal; color: var(--yellow); opacity: 0;
+        /* amber ink — pastel yellow vanished against the canary paper */
+        position: absolute; font-style: normal; color: #b27708; opacity: 0;
+        text-shadow: 0 0 6px rgba(178, 119, 8, .45);
         animation: land-spark 3.2s ease-in-out infinite;
       }
       .choice-spark i:nth-child(1) { top: 12%; left: 8%;  font-size: .8rem;  animation-delay: 0s; }
