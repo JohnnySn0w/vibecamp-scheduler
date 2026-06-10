@@ -31,12 +31,14 @@
 
     <main class="land">
       <header class="land-hero">
-        <figure class="polaroid" aria-hidden="true">
+        <h1 class="sr-only">Vibecamp 5</h1>
+        <figure class="polaroid">
           <img class="land-logo" src="/vibecamp_logo.png" alt="" />
-          <figcaption>vibecamp 5 ✦</figcaption>
+          <figcaption>
+            <span class="scratch"><s>Fivecamp</s> <s>5camp</s></span>
+            vibecamp 5 ✦
+          </figcaption>
         </figure>
-        <p class="kicker">✦ Vibe Camp</p>
-        <h1>Vibecamp&nbsp;5</h1>
         <p class="land-sub">June 18–21, 2026 · Camp Ramblewood, MD</p>
       </header>
 
@@ -170,10 +172,15 @@
       }
       @media (max-width: 640px) { .board { padding: 2rem 1rem 1.8rem; border-width: 8px; } }
 
-      /* the logo as a pinned polaroid */
+      .sr-only {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+      }
+
+      /* the logo as a pinned polaroid — now the hero itself */
       .polaroid {
-        display: inline-block; margin: 0 auto 1.1rem;
-        background: #f4f1ea; padding: 10px 10px 6px;
+        display: inline-block; margin: 0 auto .4rem;
+        background: #f4f1ea; padding: 12px 12px 8px;
         transform: rotate(-3deg);
         box-shadow: 0 8px 22px rgba(0,0,0,.4);
         position: relative;
@@ -184,11 +191,13 @@
         background: radial-gradient(circle at 35% 30%, #f8b4c0, #e8516d 55%, #8e2236);
         box-shadow: 0 3px 4px rgba(0,0,0,.4);
       }
-      .polaroid .land-logo { margin: 0; }
+      .polaroid .land-logo { margin: 0; width: 128px; height: 128px; }
       .polaroid figcaption {
-        font-family: var(--hand); font-size: .82rem; color: #4a4438;
-        padding-top: 4px;
+        font-family: var(--hand); font-size: 1.05rem; color: #4a4438;
+        padding-top: 5px; line-height: 1.25;
       }
+      .polaroid .scratch { display: block; font-size: .8rem; color: #8a7f6a; }
+      .polaroid .scratch s { text-decoration-thickness: 2px; margin: 0 .2rem; }
 
       /* a scrawled sticky note on the board */
       .sticky {

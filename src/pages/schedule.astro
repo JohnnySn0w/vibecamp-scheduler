@@ -353,7 +353,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
               ))}
               {bars.map((e, i) => (
                 <button
-                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary && e.summary.startsWith("Vibecamp Trials") ? "trials" : ""} ${(e.org === "Leah (Prime)" || e.summary === "Welcome to the Vibe Parade") ? "sheen" : ""}`}
+                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary && e.summary.startsWith("Vibecamp Trials") ? "trials" : ""} ${(e.org === "Leah (Prime)" || e.org === "Emily (emily_for_now)" || e.summary === "Welcome to the Vibe Parade") ? "sheen" : ""}`}
                   id={`ev${i}`}
                   data-bx={e.gleft} data-bw={e.barW}
                   style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
@@ -494,7 +494,9 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       <div class="review-card mapcard">
         <button id="mapmodal-close" class="review-x" aria-label="Close">✕</button>
         <h3>Camp map</h3>
-        <img class="mapfull" src="/vibecamp-map.png" alt="Vibecamp 5 camp map — Camp Ramblewood, MD" />
+        <div class="mapwrap">
+          <img class="mapfull" src="/vibecamp-map.png" alt="Vibecamp 5 camp map — Camp Ramblewood, MD" />
+        </div>
       </div>
     </div>
 
@@ -1822,7 +1824,34 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .howto-divider { border-top: 1px solid var(--surface1); margin: 1.15rem 0 .85rem; }
       .howto-subhead { margin: 0 0 .65rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--overlay1); }
       .mapcard { width: min(980px, 100%); }
-      .mapfull { display: block; width: 100%; height: auto; margin-top: .4rem; border-radius: .6rem; border: 1px solid var(--surface1); }
+      /* the camp map pinned to a corkboard (matching the trials pages' aesthetic) */
+      .mapcard {
+        border: 10px solid #4a3520; border-radius: 8px;
+        background:
+          radial-gradient(rgba(0,0,0,.16) 1px, transparent 1.5px),
+          radial-gradient(rgba(255,236,200,.06) 1px, transparent 1.6px),
+          radial-gradient(rgba(0,0,0,.10) 1.3px, transparent 1.9px),
+          linear-gradient(135deg, #6b4f33, #58412a);
+        background-size: 9px 11px, 15px 17px, 22px 19px, 100% 100%;
+        background-position: 0 0, 5px 8px, 11px 3px, 0 0;
+        box-shadow: inset 0 2px 18px rgba(0,0,0,.45), 0 14px 38px rgba(17,17,27,.5);
+      }
+      .mapcard h3 {
+        color: #f4ecd8; font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      }
+      .mapfull {
+        display: block; width: 100%; height: auto; margin-top: .4rem;
+        border-radius: 2px; border: none; position: relative;
+        transform: rotate(-.5deg);
+        box-shadow: 0 6px 18px rgba(0,0,0,.45);
+      }
+      .mapwrap { position: relative; }
+      .mapwrap::after {
+        content: ""; position: absolute; top: 4px; left: 50%; margin-left: -8px;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #f8b4c0, #e8516d 55%, #8e2236);
+        box-shadow: 0 3px 4px rgba(0,0,0,.45);
+      }
 
       /* printable schedule — hidden on screen, revealed when printing */
       .print-schedule { display: none; }
