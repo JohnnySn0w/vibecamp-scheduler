@@ -110,7 +110,6 @@ const BADGES = [
           </svg>
           <div class="b3d-gloss" aria-hidden="true" style={`clip-path: url(#cutbb-${i})`}></div>
         </div>
-        <figcaption>{b.title}</figcaption>
       </figure>
     ))}
   </div>
@@ -275,15 +274,10 @@ const BADGES = [
     0%, 100% { transform: rotateY(-7deg) rotateX(3deg) translateY(0); }
     50%      { transform: rotateY(7deg) rotateX(-3deg) translateY(-7px); }
   }
-  figcaption {
-    margin-top: .8rem; text-align: center; font-weight: 600; font-size: 1.02rem;
-    color: var(--subtext1); transition: opacity .4s; font-family: var(--hand);
-  }
 
   /* stacked intro: pile aligned in the grid's center; the whole pile bobs gently */
   .b3d-grid.stacked { cursor: pointer; animation: stack-bob 6s ease-in-out infinite; }
   .b3d-grid.stacked .b3d-inner { animation: none; transition: none; }
-  .b3d-grid.stacked figcaption { opacity: 0; }
   .b3d-grid.spreading .b3d { transition: transform .85s cubic-bezier(.22, .9, .3, 1.03); }
   @keyframes stack-bob {
     0%, 100% { transform: translateY(0); }
