@@ -97,6 +97,38 @@ const crumbs = [
     </div>
   </article>
 
+  <section class="doc-intro">
+    <p>
+      💧 <b>The Trial of Water</b> — the press never sleeps, and neither do the
+      rats. One field document so far.
+    </p>
+  </section>
+
+  <article class="doc doc-news" id="post">
+    <header class="doc-head">
+      <span class="doc-tag">FIELD COPY</span>
+      <h2>The Post File</h2>
+      <p class="doc-sub">THE RAMBLEWOOD POST · CLASSIFIEDS · est. this weekend</p>
+    </header>
+    <div class="doc-body">
+      <p class="news-head">HAVE YOU SEEN THIS RAT?</p>
+      <p>
+        Several rats have nested around camp — plush, photogenic, and exactly
+        where the whispers say they are. The Post will pay handsomely (in glory)
+        for photographic proof of a sighting.
+      </p>
+      <p>
+        Proof is a photo with the rat clearly in frame. Show your sightings at a
+        turn-in shift — or, in the grand tradition of the press, post one for
+        the world to see. Engagement is the lifeblood of journalism.
+      </p>
+      <p class="doc-coords">
+        <span class="censor">█████████</span> · nesting sites are hinted, not listed · <span class="censor">█████████</span>
+      </p>
+      <p class="doc-foot">Stuck? The newsroom keeps three hints on file — just ask the operator.</p>
+    </div>
+  </article>
+
   <section class="t-prose doc-more">
     <p class="muted">
       Documents for the other trials surface once the Trials begin — the signup
@@ -146,6 +178,12 @@ const crumbs = [
     border-radius: .15rem; user-select: none;
   }
   .doc-foot { font-size: .85rem; font-style: italic; color: var(--overlay1); }
+  .news-head {
+    font-size: 1.3rem; font-weight: 800; letter-spacing: .02em; text-align: center;
+    text-transform: uppercase; color: var(--text);
+    border-bottom: 2px solid var(--surface1); padding-bottom: .5rem;
+  }
+  .doc-news .doc-sub { font-variant: small-caps; text-transform: none; letter-spacing: .12em; }
   .doc-more { padding: 1.1rem 1.5rem; }
   .doc-more p { margin: 0; }
 </style>
