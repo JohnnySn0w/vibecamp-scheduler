@@ -870,7 +870,46 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         }
         syncCatChecks();
         updateTrayToggle();
+        saveSelection();
       }
+
+      // ---- persist picks across refreshes ----
+      // Bars are identified by date|start|title — the ev{i} ids are index-based
+      // and shift whenever the daily feed rebuild adds events. Keys that no
+      // longer match (event removed/renamed) drop out silently on restore.
+      const SEL_KEY = "vc-selected", ACK_KEY = "vc-acked";
+      const stableKey = (b) => `${b.dataset.date}|${b.dataset.shm}|${b.dataset.title}`;
+      const barByKey = new Map(bars.map((b) => [stableKey(b), b]));
+      function saveSelection() {
+        try {
+          localStorage.setItem(SEL_KEY, JSON.stringify(
+            bars.filter((b) => b.classList.contains("selected")).map(stableKey)));
+          const acked = [];
+          for (const k of ackedOverlaps) {
+            const [i1, i2] = k.split("|");
+            const a = document.getElementById(i1), b = document.getElementById(i2);
+            if (a && b) acked.push([stableKey(a), stableKey(b)].sort());
+          }
+          localStorage.setItem(ACK_KEY, JSON.stringify(acked));
+        } catch (e) {}
+      }
+      function restoreSelection() {
+        try {
+          for (const k of JSON.parse(localStorage.getItem(SEL_KEY) || "[]")) {
+            const b = barByKey.get(k);
+            if (b) b.classList.add("selected");
+          }
+          for (const p of JSON.parse(localStorage.getItem(ACK_KEY) || "[]")) {
+            const [k1, k2] = p;
+            const a = barByKey.get(k1), b = barByKey.get(k2);
+            if (a && b) ackedOverlaps.add(pairKey(a, b));
+          }
+        } catch (e) {}
+        recompute();
+        refreshToggle();
+      }
+      // (called at the very end of this script, after every const it
+      // indirectly touches — syncCatChecks/catCbs etc. — is initialized)
 
       document.getElementById("tray-clear").addEventListener("click", () => {
         bars.forEach((b) => b.classList.remove("selected", "conflict"));
@@ -991,6 +1030,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
               if (resolved) ackedOverlaps.delete(k);
               else ackedOverlaps.add(k);
             }
+            saveSelection();
             renderReview(); // re-render so events that share an overlap update too
           });
           row.appendChild(info);
@@ -1006,6 +1046,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       document.getElementById("review-cancel").addEventListener("click", closeReview);
       document.getElementById("review-allok").addEventListener("click", () => {
         for (const [a, b] of conflictPairs) ackedOverlaps.add(pairKey(a, b));
+        saveSelection();
         renderReview();
       });
       document.getElementById("review-continue").addEventListener("click", () => { closeReview(); openExport(); });
@@ -1338,6 +1379,8 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           }
         }, 150);
       })();
+      restoreSelection();
+
       // (vertical wheel is left to scroll the page — the schedule is tall, so we no
       //  longer hijack vertical scroll into horizontal. Trackpad/shift+wheel still
       //  scroll the timeline horizontally natively, and drag-to-scroll works on desktop.)
