@@ -298,6 +298,7 @@ const BADGES = [
   .b3d-gloss {
     position: absolute; inset: 0; pointer-events: none; opacity: 0;
     transition: opacity .25s; mix-blend-mode: soft-light;
+    overflow: hidden;   /* the 200% glow child must not widen the page (iOS h-scroll) */
   }
   /* the highlight is a fixed gradient moved via transform (composited) — never repainted */
   .b3d-glow {
