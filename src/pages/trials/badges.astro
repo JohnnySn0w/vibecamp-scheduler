@@ -328,26 +328,28 @@ const BADGES = [
   .b3d-focus { width: 150px; }
 
   .trial-panel {
-    background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
+    background: linear-gradient(178deg, #f5efe0, #ebe2cc);
+    border: none; border-radius: 2px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.45);
     padding: 1.6rem 1.6rem 1.4rem; max-width: 540px; margin: 0 auto; text-align: center;
     opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .35s;
   }
   .trial-panel.tp-in { opacity: 1; transform: none; }
   .tp-element {
     margin: 0 0 .6rem; font-weight: 800; font-size: 1.15rem; letter-spacing: .04em;
-    color: var(--c, var(--yellow));
+    color: color-mix(in srgb, var(--c, #8a6210) 60%, #2f2a20);
   }
-  .tp-flavor { margin: 0 0 1rem; color: var(--subtext1); font-style: italic; }
+  .tp-flavor { margin: 0 0 1rem; color: #5a5340; font-style: italic; }
   .tp-docs { list-style: none; margin: 0 0 1.1rem; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
-  .tp-docs a { color: var(--blue); font-weight: 600; text-decoration: none; }
+  .tp-docs a { color: #2a5db0; font-weight: 600; text-decoration: none; }
   .tp-docs a:hover { text-decoration: underline; }
-  .tp-none { margin: 0 0 1.1rem; color: var(--overlay1); font-size: .92rem; }
+  .tp-none { margin: 0 0 1.1rem; color: #8d8169; font-size: .92rem; }
   .tp-back {
-    background: none; border: 1px solid var(--surface1); border-radius: .55rem;
-    color: var(--subtext0); font: inherit; font-size: .9rem; font-weight: 600;
+    background: none; border: 1px solid #b5ab92; border-radius: .55rem;
+    color: #6f6550; font: inherit; font-size: .9rem; font-weight: 600;
     padding: .45rem .9rem; cursor: pointer;
   }
-  .tp-back:hover { border-color: var(--yellow); color: var(--text); }
+  .tp-back:hover { border-color: #5b3a16; color: #2f2a20; }
 
   @media (prefers-reduced-motion: reduce) {
     .b3d-inner { animation: none; transition: none; }

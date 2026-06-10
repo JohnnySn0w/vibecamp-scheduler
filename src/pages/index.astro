@@ -217,12 +217,14 @@
 
       /* cards as flyers pinned at a slight angle, taped at the top */
       .choice {
-        position: relative; text-decoration: none; color: var(--text);
-        background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
+        position: relative; text-decoration: none;
+        background: linear-gradient(178deg, #f5efe0, #ebe2cc);
+        color: #443e30; border: none; border-radius: 2px;
+        box-shadow: 0 10px 24px rgba(0,0,0,.45);
         padding: 2rem 1.5rem 1.5rem; text-align: left;
         display: flex; flex-direction: column; gap: .55rem;
         transform: rotate(var(--tilt, 0deg));
-        transition: transform .18s, box-shadow .18s, border-color .18s;
+        transition: transform .18s, box-shadow .18s;
       }
       .choice::before {
         content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
@@ -236,18 +238,18 @@
       }
       .choice:hover, .choice:focus-visible {
         transform: rotate(0deg) translateY(-5px) scale(1.015);
-        box-shadow: 0 16px 42px color-mix(in srgb, var(--ac) 18%, rgba(17,17,27,.5));
-        border-color: var(--ac);
+        box-shadow: 0 16px 42px color-mix(in srgb, var(--ac) 22%, rgba(17,17,27,.5));
       }
+      .choice:focus-visible { outline: 2px solid var(--ac); outline-offset: 2px; }
       .choice-emoji {
         font-size: 2.6rem; line-height: 1; width: max-content;
         transform: rotate(-8deg); filter: drop-shadow(0 3px 6px rgba(17,17,27,.4));
         transition: transform .18s;
       }
       .choice:hover .choice-emoji { transform: rotate(6deg) scale(1.12); }
-      .choice-title { font-family: var(--hand); font-size: 1.45rem; font-weight: 700; }
-      .choice-desc { color: var(--subtext0); font-size: .95rem; }
-      .choice-go { margin-top: auto; padding-top: .6rem; color: var(--ac, var(--blue)); font-weight: 600; font-size: .95rem; font-family: var(--hand); }
+      .choice-title { font-family: var(--hand); font-size: 1.45rem; font-weight: 700; color: #2f2a20; }
+      .choice-desc { color: #6f6550; font-size: .95rem; }
+      .choice-go { margin-top: auto; padding-top: .6rem; color: color-mix(in srgb, var(--ac, #8a6210) 55%, #2f2a20); font-weight: 600; font-size: .95rem; font-family: var(--hand); }
 
       /* a few stars drifting between the hero and the cards */
       .land-stars { position: relative; display: block; height: 0; }

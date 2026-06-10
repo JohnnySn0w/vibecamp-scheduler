@@ -244,6 +244,22 @@ const {
       .t-prose a { color: var(--blue); }
       .t-prose .muted { color: var(--overlay1); font-size: .9rem; }
 
+      /* paper variant — anything pinned to the cork reads as ink on paper */
+      .t-prose.paper, .t-card.paper {
+        background: linear-gradient(178deg, #f5efe0, #ebe2cc);
+        border: none; border-radius: 2px;
+        box-shadow: 0 10px 24px rgba(0,0,0,.45);
+        color: #443e30;
+      }
+      .t-prose.paper h2 { color: #5b3a16; }
+      .t-prose.paper p { color: #443e30; }
+      .t-prose.paper a { color: #2a5db0; }
+      .t-prose.paper .muted { color: #8d8169; }
+      .t-card.paper .t-card-title { color: #2f2a20; }
+      .t-card.paper .t-card-desc { color: #6f6550; }
+      .t-card.paper .t-card-go { color: color-mix(in srgb, var(--ac, #8a6210) 55%, #2f2a20); }
+      .t-card.paper:hover, .t-card.paper:focus-visible { border: none; outline: 2px solid var(--ac, var(--yellow)); outline-offset: 2px; }
+
       .trials-foot { padding: 1.4rem 1.5rem 2.4rem; text-align: center; }
       .trials-foot p { margin: 0; font-size: .82rem; color: var(--overlay0); }
       .trials-foot a { color: var(--blue); }
