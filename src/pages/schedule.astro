@@ -893,6 +893,30 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           localStorage.setItem(ACK_KEY, JSON.stringify(acked));
         } catch (e) {}
       }
+      // ---- "+N new since your last visit" badge on the event counter ----
+      // "last visit" = previous browser session: on the session's first load we
+      // snapshot the previously-seen keys and refresh the stored set, so the
+      // badge persists across same-session reloads and resets next visit.
+      try {
+        let prev = sessionStorage.getItem("vc-prev");
+        if (prev == null) {
+          prev = localStorage.getItem("vc-seen") || "null";
+          sessionStorage.setItem("vc-prev", prev);
+          localStorage.setItem("vc-seen", JSON.stringify(bars.map(stableKey)));
+        }
+        const seen = JSON.parse(prev);
+        if (Array.isArray(seen)) {
+          const seenSet = new Set(seen);
+          const fresh = bars.filter((b) => !seenSet.has(stableKey(b))).length;
+          if (fresh > 0) {
+            const badge = document.createElement("span");
+            badge.className = "count-new";
+            badge.textContent = "+" + fresh + " new since your last visit";
+            document.getElementById("count").appendChild(badge);
+          }
+        }
+      } catch (e) {}
+
       function restoreSelection() {
         try {
           for (const k of JSON.parse(localStorage.getItem(SEL_KEY) || "[]")) {
@@ -1487,6 +1511,11 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       }
       .search-clear:hover { background: var(--surface2); color: var(--text); }
       .count { font-size: .85rem; color: var(--subtext1); background: var(--surface0); padding: .45rem .8rem; border-radius: 999px; white-space: nowrap; }
+      .count-new {
+        margin-left: .5rem; padding: .12rem .55rem; border-radius: 999px;
+        background: var(--green); color: var(--crust);
+        font-size: .72rem; font-weight: 800; letter-spacing: .02em;
+      }
       .hint { font-size: .8rem; color: var(--overlay1); }
       .search-note { margin: .7rem auto 0; max-width: 40rem; font-size: .8rem; color: var(--overlay1); text-align: center; }
       .watch-note { margin: .55rem auto 0; max-width: 42rem; font-size: .95rem; color: var(--subtext1); text-align: center; }
