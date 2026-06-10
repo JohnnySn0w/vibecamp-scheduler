@@ -164,6 +164,9 @@ const {
           inset 0 2px 18px rgba(0,0,0,.45),
           inset 0 0 0 2px rgba(0,0,0,.2),
           0 14px 38px rgba(17,17,27,.4);
+        /* rasterize the cork gradients once on their own compositor layer —
+           otherwise everything animating over them repaints the texture per frame */
+        transform: translateZ(0);
       }
       @media (max-width: 640px) { .board { padding: 2rem 1rem 1.8rem; border-width: 8px; } }
 

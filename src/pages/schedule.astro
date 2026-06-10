@@ -1268,7 +1268,9 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       window.addEventListener("pointerup", () => { down = false; scroll.classList.remove("grabbing"); });
 
       // ---- scroll-driven sheen: slide the highlight streak on .sheen bars as you scroll ----
-      const setSheen = () => document.documentElement.style.setProperty("--sheenx", (-scroll.scrollLeft * 0.6) + "px");
+      // keep the offset within one 320px gradient period — the ::after overlay is
+      // exactly one period wider than the bar, so this never exposes an edge
+      const setSheen = () => document.documentElement.style.setProperty("--sheenx", (-(scroll.scrollLeft * 0.6) % 320) + "px");
       scroll.addEventListener("scroll", setSheen, { passive: true });
       setSheen();
 
@@ -1580,8 +1582,12 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
 
       /* glossy sheen for Leah (Prime)'s events + "Welcome to the Vibe Parade" —
          the highlight streak slides as the timeline is scrolled (--sheenx) */
+      /* the streak slides via transform (GPU-composited), not background-position
+         (which repaints every scroll frame); the overlay is one period wider and
+         --sheenx stays within (-320px, 0] so coverage never runs out */
       .bar.sheen::after {
-        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        content: ""; position: absolute; top: 0; bottom: 0; left: 0;
+        width: calc(100% + 320px); border-radius: inherit;
         pointer-events: none; z-index: 2; mix-blend-mode: screen; opacity: .9;
         background: linear-gradient(105deg,
           transparent 38%,
@@ -1590,7 +1596,8 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           color-mix(in srgb, var(--c) 30%, rgba(255,255,255,.85)) 52%,
           transparent 62%);
         background-size: 320px 100%; background-repeat: repeat;
-        background-position-x: var(--sheenx, 0px);
+        transform: translateX(var(--sheenx, 0px));
+        will-change: transform;
       }
 
       .chart { position: relative; }
