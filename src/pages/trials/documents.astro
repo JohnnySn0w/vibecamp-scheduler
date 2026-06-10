@@ -1,0 +1,33 @@
+---
+// Trials documents — copies of every handout from signup. Content lands here
+// once the handouts are final; the page exists so links/QR codes can point at it now.
+import TrialsLayout from "../../layouts/TrialsLayout.astro";
+const crumbs = [
+  { href: "/trials/", label: "← Trials" },
+  { href: "/schedule/", label: "Event schedule →" },
+];
+---
+
+<TrialsLayout
+  title="Documents · Vibecamp Trials"
+  description="Copies of every Vibecamp Trials handout, in one place."
+  crumbs={crumbs}
+>
+  <header class="trials-hero">
+    <p class="kicker">✦ Vibecamp Trials</p>
+    <h1>Documents</h1>
+    <p class="trials-sub">Every handout from signup, in one place</p>
+  </header>
+
+  <section class="t-prose">
+    <h2>🗂 Nothing here yet</h2>
+    <p>
+      Copies of all the Trials documents — the signup handout, badge
+      requirements, and anything else handed out at the shifts — will be posted
+      here once the Trials begin.
+    </p>
+    <p class="muted">
+      Lost your paper copy mid-weekend? This is where you'll find a fresh one.
+    </p>
+  </section>
+</TrialsLayout>

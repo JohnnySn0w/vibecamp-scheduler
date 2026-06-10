@@ -1,0 +1,29 @@
+---
+// Trials hints — nudges for stuck players. Content lands here during the event.
+import TrialsLayout from "../../layouts/TrialsLayout.astro";
+const crumbs = [
+  { href: "/trials/", label: "← Trials" },
+  { href: "/schedule/", label: "Event schedule →" },
+];
+---
+
+<TrialsLayout
+  title="Hints · Vibecamp Trials"
+  description="Hints for the Vibecamp Trials — spoil yourself only as much as you want."
+  crumbs={crumbs}
+>
+  <header class="trials-hero">
+    <p class="kicker">✦ Vibecamp Trials</p>
+    <h1>Hints</h1>
+    <p class="trials-sub">Spoil yourself only as much as you want</p>
+  </header>
+
+  <section class="t-prose">
+    <h2>💡 No hints yet</h2>
+    <p>
+      Hints for the trials will appear here once the Trials are underway. If
+      you're stuck in the meantime, find Michael at one of the shifts — or a
+      fellow player wearing a ribbon.
+    </p>
+  </section>
+</TrialsLayout>

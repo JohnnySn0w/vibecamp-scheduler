@@ -1,0 +1,36 @@
+---
+// Vibecamp Trials hub — links out to About, Documents, and Hints.
+import TrialsLayout from "../../layouts/TrialsLayout.astro";
+---
+
+<TrialsLayout
+  title="Vibecamp Trials · Vibecamp 5"
+  description="The Vibecamp Trials — the camp-wide game running all weekend at Vibecamp 5."
+>
+  <header class="trials-hero">
+    <p class="kicker">✦ Vibe Camp</p>
+    <h1><span class="spark" aria-hidden="true">✦</span> Vibecamp Trials <span class="spark s2" aria-hidden="true">✧</span></h1>
+    <p class="trials-sub">The camp-wide game · all weekend · June 18–21</p>
+  </header>
+
+  <nav class="t-cards" aria-label="Trials pages">
+    <a class="t-card" href="/trials/about/">
+      <span class="t-card-emoji" aria-hidden="true">📜</span>
+      <span class="t-card-title">About</span>
+      <span class="t-card-desc">How this is going down — shifts, signups, badges, and what to expect.</span>
+      <span class="t-card-go" aria-hidden="true">Read up →</span>
+    </a>
+    <a class="t-card" href="/trials/documents/">
+      <span class="t-card-emoji" aria-hidden="true">🗂</span>
+      <span class="t-card-title">Documents</span>
+      <span class="t-card-desc">Every handout from signup, posted here so you never lose your copy.</span>
+      <span class="t-card-go" aria-hidden="true">Browse →</span>
+    </a>
+    <a class="t-card" href="/trials/hints/">
+      <span class="t-card-emoji" aria-hidden="true">💡</span>
+      <span class="t-card-title">Hints</span>
+      <span class="t-card-desc">Stuck on a trial? Nudges live here — spoil yourself only as much as you want.</span>
+      <span class="t-card-go" aria-hidden="true">Get unstuck →</span>
+    </a>
+  </nav>
+</TrialsLayout>

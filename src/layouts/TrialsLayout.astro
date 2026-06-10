@@ -1,6 +1,14 @@
 ---
-// Vibecamp Trials — placeholder page. Real content (rules, turn-ins, standings)
-// lands here next; the page exists now so the landing-page link works.
+// Shared shell for the Vibecamp Trials pages: theme, aurora, crumbs nav, footer.
+// Pages provide their hero + content via the slot.
+const {
+  title,
+  description,
+  crumbs = [
+    { href: "/", label: "← Vibecamp home" },
+    { href: "/schedule/", label: "Event schedule →" },
+  ],
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -8,13 +16,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vibecamp Trials · Vibecamp 5</title>
-    <meta name="description" content="The Vibecamp Trials — the camp-wide game running all weekend at Vibecamp 5." />
+    <title>{title}</title>
+    <meta name="description" content={description} />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/vibecamp_logo.png" />
     <link rel="apple-touch-icon" href="/vibecamp_logo.png" />
-    <meta property="og:title" content="Vibecamp Trials" />
-    <meta property="og:description" content="The camp-wide game running all weekend at Vibecamp 5." />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
     <meta property="og:image" content="https://vibecamp.mahan.io/vibecamp_logo.png" />
     <meta name="twitter:card" content="summary" />
     <script is:inline>
@@ -30,26 +38,11 @@
     <div class="aurora"></div>
 
     <nav class="crumbs">
-      <a href="/">← Vibecamp home</a>
-      <a href="/schedule/">Event schedule →</a>
+      {crumbs.map((c) => <a href={c.href}>{c.label}</a>)}
     </nav>
 
     <main class="trials">
-      <header class="trials-hero">
-        <p class="kicker">✦ Vibe Camp</p>
-        <h1><span class="spark" aria-hidden="true">✦</span> Vibecamp Trials <span class="spark s2" aria-hidden="true">✧</span></h1>
-        <p class="trials-sub">The camp-wide game · all weekend · June 18–21</p>
-      </header>
-
-      <section class="soon">
-        <p class="soon-emoji" aria-hidden="true">🏆</p>
-        <h2>Details coming soon</h2>
-        <p>
-          Rules, turn-in times, and everything else you need to compete will appear
-          here. Meanwhile, the Trials sessions are already on the
-          <a href="/schedule/">schedule</a> — look for the sparkly bars.
-        </p>
-      </section>
+      <slot />
     </main>
 
     <footer class="trials-foot">
@@ -124,8 +117,8 @@
 
       .trials {
         flex: 1; width: 100%; max-width: 880px; margin: 0 auto;
-        padding: 3rem 1.5rem 2rem; text-align: center;
-        display: flex; flex-direction: column; justify-content: center; gap: 2rem;
+        padding: 2.6rem 1.5rem 2rem; text-align: center;
+        display: flex; flex-direction: column; gap: 2rem;
       }
       .kicker { margin: 0 0 .5rem; font-size: .85rem; letter-spacing: .28em; text-transform: uppercase; color: var(--mauve); font-weight: 600; }
       .trials-hero h1 {
@@ -142,14 +135,37 @@
       }
       @media (prefers-reduced-motion: reduce) { .spark { animation: none; } }
 
-      .soon {
+      /* link cards (the hub) */
+      .t-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+      @media (max-width: 700px) { .t-cards { grid-template-columns: 1fr; } }
+      .t-card {
+        text-decoration: none; color: var(--text);
         background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
-        padding: 2.2rem 1.6rem; max-width: 560px; margin: 0 auto;
+        padding: 1.5rem 1.3rem 1.3rem; text-align: left;
+        display: flex; flex-direction: column; gap: .5rem;
+        transition: transform .14s, box-shadow .14s, border-color .14s;
       }
-      .soon-emoji { font-size: 2.6rem; margin: 0 0 .4rem; }
-      .soon h2 { margin: 0 0 .6rem; font-size: 1.4rem; }
-      .soon p { margin: 0; color: var(--subtext0); }
-      .soon a { color: var(--blue); }
+      .t-card:hover, .t-card:focus-visible {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 38px rgba(17,17,27,.45);
+        border-color: var(--yellow);
+      }
+      .t-card-emoji { font-size: 1.7rem; line-height: 1; }
+      .t-card-title { font-size: 1.15rem; font-weight: 700; }
+      .t-card-desc { color: var(--subtext0); font-size: .92rem; }
+      .t-card-go { margin-top: auto; padding-top: .5rem; color: var(--yellow); font-weight: 600; font-size: .92rem; }
+      @media (prefers-reduced-motion: reduce) { .t-card { transition: none; } }
+
+      /* prose card (about / documents / hints content) */
+      .t-prose {
+        background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
+        padding: 2rem 1.8rem; max-width: 680px; margin: 0 auto; text-align: left;
+      }
+      .t-prose h2 { margin: 0 0 1rem; font-size: 1.35rem; color: var(--yellow); }
+      .t-prose p { margin: 0 0 1rem; color: var(--subtext1); }
+      .t-prose p:last-child { margin-bottom: 0; }
+      .t-prose a { color: var(--blue); }
+      .t-prose .muted { color: var(--overlay1); font-size: .9rem; }
 
       .trials-foot { padding: 1.4rem 1.5rem 2.4rem; text-align: center; }
       .trials-foot p { margin: 0; font-size: .82rem; color: var(--overlay0); }

@@ -1,0 +1,73 @@
+---
+// About the Trials — Michael's own words, links made clickable.
+import TrialsLayout from "../../layouts/TrialsLayout.astro";
+const crumbs = [
+  { href: "/trials/", label: "← Trials" },
+  { href: "/schedule/", label: "Event schedule →" },
+];
+---
+
+<TrialsLayout
+  title="About · Vibecamp Trials"
+  description="How the Vibecamp Trials are going down — shifts, signups, badges, and what to expect."
+  crumbs={crumbs}
+>
+  <header class="trials-hero">
+    <p class="kicker">✦ Vibecamp Trials</p>
+    <h1>About</h1>
+  </header>
+
+  <section class="t-prose">
+    <h2>How is this going down?</h2>
+    <p>
+      If u consult the schedule, I'll start Friday morning. There will be shifts
+      throughout the weekend. Two shifts Friday/Saturday, and one final shift on
+      Sunday morning for late turn-ins. New players may sign up at any of the
+      Friday/Saturday shifts, but not on Sunday. Please read the schedule entries
+      to confirm these details. Please also note, each of the shifts is at a
+      different location, make sure you're headed to the right place.
+    </p>
+    <p>
+      You are also encouraged to use
+      <a href="/schedule/">vibecamp.mahan.io/schedule</a> to figure out your
+      general Vibecamp schedule!
+    </p>
+    <p>
+      The estimate for time is about 1–2 hours per person. Some of the trials are
+      collaborative, and I'll have lengths of ribbon you can tie to your lanyard
+      to showcase that you're participating, and so you can find other
+      participants.
+    </p>
+    <p>
+      There will be items hidden around the grounds, inside of existing
+      structures. The trials are of varying difficulties, and they may be done in
+      any order.
+    </p>
+    <p>
+      Everyone who signs up will receive a badge case, that's yours for free!
+      The badges will require proof of accomplishment, and what that is will be
+      outlined in a handout acquired at time of signup. A copy of all documents
+      will be available on the <a href="/trials/documents/">documents page</a>.
+    </p>
+    <p>
+      This event took most of the last year to throw together, and has been a
+      resource stretcher. Frankly it was quite expensive. Any potential donations
+      should be sent to Venmo (<b>@jsn0w0</b>) or PayPal (<b>@JSn0w</b>), speak
+      with me directly to use Zelle (225-305-3499). For international folks, I do
+      have a Wise account (<b>@michaelevanm2</b>).
+    </p>
+    <p>
+      If you're interested in contacting me regarding running similar events, hit
+      me up at <a href="mailto:michael@mahan.io">michael@mahan.io</a>. You may
+      also locate me on twitter
+      <a href="https://twitter.com/timebard" target="_blank" rel="noopener">@timebard</a>,
+      though I check email more than DMs.
+    </p>
+    <p class="muted">
+      Websites were done at my direction by Claude. Badge designs are by &lt;&gt;.
+      Puzzle assistance done by
+      <a href="https://twitter.com/thrialectics" target="_blank" rel="noopener">@thrialectics</a>.
+      Planning and development, resourcing, and final touches by myself.
+    </p>
+  </section>
+</TrialsLayout>
