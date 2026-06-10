@@ -31,7 +31,10 @@
 
     <main class="land">
       <header class="land-hero">
-        <img class="land-logo" src="/vibecamp_logo.png" alt="" />
+        <figure class="polaroid" aria-hidden="true">
+          <img class="land-logo" src="/vibecamp_logo.png" alt="" />
+          <figcaption>vibecamp 5 ✦</figcaption>
+        </figure>
         <p class="kicker">✦ Vibe Camp</p>
         <h1>Vibecamp&nbsp;5</h1>
         <p class="land-sub">June 18–21, 2026 · Camp Ramblewood, MD</p>
@@ -39,28 +42,31 @@
 
       <span class="land-stars" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✶</i><i>✧</i></span>
 
-      <nav class="choices" aria-label="Site sections">
-        <a class="choice" href="/schedule/" style="--ac: var(--blue); --tilt: -1.7deg">
-          <span class="choice-emoji" aria-hidden="true">🗓</span>
-          <span class="choice-title">Event Schedule</span>
-          <span class="choice-desc">
-            Every event on one continuous timeline. Build your personal schedule,
-            check overlaps, and send it to your calendar.
-          </span>
-          <span class="choice-go" aria-hidden="true">Browse the timeline →</span>
-        </a>
+      <div class="board">
+        <nav class="choices" aria-label="Site sections">
+          <a class="choice" href="/schedule/" style="--ac: var(--blue); --tilt: -1.9deg">
+            <span class="choice-emoji" aria-hidden="true">🗓</span>
+            <span class="choice-title">Event Schedule</span>
+            <span class="choice-desc">
+              Every event on one continuous timeline. Build your personal schedule,
+              check overlaps, and send it to your calendar.
+            </span>
+            <span class="choice-go" aria-hidden="true">Browse the timeline →</span>
+          </a>
 
-        <a class="choice choice-trials" href="/trials/" style="--ac: var(--yellow); --tilt: 1.4deg">
-          <span class="choice-spark" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✶</i><i>✧</i><i>✦</i></span>
-          <span class="choice-emoji" aria-hidden="true">🏆</span>
-          <span class="choice-title">Vibecamp Trials</span>
-          <span class="choice-desc">
-            The camp-wide game running all weekend. Find out how to play,
-            where to turn in, and what glory awaits.
-          </span>
-          <span class="choice-go" aria-hidden="true">Enter the Trials →</span>
-        </a>
-      </nav>
+          <a class="choice choice-trials" href="/trials/" style="--ac: var(--yellow); --tilt: 1.6deg">
+            <span class="choice-spark" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✶</i><i>✧</i><i>✦</i></span>
+            <span class="choice-emoji" aria-hidden="true">🏆</span>
+            <span class="choice-title">Vibecamp Trials</span>
+            <span class="choice-desc">
+              The camp-wide game running all weekend. Find out how to play,
+              where to turn in, and what glory awaits.
+            </span>
+            <span class="choice-go" aria-hidden="true">Enter the Trials →</span>
+          </a>
+        </nav>
+        <p class="sticky" aria-hidden="true">bring water, sunscreen,<br />and vibes ☀</p>
+      </div>
     </main>
 
     <footer class="land-foot">
@@ -80,6 +86,8 @@
         --yellow: #f9e2af; --peach: #fab387; --maroon: #eba0ac;
         --red: #f38ba8; --mauve: #cba6f7; --pink: #f5c2e7;
         --card: rgba(24,24,37,.66);
+        --cork1: #6b4f33; --cork2: #58412a; --cork-frame: #4a3520;
+        --hand: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       }
       /* --- light (Catppuccin Latte) — explicit choice + system-follows-OS --- */
       :root[data-theme="light"],
@@ -96,6 +104,7 @@
           --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
           --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
           --card: rgba(230,233,239,.78);
+          --cork1: #c49a68; --cork2: #b18a5b; --cork-frame: #7c5c38;
         }
       }
       :root[data-theme="light"] {
@@ -109,6 +118,7 @@
         --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
         --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
         --card: rgba(230,233,239,.78);
+        --cork1: #c49a68; --cork2: #b18a5b; --cork-frame: #7c5c38;
       }
 
       * { box-sizing: border-box; }
@@ -141,7 +151,57 @@
       }
       .land-sub { margin: .6rem 0 0; color: var(--subtext0); font-size: 1.05rem; }
 
-      .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+      /* the cork message board */
+      .board {
+        position: relative; border-radius: 8px;
+        padding: 2.4rem 1.8rem 2.2rem;
+        background:
+          radial-gradient(rgba(0,0,0,.16) 1px, transparent 1.5px),
+          radial-gradient(rgba(255,236,200,.06) 1px, transparent 1.6px),
+          radial-gradient(rgba(0,0,0,.10) 1.3px, transparent 1.9px),
+          linear-gradient(135deg, var(--cork1), var(--cork2));
+        background-size: 9px 11px, 15px 17px, 22px 19px, 100% 100%;
+        background-position: 0 0, 5px 8px, 11px 3px, 0 0;
+        border: 10px solid var(--cork-frame);
+        box-shadow:
+          inset 0 2px 18px rgba(0,0,0,.45),
+          inset 0 0 0 2px rgba(0,0,0,.2),
+          0 14px 38px rgba(17,17,27,.4);
+      }
+      @media (max-width: 640px) { .board { padding: 2rem 1rem 1.8rem; border-width: 8px; } }
+
+      /* the logo as a pinned polaroid */
+      .polaroid {
+        display: inline-block; margin: 0 auto 1.1rem;
+        background: #f4f1ea; padding: 10px 10px 6px;
+        transform: rotate(-3deg);
+        box-shadow: 0 8px 22px rgba(0,0,0,.4);
+        position: relative;
+      }
+      .polaroid::before {
+        content: ""; position: absolute; top: -7px; left: 50%; margin-left: -7px;
+        width: 14px; height: 14px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #f8b4c0, #e8516d 55%, #8e2236);
+        box-shadow: 0 3px 4px rgba(0,0,0,.4);
+      }
+      .polaroid .land-logo { margin: 0; }
+      .polaroid figcaption {
+        font-family: var(--hand); font-size: .82rem; color: #4a4438;
+        padding-top: 4px;
+      }
+
+      /* a scrawled sticky note on the board */
+      .sticky {
+        width: max-content; max-width: 80%;
+        margin: 1.4rem auto 0; padding: .7rem 1.1rem .85rem;
+        background: linear-gradient(160deg, #f7e7a8, #efd989);
+        color: #43381c; font-family: var(--hand); font-size: .95rem; line-height: 1.35;
+        transform: rotate(2deg);
+        box-shadow: 0 6px 16px rgba(0,0,0,.35);
+        border-bottom-right-radius: 60% 12px;
+      }
+
+      .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem 1.2rem; }
       @media (max-width: 640px) { .choices { grid-template-columns: 1fr; } }
 
       /* cards as flyers pinned at a slight angle, taped at the top */
@@ -154,12 +214,14 @@
         transition: transform .18s, box-shadow .18s, border-color .18s;
       }
       .choice::before {
-        content: ""; position: absolute; top: -11px; left: 50%;
-        width: 96px; height: 24px; transform: translateX(-50%) rotate(-2.5deg);
-        background: color-mix(in srgb, var(--ac) 32%, transparent);
-        border-left: 1px dashed color-mix(in srgb, var(--ac) 45%, transparent);
-        border-right: 1px dashed color-mix(in srgb, var(--ac) 45%, transparent);
-        border-radius: 2px;
+        content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%,
+          color-mix(in srgb, var(--ac) 45%, white),
+          var(--ac) 55%,
+          color-mix(in srgb, var(--ac) 55%, black));
+        box-shadow: 0 3px 4px rgba(0,0,0,.45), inset 0 -1px 2px rgba(0,0,0,.3);
+        z-index: 2;
       }
       .choice:hover, .choice:focus-visible {
         transform: rotate(0deg) translateY(-5px) scale(1.015);
@@ -172,9 +234,9 @@
         transition: transform .18s;
       }
       .choice:hover .choice-emoji { transform: rotate(6deg) scale(1.12); }
-      .choice-title { font-size: 1.35rem; font-weight: 700; }
+      .choice-title { font-family: var(--hand); font-size: 1.45rem; font-weight: 700; }
       .choice-desc { color: var(--subtext0); font-size: .95rem; }
-      .choice-go { margin-top: auto; padding-top: .6rem; color: var(--ac, var(--blue)); font-weight: 600; font-size: .95rem; }
+      .choice-go { margin-top: auto; padding-top: .6rem; color: var(--ac, var(--blue)); font-weight: 600; font-size: .95rem; font-family: var(--hand); }
 
       /* a few stars drifting between the hero and the cards */
       .land-stars { position: relative; display: block; height: 0; }
