@@ -1,0 +1,159 @@
+---
+// Vibecamp Trials — placeholder page. Real content (rules, turn-ins, standings)
+// lands here next; the page exists now so the landing-page link works.
+---
+
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibecamp Trials · Vibecamp 5</title>
+    <meta name="description" content="The Vibecamp Trials — the camp-wide game running all weekend at Vibecamp 5." />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="/vibecamp_logo.png" />
+    <link rel="apple-touch-icon" href="/vibecamp_logo.png" />
+    <meta property="og:title" content="Vibecamp Trials" />
+    <meta property="og:description" content="The camp-wide game running all weekend at Vibecamp 5." />
+    <meta property="og:image" content="https://vibecamp.mahan.io/vibecamp_logo.png" />
+    <meta name="twitter:card" content="summary" />
+    <script is:inline>
+      // set theme before first paint to avoid a flash of the wrong palette
+      (function () {
+        var t = "system";
+        try { t = localStorage.getItem("vc-theme") || "system"; } catch (e) {}
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="aurora"></div>
+
+    <nav class="crumbs">
+      <a href="/">← Vibecamp home</a>
+      <a href="/schedule/">Event schedule →</a>
+    </nav>
+
+    <main class="trials">
+      <header class="trials-hero">
+        <p class="kicker">✦ Vibe Camp</p>
+        <h1><span class="spark" aria-hidden="true">✦</span> Vibecamp Trials <span class="spark s2" aria-hidden="true">✧</span></h1>
+        <p class="trials-sub">The camp-wide game · all weekend · June 18–21</p>
+      </header>
+
+      <section class="soon">
+        <p class="soon-emoji" aria-hidden="true">🏆</p>
+        <h2>Details coming soon</h2>
+        <p>
+          Rules, turn-in times, and everything else you need to compete will appear
+          here. Meanwhile, the Trials sessions are already on the
+          <a href="/schedule/">schedule</a> — look for the sparkly bars.
+        </p>
+      </section>
+    </main>
+
+    <footer class="trials-foot">
+      <p>Send bugs to <a href="https://twitter.com/timebard" target="_blank" rel="noopener">@timebard</a> on twitter!</p>
+    </footer>
+
+    <style is:global>
+      /* --- dark (Catppuccin Mocha) — the default --- */
+      :root {
+        color-scheme: dark;
+        --base: #1e1e2e; --mantle: #181825; --crust: #11111b;
+        --surface0: #313244; --surface1: #45475a; --surface2: #585b70;
+        --overlay0: #6c7086; --overlay1: #7f849c; --overlay2: #9399b2;
+        --text: #cdd6f4; --subtext1: #bac2de; --subtext0: #a6adc8;
+        --blue: #89b4fa; --lavender: #b4befe; --sapphire: #74c7ec;
+        --sky: #89dceb; --teal: #94e2d5; --green: #a6e3a1;
+        --yellow: #f9e2af; --peach: #fab387; --maroon: #eba0ac;
+        --red: #f38ba8; --mauve: #cba6f7; --pink: #f5c2e7;
+        --card: rgba(24,24,37,.66);
+      }
+      :root[data-theme="light"],
+      :root[data-theme="system"] { color-scheme: light dark; }
+      @media (prefers-color-scheme: light) {
+        :root[data-theme="system"] {
+          color-scheme: light;
+          --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+          --surface0: #ccd0da; --surface1: #bcc0cc; --surface2: #acb0be;
+          --overlay0: #9ca0b0; --overlay1: #8c8fa1; --overlay2: #7c7f93;
+          --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85;
+          --blue: #1e66f5; --lavender: #7287fd; --sapphire: #209fb5;
+          --sky: #04a5e5; --teal: #179299; --green: #40a02b;
+          --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
+          --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
+          --card: rgba(230,233,239,.78);
+        }
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+        --surface0: #ccd0da; --surface1: #bcc0cc; --surface2: #acb0be;
+        --overlay0: #9ca0b0; --overlay1: #8c8fa1; --overlay2: #7c7f93;
+        --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85;
+        --blue: #1e66f5; --lavender: #7287fd; --sapphire: #209fb5;
+        --sky: #04a5e5; --teal: #179299; --green: #40a02b;
+        --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
+        --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
+        --card: rgba(230,233,239,.78);
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0; background: var(--base); color: var(--text);
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.5; -webkit-font-smoothing: antialiased;
+        display: flex; flex-direction: column;
+      }
+      .aurora {
+        position: fixed; inset: 0; z-index: -1;
+        background:
+          radial-gradient(55% 45% at 12% 0%, rgba(249,226,175,.14), transparent 70%),
+          radial-gradient(50% 40% at 92% 4%, rgba(203,166,247,.16), transparent 70%),
+          radial-gradient(60% 50% at 50% 100%, rgba(148,226,213,.10), transparent 70%);
+      }
+
+      .crumbs {
+        display: flex; justify-content: space-between; gap: 1rem;
+        max-width: 880px; width: 100%; margin: 0 auto; padding: 1.2rem 1.5rem 0;
+      }
+      .crumbs a { color: var(--blue); text-decoration: none; font-size: .92rem; font-weight: 600; }
+      .crumbs a:hover { text-decoration: underline; }
+
+      .trials {
+        flex: 1; width: 100%; max-width: 880px; margin: 0 auto;
+        padding: 3rem 1.5rem 2rem; text-align: center;
+        display: flex; flex-direction: column; justify-content: center; gap: 2rem;
+      }
+      .kicker { margin: 0 0 .5rem; font-size: .85rem; letter-spacing: .28em; text-transform: uppercase; color: var(--mauve); font-weight: 600; }
+      .trials-hero h1 {
+        margin: 0; font-size: clamp(2.2rem, 6vw, 3.4rem); letter-spacing: -.02em;
+        background: linear-gradient(120deg, var(--yellow), var(--peach) 55%, var(--mauve));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .trials-sub { margin: .6rem 0 0; color: var(--subtext0); font-size: 1.05rem; }
+      .spark { color: var(--yellow); -webkit-text-fill-color: var(--yellow); animation: spin-spark 3s ease-in-out infinite; display: inline-block; }
+      .spark.s2 { animation-delay: 1.5s; }
+      @keyframes spin-spark {
+        0%, 100% { transform: scale(.8) rotate(0deg); opacity: .7; }
+        50%      { transform: scale(1.15) rotate(35deg); opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) { .spark { animation: none; } }
+
+      .soon {
+        background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
+        padding: 2.2rem 1.6rem; max-width: 560px; margin: 0 auto;
+      }
+      .soon-emoji { font-size: 2.6rem; margin: 0 0 .4rem; }
+      .soon h2 { margin: 0 0 .6rem; font-size: 1.4rem; }
+      .soon p { margin: 0; color: var(--subtext0); }
+      .soon a { color: var(--blue); }
+
+      .trials-foot { padding: 1.4rem 1.5rem 2.4rem; text-align: center; }
+      .trials-foot p { margin: 0; font-size: .82rem; color: var(--overlay0); }
+      .trials-foot a { color: var(--blue); }
+    </style>
+  </body>
+</html>

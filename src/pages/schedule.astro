@@ -1,0 +1,1921 @@
+---
+import events from "../events.json";
+
+// ---- geometry config ----
+const PX_PER_MIN = 2.6;
+const LANE_H = 46;
+const LANE_GAP = 8;
+const MIN_BAR = 66;
+const DAY_GAP = 76;     // gap between days on the continuous axis
+const SIDE_PAD = 16;
+const VENUE_GAP = 12;   // vertical gap between venue rows
+
+const BAR_COLORS = [
+  "#89b4fa", "#cba6f7", "#a6e3a1", "#fab387", "#89dceb",
+  "#f5c2e7", "#94e2d5", "#f9e2af", "#eba0ac", "#b4befe",
+  "#74c7ec", "#f38ba8",
+];
+const hashColor = (s) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return BAR_COLORS[h % BAR_COLORS.length];
+};
+
+const toMin = (hhmm) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+const parseDur = (s) => {
+  if (!s) return 0;
+  let t = 0;
+  const d = s.match(/(\d+)d/), h = s.match(/(\d+)h/), m = s.match(/(\d+)m/);
+  if (d) t += +d[1] * 1440;
+  if (h) t += +h[1] * 60;
+  if (m) t += +m[1];
+  return t;
+};
+const pad = (n) => String(n).padStart(2, "0");
+const dayName = (iso) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" });
+const fmtDate = (iso) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+    month: "short", day: "numeric",
+  });
+
+const shortDay = (iso) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
+const addDays = (iso, n) => {
+  const dt = new Date(iso + "T00:00:00");
+  dt.setDate(dt.getDate() + n);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+};
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// ---- group by day, compute per-day span (the axis mapping) ----
+const byDate = new Map();
+for (const e of events) {
+  if (!byDate.has(e.date)) byDate.set(e.date, []);
+  byDate.get(e.date).push(e);
+}
+
+const groups = [];
+for (const [date, items] of byDate) {
+  const evs = items.map((e) => {
+    const allDay = e.start === "all-day";
+    const startMin = allDay ? 0 : toMin(e.start);
+    let durMin = allDay ? 1440 : parseDur(e.dur);
+    if (!durMin) durMin = e.end ? ((toMin(e.end) - startMin + 1440) % 1440) || 60 : 60;
+    const endAbs = startMin + durMin;
+    const renderEnd = Math.min(endAbs, 1440); // clamped within the day, for span/peak only
+    return { ...e, allDay, startMin, durMin, endAbs, renderEnd };
+  });
+
+  const dayMin = Math.min(...evs.map((e) => e.startMin));
+  const dayMax = Math.max(...evs.map((e) => e.renderEnd));
+  const spanStart = Math.floor(dayMin / 60) * 60;
+  let spanEnd = Math.ceil(dayMax / 60) * 60;
+  if (spanEnd <= spanStart) spanEnd = spanStart + 60;
+  const width = (spanEnd - spanStart) * PX_PER_MIN;
+
+  // peak concurrency within the day (sweep line) — for the day label
+  const pts = [];
+  for (const e of evs) { pts.push([e.startMin, 1], [e.renderEnd, -1]); }
+  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  let cur = 0, peak = 0;
+  for (const [, d] of pts) { cur += d; if (cur > peak) peak = cur; }
+
+  // hour ticks (relative to this day's span)
+  const ticks = [];
+  for (let m = spanStart; m <= spanEnd; m += 60) {
+    ticks.push({ x: (m - spanStart) * PX_PER_MIN, label: `${pad((m / 60) % 24)}:00` });
+  }
+
+  groups.push({
+    date, day: dayName(date), pretty: fmtDate(date),
+    count: evs.length, spanStart, spanEnd, width, peak, ticks, events: evs,
+  });
+}
+groups.sort((a, b) => a.date.localeCompare(b.date));
+
+// ---- lay days end-to-end on ONE continuous axis ----
+let cursor = SIDE_PAD;
+for (const g of groups) {
+  g.offset = cursor;
+  cursor += g.width + DAY_GAP;
+}
+const totalWidth = cursor - DAY_GAP + SIDE_PAD;
+const firstDate = groups[0].date;
+const lastG = groups[groups.length - 1];
+const lastDate = lastG.date;
+const dayIndex = new Map(groups.map((g, i) => [g.date, i]));
+const daysFromFirst = new Map(
+  groups.map((g) => [
+    g.date,
+    Math.round((new Date(g.date + "T00:00:00") - new Date(firstDate + "T00:00:00")) / 86400000),
+  ])
+);
+
+// map any (date, minute-of-day) to a global X on the collapsed axis
+const xOf = (dateStr, minute) => {
+  const idx = dayIndex.get(dateStr);
+  if (idx != null) {
+    const g = groups[idx];
+    return g.offset + (clamp(minute, g.spanStart, g.spanEnd) - g.spanStart) * PX_PER_MIN;
+  }
+  if (dateStr < firstDate) return groups[0].offset;
+  if (dateStr > lastDate) return lastG.offset + lastG.width;
+  // date sits in a collapsed gap → snap to the preceding present day's right edge
+  let prev = groups[0];
+  for (const g of groups) if (g.date < dateStr) prev = g;
+  return prev.offset + prev.width;
+};
+
+// ---- event categories: keyword-derived, for the bulk select-by-type checkboxes ----
+const CAT_RULES = [
+  { key: "dance",    label: "🪩 Dance",            kw: ["danc","liminal","contact improv","foxtrot","rumba","swing","ceili","ballroom","parade","emo night"] },
+  { key: "music",    label: "🎵 Music",            kw: ["sing","karaoke","jam","shant","in c by","song","sound check","fake artist","music","instrument","auld lang"] },
+  { key: "food",     label: "🍽 Food & Drink",     kw: ["dinner","breakfast","lunch","ramen","cocktail","waffle","eating place","diet coke","drinks","meat in your mouth","electrolytes"] },
+  { key: "games",    label: "🎲 Games & Sports",   kw: ["clocktower","mtg","commander","board game","dodgeball","basketball","leg wrestling","sparring","conveyor belt","improv games","trials","metal detector","social deduction","small fishes","dodge","race","fitness challenge"] },
+  { key: "wellness", label: "🧘 Wellness & Spirit", kw: ["meditat","jhana","prostration","sun salutation","aerial","yoga","primal scream","breath","noting","circus","ceremon","kava","magick","magic","tarot","shaman","open circle","solstice","spoon"] },
+  { key: "art",      label: "🎨 Art & Craft",      kw: ["crochet","color","bracelet","henna","perfume","typewriter","sketch","weave","braiding","craft","slime","3d","phantogram","art of the future","poem","poetry","build"] },
+  { key: "talks",    label: "🗣 Talks & Workshops", kw: ["workshop","introduction","intro to","history","lecture","to be done","agency","cohomology","survey","podcast","recording","visual novel","negative feedback","glosso","twirl"] },
+  { key: "party",    label: "🎉 Parties & Nightlife", kw: ["party","pool","vibedip","naked","ghost night","hangout","newcomer","cigs","pre-vibecamp"] },
+  { key: "film",     label: "🎬 Film & Stars",     kw: ["megalopolis","cartoon","meteor","stargaz","movie","watch party","film"] },
+  { key: "kids",     label: "🧒 Kids & Family",    kw: ["kiddie","kids","famil","petting"] },
+];
+const catKeysOf = (e) => {
+  const t = `${e.summary || ""} ${e.desc || ""}`.toLowerCase();
+  return CAT_RULES.filter((c) => c.kw.some((k) => t.includes(k))).map((c) => c.key);
+};
+
+// ---- build global bars with real (possibly multi-day) spans ----
+const allEvents = [];
+for (const g of groups) {
+  for (const e of g.events) {
+    const offDays = Math.floor(e.endAbs / 1440);
+    const endMin = e.endAbs - offDays * 1440;
+    const endDate = offDays > 0 ? addDays(g.date, offDays) : g.date;
+    const leftX = xOf(g.date, e.startMin);
+    const rightX = xOf(endDate, endMin);
+    const barW = Math.max(rightX - leftX, MIN_BAR);
+    const crossesDay = endDate !== g.date;
+    const beyondDays =
+      endDate > lastDate
+        ? Math.round((new Date(endDate + "T00:00:00") - new Date(lastDate + "T00:00:00")) / 86400000)
+        : 0;
+    const endLabel = beyondDays > 0
+      ? `+${beyondDays}d`
+      : `${shortDay(endDate)} ${pad(Math.floor(endMin / 60))}:${pad(endMin % 60)}`;
+    const baseTime = e.allDay ? "all-day" : `${e.start}${e.end ? "–" + e.end : ""}`;
+    const absStart = daysFromFirst.get(g.date) * 1440 + e.startMin;
+    allEvents.push({
+      ...e,
+      leftX, barW, crossesDay, beyondDays, endLabel,
+      date: g.date,
+      absStart, absEnd: absStart + e.durMin,
+      color: hashColor(e.org || e.summary || "x"),
+      timeLabel: crossesDay ? `${e.start} → ${endLabel}` : baseTime,
+      dayFull: `${g.day}, ${g.pretty}`,
+      cats: catKeysOf(e),
+    });
+  }
+}
+
+// ---- venues on the Y axis: group by location, sub-lane pack within each ----
+const UNLISTED = "Unlisted";
+const venueOf = (e) => (e.location && e.location.trim()) ? e.location.trim() : UNLISTED;
+const venueCount = new Map();
+for (const e of allEvents) { const v = venueOf(e); venueCount.set(v, (venueCount.get(v) || 0) + 1); }
+// busiest venues on top, ties alphabetical; Unlisted always last
+const venueNames = [...venueCount.keys()]
+  .filter((v) => v !== UNLISTED)
+  .sort((a, b) => venueCount.get(b) - venueCount.get(a) || a.localeCompare(b));
+if (venueCount.has(UNLISTED)) venueNames.push(UNLISTED);
+
+const venueRows = [];
+let yCursor = 0;
+for (const name of venueNames) {
+  const evs = allEvents
+    .filter((e) => venueOf(e) === name)
+    .sort((a, b) => a.leftX - b.leftX || (a.leftX + a.barW) - (b.leftX + b.barW));
+  const laneEnds = [];
+  for (const e of evs) {
+    let lane = laneEnds.findIndex((end) => end <= e.leftX + 0.5);
+    if (lane === -1) { lane = laneEnds.length; laneEnds.push(0); }
+    laneEnds[lane] = e.leftX + e.barW;
+    e.subLane = lane;
+  }
+  const lanes = Math.max(1, laneEnds.length);
+  const height = lanes * (LANE_H + LANE_GAP) - LANE_GAP;
+  for (const e of evs) e.top = yCursor + e.subLane * (LANE_H + LANE_GAP);
+  venueRows.push({ name, count: venueCount.get(name), yOffset: yCursor, height, lanes, alt: venueRows.length % 2 === 1 });
+  yCursor += height + VENUE_GAP;
+}
+const lanesHeight = Math.max(0, yCursor - VENUE_GAP);
+
+const bands = groups.map((g, i) => ({
+  left: g.offset, width: g.width,
+  day: g.day, pretty: g.pretty, count: g.count, peak: g.peak, first: i === 0,
+}));
+const hourTicks = groups.flatMap((g) =>
+  g.ticks.map((t) => ({ x: g.offset + t.x, label: t.label }))
+);
+const bars = allEvents.map((e) => ({ ...e, gleft: e.leftX }));
+
+const totalEvents = events.length;
+const totalDays = groups.length;
+const totalVenues = venueNames.length;
+
+const catCounts = {};
+for (const e of allEvents) for (const k of e.cats) catCounts[k] = (catCounts[k] || 0) + 1;
+const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCounts[c.key] || 0 })).filter((c) => c.count > 0);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibecamp 2026 · Continuous Timeline</title>
+    <meta name="description" content="The Vibecamp 2026 schedule as one continuous lateral timeline." />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="/vibecamp_logo.png" />
+    <link rel="apple-touch-icon" href="/vibecamp_logo.png" />
+    <meta property="og:title" content="Vibecamp 2026 Timeline" />
+    <meta property="og:description" content="The whole Vibecamp 2026 schedule on one continuous timeline." />
+    <meta property="og:image" content="https://vibecamp.mahan.io/vibecamp_logo.png" />
+    <meta name="twitter:card" content="summary" />
+    <script is:inline>
+      // set theme before first paint to avoid a flash of the wrong palette
+      (function () {
+        var t = "system";
+        try { t = localStorage.getItem("vc-theme") || "system"; } catch (e) {}
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="aurora"></div>
+    <header class="hero">
+      <p class="kicker"><a class="kicker-home" href="/">✦ Vibe Camp</a></p>
+      <h1>2026 Event Timeline</h1>
+      <p class="tagline">
+        This year's schedule, paired with a schedule maker. Send bugs to
+        <a href="https://twitter.com/timebard" target="_blank" rel="noopener">@timebard</a>
+        on twitter!
+      </p>
+      <div class="controls">
+        <span class="hint">↔ drag to scroll · click events to build your schedule</span>
+      </div>
+      <p class="search-note">Searching spotlights matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</p>
+      <p class="watch-note">📌 New events get added even after Vibecamp kicks off — check back through the weekend so you don't miss anything.</p>
+    </header>
+
+    <main>
+      <div class="toolbars">
+        <div class="tb-group tb-utility">
+          <span class="tb-head">Utility</span>
+          <label class="zoom">
+            <span class="zoom-label">Zoom</span>
+            <span class="zoom-icon" aria-hidden="true">⊖</span>
+            <input id="zoom" type="range" min="0.1" max="2" step="0.05" value="1" aria-label="Zoom timeline" />
+            <span class="zoom-icon" aria-hidden="true">⊕</span>
+          </label>
+          <div class="search-wrap">
+            <span class="search-icon">⌕</span>
+            <input id="search" type="search" placeholder="Filter events, hosts, or places…" autocomplete="off" />
+            <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
+          </div>
+          <span id="count" class="count">{totalEvents} events</span>
+          <button id="view-toggle" class="view-toggle" type="button">📍 Location view</button>
+          <button id="map-btn" class="view-toggle" type="button">🗺 Map</button>
+          <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
+          <button id="theme-toggle" class="view-toggle" type="button">🌗 Theme: System</button>
+          <button id="collapse-all" class="collapse-all" type="button">⊟ Collapse all</button>
+        </div>
+        <div class="tb-group tb-select">
+          <span class="tb-head">Select events</span>
+          <button id="randomize-btn" class="view-toggle" type="button"><span class="die">🎲</span> Randomize</button>
+          <button id="core-btn" class="view-toggle" type="button">✦ Core events</button>
+          {CATS.map((c) => (
+            <label class="cat-chip">
+              <input type="checkbox" class="cat-cb" data-cat={c.key} />
+              <span class="cat-chip-label">{c.label}</span>
+              <span class="cat-n">{c.count}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <p class="scroll-hint">More events that way! <span class="scroll-arrow">→</span></p>
+      <div class="timeline-wrap">
+        <!-- static venue axis (does not scroll horizontally) -->
+        <div class="vaxis">
+          <div class="vaxis-head" id="axis-head">Venue</div>
+          <div class="vaxis-rows" id="venue-rows" style={`height:${lanesHeight}px`}>
+            {venueRows.map((v) => (
+              <button type="button" class={`vlabel ${v.alt ? "alt" : ""}`} data-venue={v.name} data-h={v.height} style={`top:${v.yOffset}px;height:${v.height}px`}>
+                <span class="vchevron" aria-hidden="true">▾</span>
+                <span class="vlabel-name">{v.name}</span>
+                <span class="vlabel-count">{v.count}</span>
+              </button>
+            ))}
+          </div>
+          <div class="vaxis-rows" id="track-rows" hidden></div>
+        </div>
+
+        <div class="scroll" id="scroll">
+          <div class="chart" id="chart" data-tw={totalWidth} style={`width:${totalWidth}px`}>
+            <div class="daylabels" id="daylabels" style={`width:${totalWidth}px`}>
+              {bands.map((b) => (
+                <div class="daylabel" data-bx={b.left} data-bw={b.width} style={`left:${b.left}px;width:${b.width}px`}>
+                  <span class="dl-day">{b.day}</span>
+                  <span class="dl-date">{b.pretty}</span>
+                  <span class="dl-meta">{b.count} events · {b.peak} at peak</span>
+                </div>
+              ))}
+            </div>
+
+            <div class="ruler">
+              {hourTicks.map((t) => (
+                <span class="tick" data-bx={t.x} data-clock={t.label} style={`left:${t.x}px`}>{t.label}</span>
+              ))}
+            </div>
+
+            <div class="lanes" style={`height:${lanesHeight}px`}>
+              {venueRows.map((v) => (
+                <span class={`vband ${v.alt ? "alt" : ""}`} data-venue={v.name} data-h={v.height} data-bx={0} data-bw={totalWidth} style={`top:${v.yOffset}px;height:${v.height}px;left:0;width:${totalWidth}px`} />
+              ))}
+              {bands.map((b) => (!b.first &&
+                <span class="divider" data-bx={b.left - DAY_GAP / 2} style={`left:${b.left - DAY_GAP / 2}px`} />
+              ))}
+              {hourTicks.map((t) => (
+                <span class="grid" data-bx={t.x} style={`left:${t.x}px`} />
+              ))}
+              {bars.map((e, i) => (
+                <button
+                  class={`bar ${e.crossesDay ? "multi" : ""} ${e.summary && e.summary.startsWith("Vibecamp Trials") ? "trials" : ""} ${(e.org === "Leah (Prime)" || e.summary === "Welcome to the Vibe Parade") ? "sheen" : ""}`}
+                  id={`ev${i}`}
+                  data-bx={e.gleft} data-bw={e.barW}
+                  style={`left:${e.gleft}px;top:${e.top}px;width:${e.barW}px;--c:${e.color}`}
+                  data-search={`${e.summary} ${e.org} ${e.location} ${e.desc}`.toLowerCase()}
+                  data-title={e.summary || "Untitled event"}
+                  data-time={`${e.timeLabel}${e.dur ? " · " + e.dur : ""}`}
+                  data-day={e.dayFull}
+                  data-org={e.org}
+                  data-loc={e.location}
+                  data-desc={e.desc}
+                  data-start={e.absStart}
+                  data-end={e.absEnd}
+                  data-date={e.date}
+                  data-shm={e.start}
+                  data-clock={e.timeLabel}
+                  data-venue={(e.location && e.location.trim()) ? e.location.trim() : "Unlisted"}
+                  data-sublane={e.subLane}
+                  data-cats={e.cats.join(" ")}
+                  data-new={e.new ? "1" : null}
+                >
+                  <span class="bar-check" aria-hidden="true">✓</span>
+                  <span class="bar-time">{e.timeLabel}</span>
+                  <span class="bar-title">{e.summary || "Untitled event"}</span>
+                  {e.new && <span class="bar-new" aria-label="Newly added event">New</span>}
+                  {e.crossesDay && <span class="bar-cap" aria-hidden="true">›</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <p id="empty" class="empty" hidden>No events match your filter.</p>
+    </main>
+
+    <footer>
+      <p>Generated from the Vibecamp event calendar · times in Eastern (ET) · empty stretches between days are collapsed · {totalEvents} events in 2026</p>
+    </footer>
+
+    <aside id="panel" class="panel" hidden>
+      <button id="panel-close" class="panel-close" aria-label="Close">✕</button>
+      <h3 id="p-title"></h3>
+      <div class="p-meta">
+        <span id="p-time" class="p-chip p-time"></span>
+        <span id="p-day" class="p-chip"></span>
+        <span id="p-org" class="p-chip p-org"></span>
+        <span id="p-loc" class="p-chip p-loc"></span>
+      </div>
+      <p id="p-desc" class="p-desc"></p>
+      <button id="p-toggle" class="p-toggle">+ Add to my schedule</button>
+    </aside>
+
+    <!-- selection tray -->
+    <div id="tray" class="tray">
+      <button id="tray-toggle" class="tray-min" type="button" aria-label="Minimize schedule bar">▾</button>
+      <span class="tray-count"><b id="tray-n">0</b> selected</span>
+      <span id="tray-hint" class="tray-hint">— click events to build your schedule</span>
+      <span id="tray-warn" class="tray-warn" hidden></span>
+      <span class="tray-spacer"></span>
+      <button id="howto-btn" class="tray-btn ghost">❔ How to use?</button>
+      <button id="tray-review" class="tray-btn ghost" hidden>Review overlaps</button>
+      <button id="tray-clear" class="tray-btn ghost" disabled>Clear</button>
+      <button id="tray-export" class="tray-btn primary" disabled>⤓ Export</button>
+    </div>
+
+    <!-- overlap review modal -->
+    <div id="review" class="review" hidden>
+      <div class="review-card">
+        <button id="review-close" class="review-x" aria-label="Close">✕</button>
+        <h3>Review overlapping events</h3>
+        <p id="review-sub" class="review-sub"></p>
+        <div id="review-list" class="review-list"></div>
+        <div class="review-actions">
+          <button id="review-allok" class="rv-btn ghost">Mark all OK</button>
+          <span class="tray-spacer"></span>
+          <button id="review-cancel" class="rv-btn ghost">Back</button>
+          <button id="review-continue" class="rv-btn primary">Continue to export →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- export modal -->
+    <div id="export" class="review" hidden>
+      <div class="review-card">
+        <button id="export-close" class="review-x" aria-label="Close">✕</button>
+        <h3>Export your schedule</h3>
+        <p class="review-sub">Take your <b id="export-n">0</b>-event schedule with you.</p>
+        <div class="export-opts">
+          <button id="export-ics" class="export-opt" type="button">
+            <span class="export-emoji">📅</span>
+            <span class="export-txt"><b>Add to calendar</b></span>
+          </button>
+          <button id="export-pdf" class="export-opt" type="button">
+            <span class="export-emoji">⎙</span>
+            <span class="export-txt"><b>PDF schedule</b><small>A printable one-page schedule. Any unresolved overlaps are flagged on the page.</small></span>
+          </button>
+        </div>
+        <label class="export-mapchk" title="Include the camp map at the top of the PDF">
+          <input type="checkbox" id="map-pdf" checked /> 🗺 Include the camp map in the PDF
+        </label>
+      </div>
+    </div>
+
+    <!-- how-to guide modal -->
+    <div id="howto" class="review" hidden>
+      <div class="review-card">
+        <button id="howto-close" class="review-x" aria-label="Close">✕</button>
+        <h3>How to use this schedule</h3>
+        <ul class="howto-body">
+          <li><b>Move around:</b> drag (or swipe on mobile) to scroll along the timeline. <b>Zoom</b> scales the time axis in and out, centered on whatever's in the middle of your view.</li>
+          <li><b>Two toolbars:</b> <b>Utility</b> holds the view controls (zoom, search, view, clock, map); <b>Select events</b> holds the picking tools. On mobile they sit above and below the timeline.</li>
+          <li><b>Two views:</b> <b>Location view</b> groups events by venue; <b>Row view</b> packs them compactly into rows, with long events shown as a striped layer underneath the shorter ones.</li>
+          <li><b>Search</b> to spotlight matching events — they stay lit while the rest dim, and the timeline jumps to the first match.</li>
+          <li><b>Build a schedule:</b> click an event to look at it and add it, or pick in bulk (below). Then <b>Export</b> to add it to your calendar (.ics for Apple / Google / Outlook) or save a printable PDF — overlapping picks get flagged for review before the PDF.</li>
+        </ul>
+        <div class="howto-divider"></div>
+        <p class="howto-subhead">Picking events fast</p>
+        <ul class="howto-body">
+          <li><b>✦ Core events</b> adds the meals plus the opening &amp; closing ceremonies in one tap.</li>
+          <li><b>Select by type</b> checkboxes pick or clear a whole category at once (dance, music, food, games…). A dash means only some of that type are currently selected.</li>
+          <li><b>🎲 Randomize</b> builds a random conflict-free schedule you can tweak from.</li>
+        </ul>
+        <div class="howto-divider"></div>
+        <p class="howto-subhead">Extra features</p>
+        <ul class="howto-body">
+          <li><b>🗺 Map</b> opens the camp map; tick <b>Include the camp map in the PDF</b> in the Export dialog to print it at the top of your schedule.</li>
+          <li><b>Clock toggle</b> switches every time between 24-hour and am/pm (PDF included).</li>
+          <li><b>Row labels</b> show how many events sit in each row.</li>
+        </ul>
+        <div class="review-actions">
+          <span class="tray-spacer"></span>
+          <button id="howto-ok" class="rv-btn primary">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- camp map modal -->
+    <div id="mapmodal" class="review" hidden>
+      <div class="review-card mapcard">
+        <button id="mapmodal-close" class="review-x" aria-label="Close">✕</button>
+        <h3>Camp map</h3>
+        <img class="mapfull" src="/vibecamp-map.png" alt="Vibecamp 5 camp map — Camp Ramblewood, MD" />
+      </div>
+    </div>
+
+    <!-- printable schedule (hidden on screen, shown only when printing) -->
+    <div id="print-schedule" class="print-schedule" aria-hidden="true">
+      <header class="ps-head">
+        <img class="ps-logo" src="/vibecamp_logo.png" alt="" />
+        <div class="ps-headtext">
+          <p class="ps-kicker">✦ Vibe Camp 2026</p>
+          <h1>My Schedule</h1>
+          <p id="ps-sub" class="ps-sub"></p>
+        </div>
+      </header>
+      <div id="ps-warn" class="ps-warn" hidden></div>
+      <div id="ps-map" class="ps-map" hidden>
+        <h2 class="ps-map-h">Camp map</h2>
+        <img src="/vibecamp-map.png" alt="Vibecamp 5 camp map — Camp Ramblewood, MD" />
+      </div>
+      <div id="ps-body"></div>
+      <footer class="ps-foot">Built from the Vibecamp event calendar · times shown in Eastern (ET) · vibecamp.mahan.io</footer>
+    </div>
+
+    <script is:inline>
+      const search = document.getElementById("search");
+      const searchClear = document.getElementById("search-clear");
+      const count = document.getElementById("count");
+      const empty = document.getElementById("empty");
+      const bars = Array.from(document.querySelectorAll(".bar"));
+
+      // ---- clock format: 24h by default; toggle reformats every HH:MM for display ----
+      // Times are stored 24h in the data attributes; fmtClock is applied wherever a
+      // time is shown (bars, ruler, panel, overlap review, PDF) so the toggle is global.
+      let use12hr = false;
+      try { use12hr = localStorage.getItem("vc-clock") === "12"; } catch (e) {}
+      const fmtClock = (str) => {
+        if (!use12hr || !str) return str;
+        return str.replace(/(\d{1,2}):(\d{2})/g, (_, h, mi) => {
+          h = +h; const ap = h < 12 ? "am" : "pm"; const h12 = (h % 12) || 12;
+          return h12 + ":" + mi + " " + ap;
+        });
+      };
+      function applyClockFormat() {
+        for (const b of bars) {
+          const t = b.querySelector(".bar-time");
+          if (t) t.textContent = fmtClock(b.dataset.clock);
+        }
+        for (const tk of document.querySelectorAll(".ruler .tick")) tk.textContent = fmtClock(tk.dataset.clock);
+      }
+
+      function applyFilter() {
+        const q = search.value.trim().toLowerCase();
+        let visible = 0;
+        for (const b of bars) {
+          const match = !q || b.dataset.search.includes(q);
+          b.classList.toggle("dim", !match);
+          if (match) visible++;
+        }
+        count.textContent = visible + (visible === 1 ? " event" : " events");
+        empty.hidden = visible !== 0;
+        searchClear.hidden = q === "";
+        // venue view: collapse venues with no matches (tracks view: layout is fixed)
+        if (viewMode === "venues") layoutVenues(q !== "");
+        if (q) {
+          const firstMatch = bars.find((b) => !b.classList.contains("dim") && b.offsetParent !== null);
+          if (firstMatch) {
+            const sc = document.getElementById("scroll");
+            const delta = firstMatch.getBoundingClientRect().left - sc.getBoundingClientRect().left;
+            sc.scrollTo({ left: Math.max(0, sc.scrollLeft + delta - 48), behavior: "smooth" });
+          }
+        }
+      }
+      search.addEventListener("input", applyFilter);
+      searchClear.addEventListener("click", () => { search.value = ""; applyFilter(); search.focus(); });
+
+      // ---- zoom: rescale the time (X) axis; venue rows (Y) are unaffected ----
+      const zoom = document.getElementById("zoom");
+      const chart = document.getElementById("chart");
+      const daylabels = document.getElementById("daylabels");
+      const baseWidth = +chart.dataset.tw;
+      const xEls = Array.from(document.querySelectorAll("[data-bx]"));
+      let curZoom = 1;   // tracks the applied scale so we can re-anchor on change
+      function setZoom(z) {
+        for (const el of xEls) {
+          el.style.left = (+el.dataset.bx * z) + "px";
+          if (el.dataset.bw != null) el.style.width = (+el.dataset.bw * z) + "px";
+        }
+        const w = (baseWidth * z) + "px";
+        chart.style.width = w; daylabels.style.width = w;
+        curZoom = z;
+      }
+      // zoom around the viewport midline: keep whatever's centered now centered after
+      function zoomTo(z) {
+        const sc = document.getElementById("scroll");
+        const centerBase = (sc.scrollLeft + sc.clientWidth / 2) / curZoom;   // content point at center
+        setZoom(z);
+        sc.scrollLeft = centerBase * z - sc.clientWidth / 2;
+      }
+      zoom.addEventListener("input", () => {
+        zoomTo(+zoom.value);
+        try { localStorage.setItem("vc-zoom", zoom.value); } catch (e) {}
+      });
+      // restore saved zoom; with no saved preference, default mobile to a far-out
+      // overview (near max zoom-out) since the timeline is very wide on a phone.
+      let savedZoom = null;
+      try { savedZoom = localStorage.getItem("vc-zoom"); } catch (e) {}
+      const isMobile = window.matchMedia("(max-width: 560px)").matches;
+      zoom.value = savedZoom != null ? savedZoom : (isMobile ? "0.2" : "1");
+      setZoom(+zoom.value);
+
+      // ---- layout engine: "venues" (default) or compact "tracks" ----
+      const LH = 46, LG = 8, ROW = LH + LG;   // lane height / gap
+      const VGAP = 12;                          // gap between venues
+      const COLLAPSED_H = 30;
+      const BG_MIN = 180;   // minutes (3h): events this long become the background layer in compact view
+      const lanesEl = document.querySelector(".lanes");
+      const venueRowsEl = document.getElementById("venue-rows");
+      const trackRowsEl = document.getElementById("track-rows");
+      const axisHead = document.getElementById("axis-head");
+      const collapseAllBtn = document.getElementById("collapse-all");
+      const viewToggleBtn = document.getElementById("view-toggle");
+      const manualCollapsed = new Set();
+      let viewMode = "venues";
+
+      // venue model
+      const vlabels = Array.from(document.querySelectorAll(".vlabel"));
+      const vbands = Array.from(document.querySelectorAll(".vband"));
+      const venues = vlabels.map((label, i) => ({
+        name: label.dataset.venue, label, band: vbands[i], h: +label.dataset.h, bars: [],
+      }));
+      const vByName = new Map(venues.map((v) => [v.name, v]));
+      for (const b of bars) { const v = vByName.get(b.dataset.venue); if (v) v.bars.push(b); }
+
+      // compact "tracks" model: long events → background layer, the rest packed into tracks
+      const left = (b) => +b.dataset.bx;
+      const right = (b) => +b.dataset.bx + (+b.dataset.bw);
+      const bgSet = new Set();
+      const fg = [];
+      for (const b of bars) {
+        if ((+b.dataset.end - +b.dataset.start) >= BG_MIN) bgSet.add(b);
+        else fg.push(b);
+      }
+      fg.sort((a, b) => left(a) - left(b) || right(a) - right(b));
+      const trackEnds = [], trackCounts = [], trackOf = new Map();
+      for (const b of fg) {
+        let t = trackEnds.findIndex((end) => end <= left(b) + 0.5);
+        if (t === -1) { t = trackEnds.length; trackEnds.push(0); trackCounts.push(0); }
+        trackEnds[t] = right(b); trackOf.set(b, t); trackCounts[t]++;
+      }
+      const K = Math.max(1, trackEnds.length);
+      const trackAreaH = K * ROW - LG;
+      // long (bg) events get their OWN greedy lane-packing so each is bound to a
+      // single row (not the full track-area height). Rendered slightly taller than
+      // short events so their edges peek out from under the short events on top.
+      const BG_PEEK = 8;
+      const bgArr = bars.filter((b) => bgSet.has(b)).sort((a, b) => left(a) - left(b) || right(a) - right(b));
+      const bgEnds = [], bgLaneCounts = [], bgLaneOf = new Map();
+      for (const b of bgArr) {
+        let l = bgEnds.findIndex((end) => end <= left(b) + 0.5);
+        if (l === -1) { l = bgEnds.length; bgEnds.push(0); bgLaneCounts.push(0); }
+        bgEnds[l] = right(b); bgLaneOf.set(b, l); bgLaneCounts[l]++;
+      }
+      const bgLanes = bgEnds.length;
+      // total rows = the short-event tracks PLUS any extra rows the long-event
+      // underneath layer needs. Label every row so the labels don't stop short.
+      const TROWS = Math.max(K, bgLanes);
+      const compactAreaH = TROWS * ROW - LG;
+      const tbands = [];
+      for (let i = 0; i < TROWS; i++) {
+        const lbl = document.createElement("div");
+        lbl.className = "tlabel" + (i % 2 ? " alt" : "");
+        lbl.style.top = (i * ROW) + "px"; lbl.style.height = LH + "px";
+        const count = (trackCounts[i] || 0) + (bgLaneCounts[i] || 0);
+        const c = document.createElement("span"); c.className = "vlabel-count"; c.textContent = count;
+        const n = document.createElement("span"); n.className = "vlabel-name"; n.textContent = "events";
+        lbl.append(c, n); trackRowsEl.appendChild(lbl);   // count first, then "events"
+        const band = document.createElement("span");
+        band.className = "tband" + (i % 2 ? " alt" : "");
+        band.style.top = (i * ROW) + "px"; band.style.height = LH + "px"; band.style.display = "none";
+        lanesEl.appendChild(band); tbands.push(band);
+      }
+
+      // per-venue layout: FG (short) events sub-lane-packed, long events as a background layer
+      const fgSubLane = new Map();
+      for (const v of venues) {
+        v.fgBars = v.bars.filter((b) => !bgSet.has(b)).sort((a, b) => left(a) - left(b) || right(a) - right(b));
+        v.bgBars = v.bars.filter((b) => bgSet.has(b));
+        const ends = [];
+        for (const b of v.fgBars) {
+          let l = ends.findIndex((e) => e <= left(b) + 0.5);
+          if (l === -1) { l = ends.length; ends.push(0); }
+          ends[l] = right(b); fgSubLane.set(b, l);
+        }
+        v.fgLanes = Math.max(1, ends.length);
+        v.h = v.fgLanes * ROW - LG;
+      }
+
+      function layoutVenues(searchActive) {
+        let y = 0;
+        for (const v of venues) {
+          const matches = searchActive ? v.bars.filter((b) => !b.classList.contains("dim")).length : v.bars.length;
+          if (searchActive && matches === 0) {
+            v.label.style.display = "none"; v.band.style.display = "none";
+            for (const b of v.bars) b.style.display = "none";
+            continue;
+          }
+          v.label.style.display = ""; v.band.style.display = "";
+          const collapsed = manualCollapsed.has(v.name);
+          const h = collapsed ? COLLAPSED_H : v.h;
+          v.label.style.top = y + "px"; v.label.style.height = h + "px";
+          v.band.style.top = y + "px"; v.band.style.height = h + "px";
+          v.label.classList.toggle("collapsed", collapsed);
+          v.label.setAttribute("aria-expanded", String(!collapsed));
+          for (const b of v.fgBars) {
+            b.classList.remove("bgbar"); b.style.height = "";
+            if (collapsed) b.style.display = "none";
+            else { b.style.display = ""; b.style.top = (y + fgSubLane.get(b) * ROW) + "px"; }
+          }
+          for (const b of v.bgBars) {
+            if (collapsed) { b.classList.remove("bgbar"); b.style.height = ""; b.style.display = "none"; }
+            else { b.classList.add("bgbar"); b.style.display = ""; b.style.top = y + "px"; b.style.height = h + "px"; }
+          }
+          y += h + VGAP;
+        }
+        const total = Math.max(0, y - VGAP);
+        lanesEl.style.height = total + "px";
+        venueRowsEl.style.height = total + "px";
+      }
+
+      function layoutTracks() {
+        for (const b of bars) {
+          b.style.display = "";
+          if (bgSet.has(b)) {
+            // underneath layer: one row per long event, slightly taller than a
+            // short event so its top/bottom edges peek out from under the events on top.
+            // The top lane must not peek UP — there's only the ruler above it, and
+            // an upward peek covers the hour-time labels.
+            b.classList.add("bgbar");
+            const lane = bgLaneOf.get(b);
+            const peekUp = lane > 0 ? BG_PEEK : 0;
+            b.style.top = (lane * ROW - peekUp) + "px";
+            b.style.height = (LH + peekUp + BG_PEEK) + "px";
+          } else {
+            b.classList.remove("bgbar"); b.style.height = "";
+            b.style.top = (trackOf.get(b) * ROW) + "px";
+          }
+        }
+        lanesEl.style.height = compactAreaH + "px";
+        trackRowsEl.style.height = compactAreaH + "px";
+      }
+
+      function setView(mode) {
+        viewMode = mode;
+        try { localStorage.setItem("vc-view", mode); } catch (e) {}
+        const tracks = mode === "tracks";
+        venueRowsEl.hidden = tracks;
+        trackRowsEl.hidden = !tracks;
+        for (const b of vbands) b.style.display = tracks ? "none" : "";
+        for (const b of tbands) b.style.display = tracks ? "" : "none";
+        axisHead.textContent = tracks ? (TROWS + " rows · " + bgSet.size + " bg") : "Location";
+        collapseAllBtn.style.display = tracks ? "none" : "";
+        viewToggleBtn.textContent = tracks ? "📍 Location view" : "☰ Row view";
+        if (tracks) layoutTracks(); else layoutVenues(search.value.trim() !== "");
+      }
+      viewToggleBtn.addEventListener("click", () => setView(viewMode === "tracks" ? "venues" : "tracks"));
+
+      for (const v of venues) {
+        v.label.addEventListener("click", () => {
+          if (manualCollapsed.has(v.name)) manualCollapsed.delete(v.name);
+          else manualCollapsed.add(v.name);
+          layoutVenues(search.value.trim() !== "");
+          syncCollapseAll();
+        });
+      }
+      function syncCollapseAll() {
+        const allCollapsed = venues.every((v) => manualCollapsed.has(v.name));
+        collapseAllBtn.textContent = allCollapsed ? "⊞ Expand all" : "⊟ Collapse all";
+      }
+      collapseAllBtn.addEventListener("click", () => {
+        const allCollapsed = venues.every((v) => manualCollapsed.has(v.name));
+        if (allCollapsed) manualCollapsed.clear();
+        else for (const v of venues) manualCollapsed.add(v.name);
+        layoutVenues(search.value.trim() !== "");
+        syncCollapseAll();
+      });
+
+      let savedView = "tracks";   // track view is the default
+      try { savedView = localStorage.getItem("vc-view") || "tracks"; } catch (e) {}
+      setView(savedView);
+      syncCollapseAll();
+
+      const el = (tag, cls, text) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null) n.textContent = text;
+        return n;
+      };
+
+      const panel = document.getElementById("panel");
+      const pToggle = document.getElementById("p-toggle");
+      let currentBar = null;
+      const set = (id, v) => {
+        const e = document.getElementById(id);
+        e.textContent = v || "";
+        if (e.classList.contains("p-chip")) e.hidden = !v;
+      };
+      const refreshToggle = () => {
+        if (!currentBar) return;
+        const on = currentBar.classList.contains("selected");
+        pToggle.textContent = on ? "✓ In schedule — remove" : "+ Add to my schedule";
+        pToggle.classList.toggle("on", on);
+      };
+      const show = (b) => {
+        if (currentBar && currentBar !== b) currentBar.classList.remove("viewing");
+        currentBar = b;
+        b.classList.add("viewing");   // glow the event you're looking at, in its own color
+        set("p-title", b.dataset.title);
+        set("p-time", fmtClock(b.dataset.time));
+        set("p-day", b.dataset.day);
+        set("p-org", b.dataset.org ? "♟ " + b.dataset.org : "");
+        set("p-loc", b.dataset.loc ? "⌖ " + b.dataset.loc : "");
+        set("p-desc", b.dataset.desc);
+        refreshToggle();
+        panel.hidden = false;
+      };
+      const closePanel = () => { panel.hidden = true; if (currentBar) currentBar.classList.remove("viewing"); };
+      // click opens the info popup (selection happens via the panel button)
+      bars.forEach((b) => b.addEventListener("click", () => show(b)));
+      document.getElementById("panel-close").addEventListener("click", closePanel);
+      pToggle.addEventListener("click", () => { if (currentBar) { toggleSelect(currentBar); closePanel(); } });
+
+      // ---- selection + overlap detection ----
+      const tray = document.getElementById("tray");
+      const trayN = document.getElementById("tray-n");
+      const trayHint = document.getElementById("tray-hint");
+      const trayWarn = document.getElementById("tray-warn");
+      const trayReview = document.getElementById("tray-review");
+      const trayClear = document.getElementById("tray-clear");
+      const trayExport = document.getElementById("tray-export");
+      let conflictPairs = [];
+      const ackedOverlaps = new Set();
+      const pairKey = (a, b) => [a.id, b.id].sort().join("|");
+
+      const toggleSelect = (b) => { b.classList.toggle("selected"); recompute(); };
+
+      function recompute() {
+        const sel = bars.filter((b) => b.classList.contains("selected"));
+        bars.forEach((b) => b.classList.remove("conflict"));
+        conflictPairs = [];
+        const sorted = [...sel].sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+        for (let i = 0; i < sorted.length; i++) {
+          for (let j = i + 1; j < sorted.length; j++) {
+            const a = sorted[i], b = sorted[j];
+            if (+b.dataset.start < +a.dataset.end) {
+              a.classList.add("conflict"); b.classList.add("conflict");
+              conflictPairs.push([a, b]);
+            } else break; // sorted by start: no later event can overlap a
+          }
+        }
+        const nConflict = bars.filter((b) => b.classList.contains("conflict")).length;
+        const has = sel.length > 0;
+        trayN.textContent = sel.length;
+        trayHint.hidden = has;                 // empty-state prompt only when nothing picked
+        trayClear.disabled = !has;             // stay visible, just inert until events are picked
+        trayExport.disabled = !has;
+        trayReview.hidden = conflictPairs.length === 0;
+        if (nConflict > 0) {
+          trayWarn.hidden = false;
+          trayWarn.textContent = `⚠ ${conflictPairs.length} overlap${conflictPairs.length > 1 ? "s" : ""} (${nConflict} events)`;
+        } else {
+          trayWarn.hidden = true;
+        }
+        syncCatChecks();
+        updateTrayToggle();
+      }
+
+      document.getElementById("tray-clear").addEventListener("click", () => {
+        bars.forEach((b) => b.classList.remove("selected", "conflict"));
+        ackedOverlaps.clear();
+        recompute(); refreshToggle();
+      });
+
+      // ---- randomize: build a random conflict-free schedule ----
+      document.getElementById("randomize-btn").addEventListener("click", () => {
+        const die = document.querySelector("#randomize-btn .die");
+        if (die) {
+          die.classList.remove("rolling");
+          void die.offsetWidth;            // reflow so the animation can re-trigger
+          die.classList.add("rolling");
+          die.addEventListener("animationend", () => die.classList.remove("rolling"), { once: true });
+        }
+        bars.forEach((b) => b.classList.remove("selected", "conflict"));
+        ackedOverlaps.clear();
+        const picked = [];
+        for (const b of [...bars].sort(() => Math.random() - 0.5)) {
+          const bs = +b.dataset.start, be = +b.dataset.end;
+          if (!picked.some((p) => bs < +p.dataset.end && +p.dataset.start < be)) {
+            b.classList.add("selected"); picked.push(b);
+          }
+        }
+        recompute(); refreshToggle();
+      });
+
+      // ---- core events: add the mealtimes + opening/closing ceremonies to the schedule ----
+      const CORE = new Set(["Breakfast", "Lunch", "Dinner", "Opening Ceremonies", "Closing Ceremonies"]);
+      document.getElementById("core-btn").addEventListener("click", () => {
+        for (const b of bars) if (CORE.has(b.dataset.title)) b.classList.add("selected");
+        recompute(); refreshToggle();
+      });
+
+      // ---- select-by-type: each checkbox bulk-selects / deselects its category ----
+      const catCbs = Array.from(document.querySelectorAll(".cat-cb"));
+      const catBars = new Map();
+      for (const cb of catCbs) {
+        catBars.set(cb.dataset.cat, bars.filter((b) => (b.dataset.cats || "").split(" ").includes(cb.dataset.cat)));
+      }
+      catCbs.forEach((cb) => cb.addEventListener("change", () => {
+        for (const b of (catBars.get(cb.dataset.cat) || [])) b.classList.toggle("selected", cb.checked);
+        recompute(); refreshToggle();
+      }));
+      function syncCatChecks() {
+        for (const cb of catCbs) {
+          const list = catBars.get(cb.dataset.cat) || [];
+          const sel = list.filter((b) => b.classList.contains("selected")).length;
+          cb.checked = list.length > 0 && sel === list.length;
+          cb.indeterminate = sel > 0 && sel < list.length;
+        }
+      }
+      syncCatChecks();
+
+      // ---- clock-format toggle (re-labels every displayed time + the open panel) ----
+      const clockToggle = document.getElementById("clock-toggle");
+      const setClockLabel = () => { clockToggle.textContent = use12hr ? "🕐 Clock: 12h" : "🕐 Clock: 24h"; };
+      setClockLabel();
+      clockToggle.addEventListener("click", () => {
+        use12hr = !use12hr;
+        try { localStorage.setItem("vc-clock", use12hr ? "12" : "24"); } catch (e) {}
+        setClockLabel(); applyClockFormat();
+        if (!panel.hidden && currentBar) set("p-time", fmtClock(currentBar.dataset.time));
+      });
+      if (use12hr) applyClockFormat();   // restore a saved 12h preference on load
+
+      // ---- theme toggle: System → Light → Dark (System follows the OS) ----
+      const themeToggle = document.getElementById("theme-toggle");
+      const THEME_LABELS = { system: "🌗 Theme: System", light: "☀ Theme: Light", dark: "🌙 Theme: Dark" };
+      const THEME_ORDER = ["system", "light", "dark"];
+      let theme = document.documentElement.getAttribute("data-theme") || "system";
+      const applyTheme = () => {
+        document.documentElement.setAttribute("data-theme", theme);
+        themeToggle.textContent = THEME_LABELS[theme] || THEME_LABELS.system;
+      };
+      applyTheme();
+      themeToggle.addEventListener("click", () => {
+        theme = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+        try { localStorage.setItem("vc-theme", theme); } catch (e) {}
+        applyTheme();
+      });
+
+      // ---- overlap review modal ----
+      const review = document.getElementById("review");
+      const reviewList = document.getElementById("review-list");
+      const reviewSub = document.getElementById("review-sub");
+
+      const pairsOf = (e) => conflictPairs.filter(([a, b]) => a === e || b === e);
+
+      function renderReview() {
+        reviewList.textContent = "";
+        // one row per event involved in a conflict, sorted by start time
+        const evs = [...new Set(conflictPairs.flat())].sort(
+          (a, b) => (+a.dataset.start) - (+b.dataset.start)
+        );
+        reviewSub.textContent = evs.length
+          ? `${evs.length} event${evs.length > 1 ? "s" : ""} with overlaps. Marking an event OK clears every overlap it's part of — resolved ones won't be flagged.`
+          : "No overlaps — you're all clear.";
+        for (const e of evs) {
+          const mine = pairsOf(e);
+          const partners = mine
+            .map(([a, b]) => (a === e ? b : a))
+            .sort((x, y) => (+x.dataset.start) - (+y.dataset.start));
+          const resolved = mine.every(([a, b]) => ackedOverlaps.has(pairKey(a, b)));
+
+          const row = el("div", "rv-row" + (resolved ? " resolved" : ""));
+          const info = el("div", "rv-info");
+          info.appendChild(el("div", "rv-pair", `${e.dataset.title}  (${fmtClock(e.dataset.clock)})`));
+          info.appendChild(el("div", "rv-times",
+            "overlaps " + partners.map((p) => `${p.dataset.title} (${p.dataset.clock})`).join(",  ")));
+          const btn = el("button", "rv-ok");
+          btn.textContent = resolved ? "OK ✓" : "Mark OK";
+          btn.classList.toggle("on", resolved);
+          btn.addEventListener("click", () => {
+            for (const [a, b] of mine) {
+              const k = pairKey(a, b);
+              if (resolved) ackedOverlaps.delete(k);
+              else ackedOverlaps.add(k);
+            }
+            renderReview(); // re-render so events that share an overlap update too
+          });
+          row.appendChild(info);
+          row.appendChild(btn);
+          reviewList.appendChild(row);
+        }
+      }
+      const openReview = () => { renderReview(); review.hidden = false; };
+      const closeReview = () => { review.hidden = true; };
+
+      trayReview.addEventListener("click", openReview);
+      document.getElementById("review-close").addEventListener("click", closeReview);
+      document.getElementById("review-cancel").addEventListener("click", closeReview);
+      document.getElementById("review-allok").addEventListener("click", () => {
+        for (const [a, b] of conflictPairs) ackedOverlaps.add(pairKey(a, b));
+        renderReview();
+      });
+      document.getElementById("review-continue").addEventListener("click", () => { closeReview(); openExport(); });
+
+      // ---- how-to guide modal ----
+      const howto = document.getElementById("howto");
+      const closeHowto = () => { howto.hidden = true; };
+      document.getElementById("howto-btn").addEventListener("click", () => { howto.hidden = false; });
+      document.getElementById("howto-close").addEventListener("click", closeHowto);
+      document.getElementById("howto-ok").addEventListener("click", closeHowto);
+      howto.addEventListener("click", (e) => { if (e.target === howto) closeHowto(); });  // click backdrop to close
+
+      // ---- camp map modal ----
+      const mapmodal = document.getElementById("mapmodal");
+      const closeMap = () => { mapmodal.hidden = true; };
+      document.getElementById("map-btn").addEventListener("click", () => { mapmodal.hidden = false; });
+      document.getElementById("mapmodal-close").addEventListener("click", closeMap);
+      mapmodal.addEventListener("click", (e) => { if (e.target === mapmodal) closeMap(); });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") { closeReview(); closeHowto(); closeMap(); closeExport(); closePanel(); }
+      });
+
+      // ---- build printable schedule & open print dialog (Save as PDF) ----
+      function doPrint() {
+        const sel = bars
+          .filter((b) => b.classList.contains("selected"))
+          .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+        if (!sel.length) return;
+
+        // only unresolved overlaps matter for the PDF; anything marked OK is silent
+        const unackedPairs = conflictPairs.filter(([a, b]) => !ackedOverlaps.has(pairKey(a, b)));
+        const unackedIds = new Set();
+        for (const [a, b] of unackedPairs) { unackedIds.add(a.id); unackedIds.add(b.id); }
+
+        const body = document.getElementById("ps-body");
+        body.textContent = "";
+        const days = [...new Set(sel.map((b) => b.dataset.day))];
+        document.getElementById("ps-sub").textContent =
+          `${sel.length} event${sel.length > 1 ? "s" : ""} · ${days.length} day${days.length > 1 ? "s" : ""}`;
+
+        for (const day of days) {
+          const dayEvents = sel.filter((x) => x.dataset.day === day);
+          const sec = el("section", "ps-day");
+          const head = el("h2");
+          head.appendChild(el("span", "ps-dayname", day));
+          head.appendChild(el("span", "ps-daycount", `${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""}`));
+          sec.appendChild(head);
+          for (const b of dayEvents) {
+            let cls = "ps-item";
+            if (unackedIds.has(b.id)) cls += " conflict";
+            const item = el("div", cls);
+            item.appendChild(el("div", "ps-time", fmtClock(b.dataset.clock)));
+            const main = el("div", "ps-main");
+            main.appendChild(el("div", "t", b.dataset.title));
+            const meta = el("div", "m");
+            if (b.dataset.org) meta.appendChild(el("span", "ps-host", "by " + b.dataset.org));
+            if (b.dataset.loc) {
+              if (b.dataset.org) meta.appendChild(el("span", "ps-dot", "·"));
+              meta.appendChild(el("span", "ps-loc", b.dataset.loc));
+            }
+            if (b.dataset.org || b.dataset.loc) main.appendChild(meta);
+            item.appendChild(main);
+            sec.appendChild(item);
+          }
+          body.appendChild(sec);
+        }
+
+        const warn = document.getElementById("ps-warn");
+        warn.textContent = "";
+        warn.hidden = unackedPairs.length === 0;
+        if (unackedPairs.length) {
+          const box = el("div", "pw-red");
+          box.appendChild(el("h4", null, `⚠ ${unackedPairs.length} unresolved time conflict${unackedPairs.length > 1 ? "s" : ""}`));
+          for (const [a, b] of unackedPairs)
+            box.appendChild(el("div", null, `“${a.dataset.title}” (${a.dataset.clock}) overlaps “${b.dataset.title}” (${b.dataset.clock})`));
+          warn.appendChild(box);
+        }
+
+        document.getElementById("ps-map").hidden = !document.getElementById("map-pdf").checked;
+        window.print();
+      }
+
+      // ---- build a calendar .ics from the selected events ----
+      const icsEsc = (s) => (s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+      // RFC 5545 line folding: split octets >75 onto continuation lines (leading space)
+      function icsFold(line) {
+        if (line.length <= 75) return line;
+        const out = [line.slice(0, 75)];
+        let rest = line.slice(75);
+        while (rest.length > 74) { out.push(" " + rest.slice(0, 74)); rest = rest.slice(74); }
+        out.push(" " + rest);
+        return out.join("\r\n");
+      }
+      const TZBLOCK = [
+        "BEGIN:VTIMEZONE", "TZID:America/New_York",
+        "BEGIN:DAYLIGHT", "TZOFFSETFROM:-0500", "TZOFFSETTO:-0400", "TZNAME:EDT",
+        "DTSTART:19700308T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU", "END:DAYLIGHT",
+        "BEGIN:STANDARD", "TZOFFSETFROM:-0400", "TZOFFSETTO:-0500", "TZNAME:EST",
+        "DTSTART:19701101T020000", "RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU", "END:STANDARD",
+        "END:VTIMEZONE",
+      ];
+      const p2 = (n) => String(n).padStart(2, "0");
+      function buildICS(sel) {
+        const now = new Date();
+        const stamp = `${now.getUTCFullYear()}${p2(now.getUTCMonth() + 1)}${p2(now.getUTCDate())}T${p2(now.getUTCHours())}${p2(now.getUTCMinutes())}${p2(now.getUTCSeconds())}Z`;
+        const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//vibecamp-scheduler//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Vibecamp schedule", ...TZBLOCK];
+        for (const b of sel) {
+          const date = b.dataset.date, shm = b.dataset.shm;
+          lines.push("BEGIN:VEVENT", `UID:${b.id}@vibecamp.mahan.io`, `DTSTAMP:${stamp}`);
+          if (shm === "all-day" || !/^\d{1,2}:\d{2}$/.test(shm)) {
+            const d = date.replace(/-/g, "");
+            const next = new Date(date + "T00:00:00"); next.setDate(next.getDate() + 1);
+            const nd = `${next.getFullYear()}${p2(next.getMonth() + 1)}${p2(next.getDate())}`;
+            lines.push(`DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${nd}`);
+          } else {
+            const [h, m] = shm.split(":").map(Number);
+            const durMin = (+b.dataset.end) - (+b.dataset.start);
+            const s = new Date(date + "T00:00:00"); s.setHours(h, m, 0, 0);
+            const e = new Date(s.getTime()); e.setMinutes(e.getMinutes() + (durMin > 0 ? durMin : 60));
+            const fmt = (x) => `${x.getFullYear()}${p2(x.getMonth() + 1)}${p2(x.getDate())}T${p2(x.getHours())}${p2(x.getMinutes())}00`;
+            lines.push(`DTSTART;TZID=America/New_York:${fmt(s)}`, `DTEND;TZID=America/New_York:${fmt(e)}`);
+          }
+          lines.push(`SUMMARY:${icsEsc(b.dataset.title)}`);
+          if (b.dataset.loc) lines.push(`LOCATION:${icsEsc(b.dataset.loc)}`);
+          const desc = [b.dataset.org ? "Host: " + b.dataset.org : "", b.dataset.desc || ""].filter(Boolean).join("\n\n");
+          if (desc) lines.push(`DESCRIPTION:${icsEsc(desc)}`);
+          lines.push("END:VEVENT");
+        }
+        lines.push("END:VCALENDAR");
+        return lines.map(icsFold).join("\r\n");
+      }
+      const ua = navigator.userAgent;
+      const onIOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isAndroid = /Android/.test(ua);
+      const isPhone = onIOS || isAndroid;   // an actual mobile device (not just a narrow viewport)
+      // Real iOS Safari (not Chrome/Firefox/Edge on iOS) — only it shows the native add sheet.
+      const isIOSSafari = onIOS && /Safari/.test(ua) && !/(CriOS|FxiOS|EdgiOS|OPiOS|GSA|DuckDuckGo|Brave|YaBrowser)/.test(ua);
+
+      // ---- calendar Worker (vccal.mahan.io): serves text/calendar headers so the
+      // .ics lands in the calendar across browsers. Until it's live, the ping fails
+      // and we silently fall back to the client-side paths below. ----
+      const CAL_WORKER = "https://vccal.mahan.io";
+      let _workerUp = null;
+      async function workerReachable() {
+        if (_workerUp !== null) return _workerUp;
+        try {
+          const opts = { method: "GET", mode: "cors" };
+          if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) opts.signal = AbortSignal.timeout(2500);
+          const r = await fetch(CAL_WORKER + "/?ping=1", opts);
+          _workerUp = r.ok;
+        } catch (e) { _workerUp = false; }
+        return _workerUp;
+      }
+      async function gzipB64url(str) {
+        const cs = new CompressionStream("gzip");
+        const w = cs.writable.getWriter();
+        w.write(new TextEncoder().encode(str)); w.close();
+        const buf = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+        let bin = ""; for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+        return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+      async function workerCalUrl(ics) {
+        if (typeof CompressionStream === "undefined") return null;
+        try {
+          const u = CAL_WORKER + "/vibecamp-schedule.ics?d=" + await gzipB64url(ics);
+          return u.length > 7500 ? null : u; // too long to navigate safely → fall back
+        } catch (e) { return null; }
+      }
+
+      function fileDownloadICS(ics) {
+        const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "vibecamp-schedule.ics"; a.rel = "noopener";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }
+
+      // "Add to calendar" — routes by platform:
+      //   phone (iOS + Android) → webcal:// hands the Worker feed to the calendar app (one tap)
+      //   desktop → download the .ics to open
+      //
+      // IMPORTANT: launching the webcal:// scheme must happen SYNCHRONOUSLY inside the
+      // tap gesture. iOS Safari (and Android for app-scheme handoff) silently blocks a
+      // navigation that occurs after an `await`. So we precompute the webcal URL when the
+      // export modal opens (openExport) and stash it in `pendingCalUrl`; the click handler
+      // below just reads it and navigates — no awaits in the gesture path.
+      let pendingCalUrl = null;
+      function downloadICS() {
+        const sel = bars
+          .filter((b) => b.classList.contains("selected"))
+          .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+        if (!sel.length) return;
+
+        // Phone: jump straight to the precomputed webcal URL (synchronous = not blocked).
+        if (isPhone && pendingCalUrl) { window.location.href = pendingCalUrl; return; }
+
+        const ics = buildICS(sel);
+        // iOS Safari without the Worker: native add sheet via a text/calendar data: URL.
+        if (isIOSSafari) {
+          window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
+          return;
+        }
+        // Desktop (and any mobile fallback): download a named .ics to open.
+        fileDownloadICS(ics);
+      }
+      workerReachable(); // warm the reachability check on load
+
+      // ---- export modal ----
+      const exportModal = document.getElementById("export");
+      const closeExport = () => { exportModal.hidden = true; };
+      function openExport() {
+        if (!bars.some((b) => b.classList.contains("selected"))) return;
+        document.getElementById("export-n").textContent =
+          bars.filter((b) => b.classList.contains("selected")).length;
+        exportModal.hidden = false;
+
+        // Precompute the phone "add to calendar" webcal URL while the modal is open, so the
+        // button tap can navigate synchronously (iOS blocks app-scheme launches after await).
+        pendingCalUrl = null;
+        if (isPhone) {
+          const sel = bars
+            .filter((b) => b.classList.contains("selected"))
+            .sort((a, b) => (+a.dataset.start) - (+b.dataset.start));
+          const ics = buildICS(sel);
+          workerReachable().then((up) => {
+            if (!up) return;
+            return workerCalUrl(ics).then((u) => {
+              if (u) pendingCalUrl = u.replace(/^https:/, "webcal:");
+            });
+          });
+        }
+      }
+      // Export gates on overlaps first: if any are unresolved, review before exporting.
+      document.getElementById("tray-export").addEventListener("click", () => {
+        if (!bars.some((b) => b.classList.contains("selected"))) return;
+        const unresolved = conflictPairs.some(([a, b]) => !ackedOverlaps.has(pairKey(a, b)));
+        if (unresolved) openReview(); else openExport();
+      });
+      document.getElementById("export-close").addEventListener("click", closeExport);
+      exportModal.addEventListener("click", (e) => { if (e.target === exportModal) closeExport(); });
+      document.getElementById("export-ics").addEventListener("click", () => { downloadICS(); closeExport(); });
+      document.getElementById("export-pdf").addEventListener("click", () => { closeExport(); doPrint(); });
+
+      // drag-to-scroll the continuous track
+      const scroll = document.getElementById("scroll");
+      let down = false, startX = 0, startL = 0, moved = 0;
+      scroll.addEventListener("pointerdown", (e) => {
+        if (e.pointerType !== "mouse") return;   // touch/pen: use native scrolling (don't hijack vertical page scroll)
+        if (e.target.closest(".bar")) return;
+        down = true; startX = e.clientX; startL = scroll.scrollLeft; moved = 0;
+        scroll.classList.add("grabbing");
+      });
+      window.addEventListener("pointermove", (e) => {
+        if (!down) return;
+        const dx = e.clientX - startX; moved = Math.abs(dx);
+        scroll.scrollLeft = startL - dx;
+      });
+      window.addEventListener("pointerup", () => { down = false; scroll.classList.remove("grabbing"); });
+
+      // ---- scroll-driven sheen: slide the highlight streak on .sheen bars as you scroll ----
+      const setSheen = () => document.documentElement.style.setProperty("--sheenx", (-scroll.scrollLeft * 0.6) + "px");
+      scroll.addEventListener("scroll", setSheen, { passive: true });
+      setSheen();
+
+      // ---- mobile: fade the schedule bar in on first downscroll, then keep it shown ----
+      const trayMQ = window.matchMedia("(max-width: 560px)");
+      let trayRevealed = false;
+      const maybeRevealTray = () => {
+        if (trayRevealed || !trayMQ.matches) return;
+        if (window.scrollY > 60) { tray.classList.add("revealed"); trayRevealed = true; }
+      };
+      window.addEventListener("scroll", maybeRevealTray, { passive: true });
+      maybeRevealTray();
+
+      // ---- mobile: minimize/drawer toggle for the schedule bar ----
+      const trayToggle = document.getElementById("tray-toggle");
+      function updateTrayToggle() {
+        const collapsed = tray.classList.contains("collapsed");
+        trayToggle.textContent = collapsed ? "▾" : "▴";
+        trayToggle.setAttribute("aria-label", collapsed ? "Open schedule bar" : "Minimize schedule bar");
+      }
+      trayToggle.addEventListener("click", () => { tray.classList.toggle("collapsed"); updateTrayToggle(); });
+      updateTrayToggle();
+
+      // ---- sparkles inside the "Vibecamp Trials" events — Michael's, so they're special ----
+      // (The Trials are now split into several bars that all start with "Vibecamp Trials"; we
+      // sparkle every one of them.) Each bar is wide AND (in Row view) a background layer
+      // beneath the foreground events, so sparkles drawn into it get occluded. Instead we draw
+      // them into a transparent, click-through overlay per bar that mirrors its box but stacks
+      // on top. The overlay's overflow:hidden keeps every sparkle inside the bar's bounds.
+      (function sparkleTrials() {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const hosts = [...document.querySelectorAll(".bar.trials")];
+        if (!hosts.length) return;
+        const scrollEl = document.getElementById("scroll");
+        const GLYPHS = ["✦", "✧", "⋆", "✶", "·"];
+        const pairs = hosts.map((host) => {
+          const ov = document.createElement("div");
+          ov.className = "spark-overlay";
+          (host.offsetParent || host.parentElement).appendChild(ov); // sibling of the bars, inside .lanes
+          return { host, ov };
+        });
+        setInterval(() => {
+          for (const { host, ov } of pairs) {
+            const hidden = host.classList.contains("dim") || host.style.display === "none";
+            ov.style.display = hidden ? "none" : "";
+            if (hidden) continue;
+            // keep the overlay aligned to its bar (geometry shifts on zoom / view change)
+            ov.style.left = host.offsetLeft + "px"; ov.style.top = host.offsetTop + "px";
+            ov.style.width = host.offsetWidth + "px"; ov.style.height = host.offsetHeight + "px";
+            const br = host.getBoundingClientRect(), sr = scrollEl.getBoundingClientRect();
+            const visL = Math.max(br.left, sr.left), visR = Math.min(br.right, sr.right);
+            if (visR - visL < 8 || br.bottom < sr.top || br.top > sr.bottom) continue; // off-screen
+            const localL = visL - br.left, localR = visR - br.left;
+            const burst = 2 + Math.floor(Math.random() * 2);   // 2-3 sparkles per tick
+            for (let k = 0; k < burst; k++) {
+              const s = document.createElement("span");
+              s.className = "sparkle";
+              s.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+              s.style.left = (localL + Math.random() * (localR - localL)) + "px";
+              s.style.top = (3 + Math.random() * Math.max(1, host.offsetHeight - 13)) + "px";
+              s.style.fontSize = (0.55 + Math.random() * 0.55) + "rem";
+              ov.appendChild(s);
+              s.addEventListener("animationend", () => s.remove(), { once: true });
+            }
+          }
+        }, 150);
+      })();
+      // (vertical wheel is left to scroll the page — the schedule is tall, so we no
+      //  longer hijack vertical scroll into horizontal. Trackpad/shift+wheel still
+      //  scroll the timeline horizontally natively, and drag-to-scroll works on desktop.)
+    </script>
+
+    <style is:global>
+      /* --- dark (Catppuccin Mocha) — the default --- */
+      :root {
+        color-scheme: dark;
+        --base: #1e1e2e; --mantle: #181825; --crust: #11111b;
+        --surface0: #313244; --surface1: #45475a; --surface2: #585b70;
+        --overlay0: #6c7086; --overlay1: #7f849c; --overlay2: #9399b2;
+        --text: #cdd6f4; --subtext1: #bac2de; --subtext0: #a6adc8;
+        --blue: #89b4fa; --lavender: #b4befe; --sapphire: #74c7ec;
+        --sky: #89dceb; --teal: #94e2d5; --green: #a6e3a1;
+        --yellow: #f9e2af; --peach: #fab387; --maroon: #eba0ac;
+        --red: #f38ba8; --mauve: #cba6f7; --pink: #f5c2e7;
+        /* semantic surfaces (translucent — swap with the palette) */
+        --glass: rgba(24,24,37,.6);      /* floating toolbars */
+        --panel-bg: rgba(24,24,37,.97);  /* side panel, modals, drawer */
+        --stripe: rgba(205,214,244,.045);    /* zebra striping on rows/bands */
+        --input-bg: rgba(49,50,68,.55);  /* search field */
+      }
+      /* --- light (Catppuccin Latte) — explicit choice + system-follows-OS --- */
+      :root[data-theme="light"],
+      :root[data-theme="system"] { color-scheme: light dark; }
+      @media (prefers-color-scheme: light) {
+        :root[data-theme="system"] {
+          color-scheme: light;
+          --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+          --surface0: #ccd0da; --surface1: #bcc0cc; --surface2: #acb0be;
+          --overlay0: #9ca0b0; --overlay1: #8c8fa1; --overlay2: #7c7f93;
+          --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85;
+          --blue: #1e66f5; --lavender: #7287fd; --sapphire: #209fb5;
+          --sky: #04a5e5; --teal: #179299; --green: #40a02b;
+          --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
+          --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
+          --glass: rgba(230,233,239,.72);
+          --panel-bg: rgba(239,241,245,.98);
+          --stripe: rgba(76,79,105,.07);
+          --input-bg: rgba(255,255,255,.7);
+        }
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --base: #eff1f5; --mantle: #e6e9ef; --crust: #dce0e8;
+        --surface0: #ccd0da; --surface1: #bcc0cc; --surface2: #acb0be;
+        --overlay0: #9ca0b0; --overlay1: #8c8fa1; --overlay2: #7c7f93;
+        --text: #4c4f69; --subtext1: #5c5f77; --subtext0: #6c6f85;
+        --blue: #1e66f5; --lavender: #7287fd; --sapphire: #209fb5;
+        --sky: #04a5e5; --teal: #179299; --green: #40a02b;
+        --yellow: #df8e1d; --peach: #fe640b; --maroon: #e64553;
+        --red: #d20f39; --mauve: #8839ef; --pink: #ea76cb;
+        --glass: rgba(230,233,239,.72);
+        --panel-bg: rgba(239,241,245,.98);
+        --stripe: rgba(76,79,105,.07);
+        --input-bg: rgba(255,255,255,.7);
+      }
+      * { box-sizing: border-box; }
+      /* the `hidden` attribute must win over component display rules (.review/.tray/etc.) */
+      [hidden] { display: none !important; }
+      body {
+        margin: 0; background: var(--base); color: var(--text);
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.5; -webkit-font-smoothing: antialiased;
+      }
+      .aurora {
+        position: fixed; inset: 0; z-index: -1;
+        background:
+          radial-gradient(55% 45% at 12% 0%, rgba(203,166,247,.18), transparent 70%),
+          radial-gradient(50% 40% at 92% 4%, rgba(137,180,250,.16), transparent 70%),
+          radial-gradient(60% 50% at 50% 100%, rgba(148,226,213,.10), transparent 70%);
+      }
+
+      .hero { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem 1rem; text-align: center; }
+      .kicker { margin: 0 0 .6rem; font-size: .85rem; letter-spacing: .28em; text-transform: uppercase; color: var(--mauve); font-weight: 600; }
+      .kicker-home { color: inherit; text-decoration: none; }
+      .kicker-home:hover { text-decoration: underline; }
+      .hero h1 {
+        margin: 0; font-size: clamp(2.1rem, 5vw, 3.3rem); font-weight: 800; letter-spacing: -.02em;
+        background: linear-gradient(120deg, var(--lavender), var(--sky), var(--teal));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .tagline { margin: .8rem auto 0; max-width: 42rem; color: var(--subtext0); font-size: 1.02rem; }
+      .tagline a { color: var(--sky); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--sky) 45%, transparent); }
+      .tagline a:hover { color: var(--sapphire); border-bottom-color: var(--sapphire); }
+      .controls { display: flex; align-items: center; justify-content: center; gap: .9rem; flex-wrap: wrap; margin-top: 1.6rem; }
+      .search-wrap { position: relative; flex: 1; max-width: 26rem; min-width: 14rem; }
+      .search-icon { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--overlay1); font-size: 1.1rem; }
+      #search {
+        width: 100%; padding: .7rem 2.4rem .7rem 2.4rem; border-radius: .8rem;
+        border: 1px solid var(--surface1); background: var(--input-bg); color: var(--text);
+        font-size: .98rem; backdrop-filter: blur(6px); transition: border-color .18s, box-shadow .18s;
+      }
+      #search::placeholder { color: var(--overlay0); }
+      #search:focus { outline: none; border-color: var(--mauve); box-shadow: 0 0 0 3px rgba(203,166,247,.18); }
+      /* hide native search clear (we use our own) */
+      #search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+      .search-clear {
+        position: absolute; right: .5rem; top: 50%; transform: translateY(-50%);
+        width: 1.5rem; height: 1.5rem; border: none; border-radius: 50%;
+        background: var(--surface1); color: var(--subtext0); cursor: pointer;
+        font-size: .72rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+      }
+      .search-clear:hover { background: var(--surface2); color: var(--text); }
+      .count { font-size: .85rem; color: var(--subtext1); background: var(--surface0); padding: .45rem .8rem; border-radius: 999px; white-space: nowrap; }
+      .hint { font-size: .8rem; color: var(--overlay1); }
+      .search-note { margin: .7rem auto 0; max-width: 40rem; font-size: .8rem; color: var(--overlay1); text-align: center; }
+      .watch-note { margin: .55rem auto 0; max-width: 42rem; font-size: .95rem; color: var(--subtext1); text-align: center; }
+
+      main { max-width: 1240px; margin: 0 auto; padding: 1.2rem 1.5rem 6rem; }
+      .scroll-hint {
+        margin: .2rem 0 .7rem; font-size: 1.5rem; font-weight: 800; letter-spacing: -.01em;
+        color: var(--peach); display: flex; align-items: center; gap: .5rem;
+      }
+      .scroll-arrow { display: inline-block; animation: nudge 1.2s ease-in-out infinite; }
+      @keyframes nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(.4rem); } }
+      @media (prefers-reduced-motion: reduce) { .scroll-arrow { animation: none; } }
+
+      /* timeline = static venue axis + horizontally-scrolling chart */
+      .timeline-wrap {
+        display: flex; align-items: flex-start;
+        border: 1px solid var(--surface0); border-radius: 1rem; background: var(--mantle); overflow: hidden;
+      }
+      .vaxis { flex: 0 0 158px; background: var(--crust); border-right: 1px solid var(--surface1); z-index: 6; }
+      .vaxis-head {
+        height: 76px; display: flex; align-items: flex-end; padding: 0 .75rem .5rem;
+        font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--overlay1); font-weight: 700;
+      }
+      .vaxis-rows { position: relative; }
+      .vlabel {
+        position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .35rem;
+        padding: 0 .5rem 0 .55rem; margin: 0; border: none; background: transparent;
+        color: inherit; font: inherit; text-align: left; cursor: pointer;
+        transition: background .12s;
+      }
+      .vlabel.alt { background: var(--stripe); }
+      .vlabel:hover { background: rgba(137,180,250,.12); }
+      .vchevron { flex: 0 0 auto; font-size: 1.15rem; line-height: 1; color: var(--overlay2); transition: transform .15s; }
+      .vlabel.collapsed .vchevron { transform: rotate(-90deg); }
+      .vlabel-name { flex: 1; font-size: .8rem; font-weight: 600; color: var(--subtext1); line-height: 1.15;
+        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .vlabel.collapsed .vlabel-name { -webkit-line-clamp: 1; }
+      .vlabel-count { flex: 0 0 auto; font-size: .68rem; font-weight: 700; color: var(--subtext0); background: var(--surface0); border-radius: 999px; padding: .08rem .42rem; }
+
+      .scroll {
+        flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; cursor: grab;
+        scrollbar-color: var(--surface2) var(--mantle);
+      }
+      .scroll.grabbing { cursor: grabbing; }
+      .scroll::-webkit-scrollbar { height: 12px; }
+      .scroll::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 999px; border: 3px solid var(--mantle); }
+      .scroll::-webkit-scrollbar-track { background: var(--mantle); }
+
+      .vband { position: absolute; left: 0; background: transparent; }
+      .vband.alt { background: var(--stripe); }
+      /* compact "tracks" view: row bands (chart) + row labels (axis) */
+      .tband { position: absolute; left: 0; width: 100%; z-index: 0; background: transparent; }
+      .tband.alt { background: var(--stripe); }
+      .tlabel {
+        position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: .35rem;
+        padding: 0 .5rem 0 .75rem;
+      }
+      .tlabel.alt { background: var(--stripe); }
+
+      /* split toolbar: Utility | Select events — side-by-side on desktop, stacked on mobile */
+      .toolbars {
+        display: flex; align-items: stretch; margin: 0 0 .9rem; overflow: hidden;
+        border-radius: .9rem; background: var(--glass); border: 1px solid var(--surface1);
+        box-shadow: 0 8px 28px rgba(17,17,27,.35); backdrop-filter: blur(8px);
+      }
+      .tb-group { display: flex; align-items: center; align-content: flex-start; gap: .7rem; flex-wrap: wrap; padding: .7rem .9rem; }
+      .tb-utility { flex: 1 1 340px; }
+      .tb-select { flex: 1.6 1 420px; border-left: 1px solid var(--surface1); }
+      .tb-head { width: 100%; font-size: .7rem; text-transform: uppercase; letter-spacing: .13em; font-weight: 700; color: var(--overlay1); }
+      @media (max-width: 820px) {
+        /* stacked + reordered: Select events on top, then the schedule, with Utility
+           (view tweaks) tucked underneath the timeline where you adjust them */
+        main { display: flex; flex-direction: column; }
+        .toolbars { display: contents; }
+        .tb-group {
+          border-radius: .9rem; background: var(--glass); border: 1px solid var(--surface1);
+          box-shadow: 0 8px 28px rgba(17,17,27,.35); backdrop-filter: blur(8px);
+        }
+        .tb-select   { order: 1; border-left: none; margin: 0 0 .9rem; }
+        .scroll-hint { order: 2; }
+        .timeline-wrap { order: 3; }
+        #empty       { order: 4; }
+        .tb-utility  { order: 5; margin: .9rem 0 0; }
+      }
+      .zoom { display: flex; align-items: center; gap: .45rem; }
+      .zoom input { width: 170px; accent-color: var(--mauve); cursor: pointer; }
+      .zoom-icon { color: var(--overlay1); font-size: .95rem; }
+      .zoom-label { font-size: .8rem; font-weight: 600; color: var(--subtext0); }
+      .collapse-all, .view-toggle {
+        border: 1px solid var(--surface1); background: var(--surface0); color: var(--subtext1);
+        border-radius: 999px; padding: .35rem .85rem; font-size: .8rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      }
+      .collapse-all:hover, .view-toggle:hover { background: var(--surface1); color: var(--text); }
+      .view-toggle { border-color: var(--mauve); color: var(--mauve); }
+      .view-toggle:hover { background: color-mix(in srgb, var(--mauve) 18%, var(--mantle)); color: var(--lavender); }
+
+      /* select-by-type checkbox chips */
+      .cat-chip {
+        display: inline-flex; align-items: center; gap: .35rem; cursor: pointer; user-select: none;
+        padding: .28rem .55rem; border-radius: 999px; font-size: .82rem; color: var(--subtext1);
+        background: var(--surface0); border: 1px solid var(--surface1); transition: background .12s, border-color .12s;
+      }
+      .cat-chip:hover { background: var(--surface1); color: var(--text); }
+      .cat-chip:has(input:checked) { background: color-mix(in srgb, var(--mauve) 22%, var(--mantle)); border-color: var(--mauve); color: var(--lavender); }
+      .cat-chip:has(input:indeterminate) { border-color: var(--mauve); }
+      .cat-chip input { accent-color: var(--mauve); cursor: pointer; width: .95rem; height: .95rem; margin: 0; }
+      .cat-n { font-size: .68rem; font-weight: 700; color: var(--subtext0); background: rgba(0,0,0,.22); border-radius: 999px; padding: .04rem .38rem; }
+      .die { display: inline-block; transform-origin: 50% 55%; }
+      .die.rolling { animation: die-roll .55s cubic-bezier(.36,.07,.19,.97) both; }
+      @keyframes die-roll {
+        0%   { transform: rotate(0deg)    scale(1);   }
+        20%  { transform: rotate(-22deg)  scale(1.18);}
+        40%  { transform: rotate(18deg)   scale(1.18);}
+        60%  { transform: rotate(-14deg)  scale(1.12);}
+        80%  { transform: rotate(10deg)   scale(1.06);}
+        100% { transform: rotate(0deg)    scale(1);   }
+      }
+      @media (prefers-reduced-motion: reduce) { .die.rolling { animation: none; } }
+
+      /* "Vibecamp Trials" sparkles — drawn into a click-through overlay that mirrors the
+         bar's box and stacks above the foreground; overflow:hidden keeps them inside. */
+      .spark-overlay { position: absolute; overflow: hidden; pointer-events: none; z-index: 7; border-radius: .4rem; }
+      .sparkle {
+        position: absolute; pointer-events: none; z-index: 3; line-height: 1;
+        color: var(--yellow); opacity: 0; will-change: transform, opacity;
+        text-shadow: 0 0 6px var(--yellow), 0 0 10px color-mix(in srgb, var(--peach) 70%, transparent);
+        animation: sparkle-pop 1.4s ease-in-out forwards;
+      }
+      @keyframes sparkle-pop {
+        0%   { opacity: 0;  transform: translateY(4px)  scale(.3) rotate(0deg); }
+        30%  { opacity: 1;  transform: translateY(0)    scale(1)  rotate(20deg); }
+        70%  { opacity: .9; transform: translateY(-3px) scale(.9) rotate(-10deg); }
+        100% { opacity: 0;  transform: translateY(-7px) scale(.2) rotate(15deg); }
+      }
+      @media (prefers-reduced-motion: reduce) { .sparkle { display: none; } }
+
+      /* glossy sheen for Leah (Prime)'s events + "Welcome to the Vibe Parade" —
+         the highlight streak slides as the timeline is scrolled (--sheenx) */
+      .bar.sheen::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit;
+        pointer-events: none; z-index: 2; mix-blend-mode: screen; opacity: .9;
+        background: linear-gradient(105deg,
+          transparent 38%,
+          color-mix(in srgb, var(--c) 30%, rgba(255,255,255,.85)) 48%,
+          rgba(255,255,255,.9) 50%,
+          color-mix(in srgb, var(--c) 30%, rgba(255,255,255,.85)) 52%,
+          transparent 62%);
+        background-size: 320px 100%; background-repeat: repeat;
+        background-position-x: var(--sheenx, 0px);
+      }
+
+      .chart { position: relative; }
+      .daylabels { position: relative; height: 52px; }
+      .daylabel {
+        position: absolute; top: 8px; height: 40px; padding: 4px 10px;
+        display: flex; flex-direction: column; justify-content: center;
+        border-left: 2px solid var(--surface2);
+      }
+      .dl-day { font-size: .95rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+      .dl-date { font-size: .76rem; color: var(--peach); }
+      .dl-meta { font-size: .68rem; color: var(--overlay1); white-space: nowrap; }
+
+      .ruler { position: relative; height: 22px; }
+      .tick {
+        position: absolute; top: 4px; transform: translateX(-50%);
+        font-size: .68rem; font-variant-numeric: tabular-nums; color: var(--overlay1); white-space: nowrap;
+      }
+
+      .lanes { position: relative; margin: 2px 0 14px; }
+      .band { position: absolute; top: 0; bottom: 0; background: transparent; }
+      .band.alt { background: var(--stripe); }
+      .divider { position: absolute; top: -2px; bottom: 0; width: 2px; background: var(--surface1); }
+      .grid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--surface0); opacity: .5; }
+
+      .bar {
+        position: absolute; height: 46px; padding: 5px 9px; text-align: left; z-index: 2;
+        border: none; border-radius: .55rem; cursor: pointer; overflow: hidden;
+        background: color-mix(in srgb, var(--c) 22%, var(--mantle));
+        border-left: 3px solid var(--c); color: var(--text); font-family: inherit;
+        display: flex; flex-direction: column; justify-content: center; gap: 1px;
+        transition: transform .12s, box-shadow .12s, background .12s, opacity .15s;
+      }
+      .bar:hover {
+        background: color-mix(in srgb, var(--c) 34%, var(--mantle));
+        transform: translateY(-1px); box-shadow: 0 6px 18px rgba(17,17,27,.55); z-index: 4;
+      }
+      .bar-time { font-size: .66rem; font-variant-numeric: tabular-nums; color: var(--c); font-weight: 700; line-height: 1; }
+      .bar-title { font-size: .8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; }
+      .bar.dim { opacity: .1; pointer-events: none; }
+
+      /* multi-day events: span across the day columns with a striped fill + dashed leading edge */
+      .bar.multi {
+        background:
+          repeating-linear-gradient(45deg, transparent 0 9px, color-mix(in srgb, var(--c) 12%, transparent) 9px 18px),
+          color-mix(in srgb, var(--c) 20%, var(--mantle));
+        border-right: 2px dashed color-mix(in srgb, var(--c) 65%, transparent);
+        padding-right: 22px;
+      }
+      .bar.multi:hover {
+        background:
+          repeating-linear-gradient(45deg, transparent 0 9px, color-mix(in srgb, var(--c) 16%, transparent) 9px 18px),
+          color-mix(in srgb, var(--c) 32%, var(--mantle));
+      }
+      /* keep the label readable while scrolling along a long bar */
+      .bar.multi .bar-time, .bar.multi .bar-title {
+        position: sticky; left: 9px; width: max-content; max-width: calc(100% - 18px);
+      }
+      .bar-cap {
+        position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+        font-size: 1rem; font-weight: 800; color: var(--c); line-height: 1;
+      }
+      /* "New" pill — events added after the schedule froze (June 18+) */
+      .bar-new {
+        position: absolute; top: 4px; right: 5px; z-index: 5;
+        padding: 1px 5px; border-radius: 999px;
+        font-size: .56rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+        color: var(--crust); background: var(--green);
+        box-shadow: 0 1px 4px rgba(17,17,27,.5);
+        pointer-events: none;
+      }
+      .bar.multi .bar-new { right: 22px; }   /* clear the › day-continuation cap */
+
+      /* compact view: long events as a faint hatched background layer (short events sit on top) */
+      .bar.bgbar {
+        z-index: 1; justify-content: flex-start; padding-top: 5px; border-radius: .4rem;
+        background:
+          repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--c) 15%, transparent) 6px 12px),
+          color-mix(in srgb, var(--c) 8%, var(--mantle));
+        border-left-color: color-mix(in srgb, var(--c) 45%, transparent);
+      }
+      .bar.bgbar:hover {
+        background:
+          repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--c) 22%, transparent) 6px 12px),
+          color-mix(in srgb, var(--c) 14%, var(--mantle));
+      }
+      .bar.bgbar .bar-time, .bar.bgbar .bar-title {
+        position: sticky; left: 4px; width: max-content; max-width: calc(100% - 8px);
+        color: color-mix(in srgb, var(--c) 72%, var(--subtext0));
+      }
+
+      .empty { text-align: center; color: var(--subtext0); padding: 3rem 0; font-size: 1.05rem; }
+      footer { border-top: 1px solid var(--surface0); padding: 1.6rem 1.5rem 3rem; text-align: center; }
+      footer p { margin: 0; font-size: .82rem; color: var(--overlay0); }
+
+      .panel {
+        position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
+        width: min(640px, calc(100vw - 2rem)); z-index: 20;
+        background: var(--panel-bg); border: 1px solid var(--surface1);
+        border-radius: 1rem; padding: 1rem 1.2rem 1.1rem; backdrop-filter: blur(10px);
+        box-shadow: 0 16px 48px rgba(17,17,27,.6);
+      }
+      .panel-close {
+        position: absolute; top: .7rem; right: .8rem; background: var(--surface0); border: none;
+        color: var(--subtext0); width: 1.7rem; height: 1.7rem; border-radius: 50%; cursor: pointer; font-size: .85rem;
+      }
+      .panel-close:hover { background: var(--surface1); color: var(--text); }
+      .panel h3 { margin: 0 1.8rem .55rem 0; font-size: 1.12rem; color: var(--lavender); }
+      .p-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .55rem; }
+      .p-chip { font-size: .76rem; padding: .2rem .55rem; border-radius: 999px; background: var(--surface0); color: var(--subtext1); }
+      .p-time { color: var(--sky); font-variant-numeric: tabular-nums; }
+      .p-org { color: var(--green); }
+      .p-loc { color: var(--sapphire); }
+      .p-desc { margin: 0; font-size: .9rem; color: var(--subtext0); max-height: 7.5rem; overflow-y: auto; white-space: pre-wrap; }
+      .p-toggle {
+        margin-top: .8rem; width: 100%; padding: .55rem; border-radius: .6rem;
+        border: 1px solid var(--surface1); background: var(--surface0); color: var(--text);
+        cursor: pointer; font-weight: 600; font-family: inherit; transition: background .15s, border-color .15s, color .15s;
+      }
+      .p-toggle:hover { background: var(--surface1); }
+      .p-toggle.on { background: color-mix(in srgb, var(--green) 24%, var(--mantle)); border-color: var(--green); color: var(--green); }
+
+      /* selection state on bars */
+      .bar-check {
+        position: absolute; top: 4px; right: 5px; width: 15px; height: 15px; border-radius: 50%;
+        background: var(--green); color: var(--crust); font-size: .62rem; font-weight: 900;
+        display: none; align-items: center; justify-content: center; line-height: 1; z-index: 3;
+      }
+      .bar.selected { outline: 2px solid var(--green); outline-offset: -1px; z-index: 5; }
+      /* event you're currently looking at (panel open): glow in its own color */
+      .bar.viewing { box-shadow: 0 0 0 2px var(--c), 0 0 16px 2px color-mix(in srgb, var(--c) 65%, transparent); z-index: 6; }
+      .bar.selected .bar-check { display: flex; }
+      .bar.conflict { outline: 2px solid var(--red); }
+      .bar.conflict .bar-check { background: var(--red); }
+
+      /* selection tray */
+      .tray {
+        position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 30;
+        display: flex; align-items: center; gap: .7rem;
+        background: var(--panel-bg); border: 1px solid var(--surface1);
+        border-radius: 999px; padding: .5rem .6rem .5rem 1.1rem;
+        box-shadow: 0 12px 40px rgba(17,17,27,.6); backdrop-filter: blur(10px);
+        max-width: calc(100vw - 1.5rem);
+      }
+      .tray-count { font-size: .9rem; color: var(--subtext1); white-space: nowrap; }
+      .tray-count b { color: var(--text); }
+      .tray-hint { font-size: .82rem; color: var(--overlay1); white-space: nowrap; }
+      .tray-min {
+        display: none; align-items: center; gap: .25rem; border: none; cursor: pointer; font-family: inherit;
+        background: var(--surface0); color: var(--subtext1); border-radius: 999px;
+        padding: .3rem .6rem; font-size: .85rem; font-weight: 700;
+      }
+      .tray-min:hover { background: var(--surface1); color: var(--text); }
+      .tray-warn { font-size: .76rem; font-weight: 600; color: var(--crust); background: var(--red); padding: .22rem .6rem; border-radius: 999px; white-space: nowrap; }
+      .tray-spacer { flex: 1; min-width: .2rem; }
+      .tray-btn { border: none; border-radius: 999px; padding: .45rem .9rem; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+      .tray-btn.ghost { background: var(--surface0); color: var(--subtext1); }
+      .tray-btn.ghost:hover { background: var(--surface1); color: var(--text); }
+      .tray-btn.primary { background: var(--mauve); color: var(--crust); }
+      .tray-btn.primary:hover { background: var(--lavender); }
+      .tray-btn:disabled { opacity: .4; cursor: default; pointer-events: none; }
+      .tray-check {
+        display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap;
+        font-size: .82rem; color: var(--subtext1); cursor: pointer; user-select: none;
+      }
+      .tray-check input { accent-color: var(--mauve); cursor: pointer; width: 1rem; height: 1rem; }
+
+      /* overlap review modal */
+      .review {
+        position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+        background: rgba(17,17,27,.7); backdrop-filter: blur(3px); padding: 1.5rem;
+      }
+      .review-card {
+        position: relative; width: min(560px, 100%); max-height: 82vh; overflow-y: auto;
+        background: var(--mantle); border: 1px solid var(--surface1); border-radius: 1rem;
+        padding: 1.4rem 1.4rem 1.1rem; box-shadow: 0 24px 64px rgba(17,17,27,.7);
+      }
+      .review-x {
+        position: absolute; top: .9rem; right: 1rem; background: var(--surface0); border: none;
+        color: var(--subtext0); width: 1.8rem; height: 1.8rem; border-radius: 50%; cursor: pointer; font-size: .9rem;
+      }
+      .review-x:hover { background: var(--surface1); color: var(--text); }
+      .review-card h3 { margin: 0 1.8rem .4rem 0; font-size: 1.2rem; color: var(--lavender); }
+      .review-sub { margin: 0 0 1rem; font-size: .9rem; color: var(--subtext0); }
+      .review-list { display: flex; flex-direction: column; gap: .55rem; }
+      .rv-row {
+        display: flex; align-items: center; gap: .8rem; padding: .65rem .8rem;
+        background: var(--base); border: 1px solid var(--surface0); border-left: 3px solid var(--red); border-radius: .6rem;
+      }
+      .rv-info { flex: 1; min-width: 0; }
+      .rv-pair { font-size: .9rem; font-weight: 600; color: var(--text); }
+      .rv-times { font-size: .78rem; color: var(--subtext0); font-variant-numeric: tabular-nums; margin-top: .15rem; }
+      .rv-ok {
+        flex: 0 0 auto; border: 1px solid var(--surface1); background: var(--surface0); color: var(--subtext1);
+        border-radius: 999px; padding: .4rem .85rem; font-size: .82rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      }
+      .rv-ok:hover { background: var(--surface1); color: var(--text); }
+      .rv-ok.on { background: color-mix(in srgb, var(--green) 26%, var(--mantle)); border-color: var(--green); color: var(--green); }
+      .rv-row.resolved { border-left-color: var(--green); }
+      .review-actions { display: flex; align-items: center; gap: .6rem; margin-top: 1.2rem; }
+      .rv-btn { border: none; border-radius: 999px; padding: .5rem 1rem; font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+      .rv-btn.ghost { background: var(--surface0); color: var(--subtext1); }
+      .rv-btn.ghost:hover { background: var(--surface1); color: var(--text); }
+      .rv-btn.primary { background: var(--mauve); color: var(--crust); }
+      .rv-btn.primary:hover { background: var(--lavender); }
+
+      /* export modal: two big choice cards + a PDF-map toggle */
+      .export-opts { display: flex; flex-direction: column; gap: .6rem; }
+      .export-opt { display: flex; align-items: flex-start; gap: .8rem; text-align: left; width: 100%; padding: .85rem 1rem; border: 1px solid var(--surface1); border-radius: 14px; background: var(--surface0); color: var(--text); cursor: pointer; font-family: inherit; transition: border-color .12s, background .12s, transform .06s; }
+      .export-opt:hover { background: var(--surface1); border-color: var(--mauve); }
+      .export-opt:active { transform: translateY(1px); }
+      .export-emoji { font-size: 1.5rem; line-height: 1.4; flex: none; }
+      .export-txt { display: flex; flex-direction: column; gap: .2rem; }
+      .export-txt b { font-size: .98rem; }
+      .wip-badge {
+        display: inline-block; margin-left: .4rem; vertical-align: middle;
+        font-size: .64rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+        color: var(--peach); background: color-mix(in srgb, var(--peach) 16%, var(--mantle));
+        border: 1px solid color-mix(in srgb, var(--peach) 45%, transparent);
+        border-radius: 999px; padding: .08rem .45rem; white-space: nowrap;
+      }
+      .export-txt small { font-size: .82rem; color: var(--subtext0); line-height: 1.35; }
+      .export-txt code { background: var(--mantle); padding: 0 .25rem; border-radius: 4px; font-size: .9em; }
+      .export-mapchk { display: flex; align-items: center; gap: .45rem; margin: .9rem .15rem 0; font-size: .85rem; color: var(--subtext1); cursor: pointer; }
+      .export-mapchk input { accent-color: var(--mauve); }
+      .howto-body { margin: .2rem 0 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: .6rem; font-size: .9rem; color: var(--subtext0); line-height: 1.45; }
+      .howto-body b { color: var(--text); font-weight: 600; }
+      .howto-divider { border-top: 1px solid var(--surface1); margin: 1.15rem 0 .85rem; }
+      .howto-subhead { margin: 0 0 .65rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--overlay1); }
+      .mapcard { width: min(980px, 100%); }
+      .mapfull { display: block; width: 100%; height: auto; margin-top: .4rem; border-radius: .6rem; border: 1px solid var(--surface1); }
+
+      /* printable schedule — hidden on screen, revealed when printing */
+      .print-schedule { display: none; }
+      @media print {
+        /* Catppuccin Latte — the light sibling of the Mocha screen theme */
+        .aurora, .hero, main, footer, #panel, #tray, #review { display: none !important; }
+        html, body { background: #fff !important; }
+        @page { margin: 13mm; }
+
+        .print-schedule {
+          display: block !important; max-width: 720pt; margin: 0 auto;
+          color: #4c4f69; font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+          -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        }
+
+        /* header */
+        .ps-head {
+          display: flex; align-items: center; gap: 14pt;
+          padding-bottom: 12pt; margin-bottom: 15pt; border-bottom: 1.5pt solid #8839ef;
+        }
+        .ps-logo { width: 50pt; height: 50pt; border-radius: 11pt; flex: 0 0 auto; }
+        .ps-headtext { min-width: 0; }
+        .ps-kicker { margin: 0 0 2pt; font-size: 8pt; letter-spacing: .22em; text-transform: uppercase; color: #8839ef; font-weight: 700; }
+        .ps-head h1 { margin: 0; font-size: 23pt; font-weight: 800; letter-spacing: -.02em; color: #4c4f69; }
+        .ps-sub { margin: 3pt 0 0; font-size: 9.5pt; color: #8c8fa1; }
+
+        /* unresolved-conflict notice */
+        .ps-warn { margin-bottom: 15pt; font-size: 9pt; }
+        .pw-red { border: 1pt solid #f0a9b8; background: #fce7ec; color: #b30f33; border-radius: 8pt; padding: 9pt 12pt; }
+        .ps-warn h4 { margin: 0 0 5pt; font-size: 10pt; font-weight: 700; }
+        .ps-warn div { margin: 1.5pt 0; color: #9c2440; }
+
+        /* day groups */
+        /* let a day flow across a page break (items below avoid splitting individually);
+           avoiding the break on the whole day is what left big gaps when one didn't fit */
+        .ps-day { margin-bottom: 15pt; }
+        .ps-day h2 { display: flex; align-items: baseline; gap: 8pt; margin: 0 0 5pt; padding-bottom: 4pt; border-bottom: 1pt solid #e6e9ef; break-after: avoid; }
+        .ps-dayname { font-size: 13pt; font-weight: 700; letter-spacing: -.01em; color: #8839ef; }
+        .ps-daycount { margin-left: auto; font-size: 8pt; font-weight: 600; color: #9ca0b0; }
+
+        /* event rows */
+        .ps-item { display: flex; gap: 11pt; align-items: flex-start; padding: 7pt 0; border-bottom: .75pt solid #eff1f5; break-inside: avoid; }
+        .ps-item:last-child { border-bottom: none; }
+        .ps-time {
+          flex: 0 0 88pt; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 8.5pt;
+          color: #8839ef; background: #f1e9fb; border-radius: 6pt; padding: 4pt 6pt; text-align: center; line-height: 1.25;
+        }
+        .ps-main { flex: 1; padding-top: .5pt; }
+        .ps-main .t { font-weight: 700; font-size: 10.5pt; line-height: 1.25; color: #4c4f69; }
+        .ps-main .m { margin-top: 2.5pt; font-size: 8.5pt; color: #8c8fa1; }
+        .ps-host { font-style: italic; }
+        .ps-loc { color: #6c6f85; }
+        .ps-dot { margin: 0 5pt; color: #bcc0cc; }
+
+        /* conflicts */
+        .ps-item.conflict .ps-time { color: #d20f39; background: #fce7ec; }
+        .ps-item.conflict .t::after { content: "  ⚠ overlaps"; color: #d20f39; font-weight: 700; font-size: 7.5pt; letter-spacing: .02em; }
+
+        .ps-foot { margin-top: 18pt; padding-top: 8pt; border-top: 1pt solid #e6e9ef; font-size: 7.5pt; color: #acb0be; text-align: center; }
+
+        /* camp map — at the top of the PDF, before the schedule */
+        .ps-map { margin: 0 0 16pt; text-align: center; break-inside: avoid; }
+        .ps-map-h { margin: 0 0 6pt; font-size: 13pt; font-weight: 700; letter-spacing: -.01em; color: #8839ef; }
+        .ps-map img { max-width: 100%; height: auto; border-radius: 8pt; border: 1pt solid #e6e9ef; }
+      }
+
+      @media (max-width: 560px) {
+        .hero { padding-top: 2.6rem; }
+        /* narrower row-track headers on mobile so the timeline gets the space */
+        .vaxis { flex-basis: 96px; }
+        .vaxis-head { padding: 0 .5rem .5rem; font-size: .6rem; letter-spacing: .06em; }
+        .vlabel { padding: 0 .4rem; gap: .25rem; }
+        .vlabel-count { font-size: .62rem; padding: .06rem .34rem; }
+        /* schedule-manager bar: span the width and wrap its controls instead of running off-screen.
+           Starts hidden (so it doesn't overlap the title) and fades in on first downscroll. */
+        .tray {
+          top: .6rem; left: .6rem; right: .6rem; max-width: none;
+          flex-wrap: wrap; justify-content: center; border-radius: .9rem; padding: .55rem .65rem; gap: .4rem .5rem;
+          opacity: 0; transform: translateY(0); pointer-events: none;
+          transition: opacity .4s ease, transform .38s ease;
+        }
+        .tray.revealed { opacity: 1; pointer-events: auto; }
+        .tray-spacer { display: none; }
+        .tray-hint { white-space: normal; }
+        /* pull-tab hanging off the bottom of the bar; when collapsed the bar slides up
+           off the top and the tab is left hanging from the top edge of the window */
+        .tray-min {
+          display: inline-flex; align-items: center; justify-content: center;
+          position: absolute; left: 50%; bottom: -23px; transform: translateX(-50%);
+          width: 66px; height: 24px; padding: 0; border-radius: 0 0 .8rem .8rem;
+          background: var(--panel-bg); border: 1px solid var(--surface1); border-top: none;
+          color: var(--subtext1); font-size: .95rem; line-height: 1;
+          box-shadow: 0 8px 16px rgba(17,17,27,.5);
+        }
+        .tray.collapsed { transform: translateY(calc(-100% - .6rem)); }
+      }
+    </style>
+  </body>
+</html>
