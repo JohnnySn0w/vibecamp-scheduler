@@ -1,9 +1,15 @@
 ---
 // Badge gallery — the five Trials badges rendered as 3D-tilting physical badges.
 // Each badge is an inline SVG: the real laser cut-line path (extracted from the
-// production .ai) filled white like the acrylic blank, with the engraving art
-// (transparent PNG) clipped to it. CSS drop-shadow follows the arch shape, and
-// a pointer-tracking tilt + gloss gives the 3D feel.
+// production .ai) filled in its acrylic color, with the engraving art
+// (transparent PNG) clipped to it. The cut-out hearts are real holes (evenodd
+// subpaths, also lifted from the .ai), so stacking the badges lines the holes up
+// exactly like the physical acrylic. CSS drop-shadow follows the shape, and a
+// pointer-tracking tilt + gloss gives the 3D feel.
+//
+// On load (motion permitting) the badges arrive stacked bottom-to-top in order —
+// the first heart position is cut on every badge, so it reads clear through the
+// pile. Clicking the stack spreads them into the grid.
 import TrialsLayout from "../../layouts/TrialsLayout.astro";
 const crumbs = [
   { href: "/trials/", label: "← Trials" },
@@ -17,6 +23,15 @@ const CUT =
   "C155.91 206.04 121.01 240.95 77.95 240.95 C34.90 240.95 0.00 206.04 0.00 162.99 Z";
 const W = 155.91, H = 240.95;
 
+// the heart cut-outs (left to right), same card coordinates — badge N cuts the first N
+const HEARTS = [
+  "M50.12 10.51 C49.76 10.79 49.29 10.79 48.93 10.51 C48.00 9.78 46.84 9.61 46.03 10.45 C44.99 11.53 45.86 13.13 46.72 14.49 L47.13 15.16 C47.68 15.94 48.20 16.68 48.79 17.44 C49.16 17.92 49.88 17.92 50.25 17.45 C50.82 16.73 51.32 16.01 51.85 15.23 L52.24 14.64 C52.71 13.81 53.26 13.06 53.44 12.19 C53.59 11.50 53.41 10.81 52.98 10.41 C52.14 9.61 51.04 9.78 50.12 10.51 Z",
+  "M64.33 10.51 C63.98 10.79 63.50 10.79 63.14 10.51 C62.22 9.78 61.06 9.61 60.25 10.45 C59.21 11.53 60.07 13.13 60.94 14.49 L61.35 15.16 C61.89 15.94 62.41 16.68 63.01 17.44 C63.38 17.92 64.09 17.92 64.47 17.45 C65.03 16.73 65.53 16.01 66.07 15.23 L66.45 14.64 C66.92 13.81 67.47 13.06 67.65 12.19 C67.80 11.50 67.62 10.81 67.19 10.41 C66.35 9.61 65.26 9.78 64.33 10.51 Z",
+  "M78.55 10.51 C78.19 10.79 77.71 10.79 77.36 10.51 C76.43 9.78 75.27 9.61 74.46 10.45 C73.42 11.53 74.29 13.13 75.15 14.49 L75.56 15.16 C76.10 15.94 76.63 16.68 77.22 17.44 C77.59 17.92 78.31 17.92 78.68 17.45 C79.25 16.73 79.75 16.01 80.28 15.23 L80.67 14.64 C81.14 13.81 81.68 13.06 81.87 12.19 C82.01 11.50 81.84 10.81 81.41 10.41 C80.57 9.61 79.47 9.78 78.55 10.51 Z",
+  "M92.76 10.51 C92.41 10.79 91.93 10.79 91.57 10.51 C90.64 9.78 89.49 9.61 88.68 10.45 C87.64 11.53 88.50 13.13 89.37 14.49 L89.78 15.16 C90.32 15.94 90.84 16.68 91.44 17.44 C91.81 17.92 92.52 17.92 92.90 17.45 C93.46 16.73 93.96 16.01 94.50 15.23 L94.88 14.64 C95.35 13.81 95.90 13.06 96.08 12.19 C96.23 11.50 96.05 10.81 95.62 10.41 C94.78 9.61 93.68 9.78 92.76 10.51 Z",
+  "M106.98 10.51 C106.62 10.79 106.14 10.79 105.79 10.51 C104.86 9.78 103.70 9.61 102.89 10.45 C101.85 11.53 102.72 13.13 103.58 14.49 L103.99 15.16 C104.53 15.94 105.06 16.68 105.65 17.44 C106.02 17.92 106.74 17.92 107.11 17.45 C107.68 16.73 108.18 16.01 108.71 15.23 L109.10 14.64 C109.57 13.81 110.11 13.06 110.30 12.19 C110.44 11.50 110.27 10.81 109.83 10.41 C108.99 9.61 107.90 9.78 106.98 10.51 Z",
+];
+
 // acrylic colors, in order of appearance — medium hues (not too bright, not too dark)
 const BADGES = [
   { file: "map-territory",            title: "The Map Is Not the Territory", color: "#4f9e62" }, // green
@@ -24,7 +39,7 @@ const BADGES = [
   { file: "ycjdt-take-me",            title: "YCJDT!",                       color: "#c4544e" }, // red
   { file: "post-rat",                 title: "Post Rat",                     color: "#4d82c4" }, // blue
   { file: "friendly-ambitious-nerds", title: "Friendly Ambitious Nerds",     color: "#8a63b8" }, // purple
-];
+].map((b, i) => ({ ...b, shape: CUT + " " + HEARTS.slice(0, i + 1).join(" ") }));
 ---
 
 <TrialsLayout
@@ -38,63 +53,100 @@ const BADGES = [
     <p class="trials-sub">Five to earn. Tilt them around — the real ones are laser-cut.</p>
   </header>
 
-  <!-- shared clip for the gloss overlays: same cut path, normalized to the element box -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <clipPath id="cut-bb" clipPathUnits="objectBoundingBox">
-        <path transform={`scale(${1 / W}, ${1 / H})`} d={CUT} />
-      </clipPath>
-    </defs>
-  </svg>
-
-  <div class="b3d-grid">
+  <div class="b3d-grid" id="b3d-grid">
     {BADGES.map((b, i) => (
       <figure class="b3d" data-tilt>
         <div class="b3d-inner">
-          <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${b.title} badge`}>
+          <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${b.title} badge — ${i + 1} heart${i ? "s" : ""} cut out`}>
             <defs>
               <clipPath id={`cut-${i}`}><path d={CUT} /></clipPath>
+              <clipPath id={`cutbb-${i}`} clipPathUnits="objectBoundingBox">
+                <path clip-rule="evenodd" transform={`scale(${1 / W}, ${1 / H})`} d={b.shape} />
+              </clipPath>
             </defs>
-            <path d={CUT} fill={b.color} />
+            <path d={b.shape} fill={b.color} fill-rule="evenodd" />
             <image
               href={`/trials/badge-${b.file}.png`}
               x="0" y="0" width={W} height={H}
               clip-path={`url(#cut-${i})`}
             />
           </svg>
-          <div class="b3d-gloss" aria-hidden="true"></div>
+          <div class="b3d-gloss" aria-hidden="true" style={`clip-path: url(#cutbb-${i})`}></div>
         </div>
         <figcaption>{b.title}</figcaption>
       </figure>
     ))}
   </div>
+  <p class="stack-hint" id="stack-hint" hidden>the badges stack irl — click to lay them out ✦</p>
 
   <script is:inline>
-    // pointer-tracking 3D tilt + gloss; idle float when untouched
     (function () {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      document.querySelectorAll(".b3d").forEach((card, i) => {
-        const inner = card.querySelector(".b3d-inner");
-        const gloss = card.querySelector(".b3d-gloss");
-        inner.style.animationDelay = (i * -1.3) + "s";
-        card.addEventListener("pointermove", (e) => {
-          const r = card.getBoundingClientRect();
-          const x = (e.clientX - r.left) / r.width;
-          const y = (e.clientY - r.top) / r.height;
-          inner.classList.add("live");
-          inner.style.transform =
-            "rotateY(" + ((x - 0.5) * 26).toFixed(2) + "deg) " +
-            "rotateX(" + ((0.5 - y) * 18).toFixed(2) + "deg) scale(1.04)";
-          gloss.style.opacity = "1";
-          gloss.style.background =
-            "radial-gradient(circle at " + (x * 100).toFixed(1) + "% " + (y * 100).toFixed(1) + "%, rgba(255,255,255,.5), rgba(255,255,255,0) 55%)";
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var grid = document.getElementById("b3d-grid");
+      var hint = document.getElementById("stack-hint");
+      var items = Array.prototype.slice.call(grid.querySelectorAll(".b3d"));
+
+      // ---- stacked intro: badges pile up in order (first on the bottom), holes
+      // aligned so heart #1 reads clear through; click spreads them to the grid ----
+      function stackTransforms() {
+        var gr = grid.getBoundingClientRect();
+        items.forEach(function (it) {
+          it.style.transform = "";   // measure the natural grid spot
         });
-        card.addEventListener("pointerleave", () => {
-          inner.classList.remove("live");
-          inner.style.transform = "";
-          gloss.style.opacity = "0";
+        items.forEach(function (it) {
+          var r = it.getBoundingClientRect();
+          var dx = (gr.left + gr.width / 2) - (r.left + r.width / 2);
+          var dy = (gr.top + gr.height / 2) - (r.top + r.height / 2);
+          it.style.transform = "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)";
         });
-      });
+      }
+      if (!reduce) {
+        grid.classList.add("stacked");
+        stackTransforms();
+        hint.hidden = false;
+        var onResize = function () { if (grid.classList.contains("stacked")) stackTransforms(); };
+        window.addEventListener("resize", onResize);
+        var spread = function () {
+          if (!grid.classList.contains("stacked")) return;
+          grid.classList.add("spreading");
+          grid.classList.remove("stacked");
+          items.forEach(function (it) { it.style.transform = ""; });
+          hint.hidden = true;
+          setTimeout(function () { grid.classList.remove("spreading"); }, 900);
+        };
+        grid.addEventListener("click", spread);
+        grid.tabIndex = 0;
+        grid.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); spread(); }
+        });
+      }
+
+      // ---- pointer-tracking 3D tilt + gloss; idle float when untouched ----
+      if (!reduce) {
+        items.forEach(function (card, i) {
+          var inner = card.querySelector(".b3d-inner");
+          var gloss = card.querySelector(".b3d-gloss");
+          inner.style.animationDelay = (i * -1.3) + "s";
+          card.addEventListener("pointermove", function (e) {
+            if (grid.classList.contains("stacked")) return;
+            var r = card.getBoundingClientRect();
+            var x = (e.clientX - r.left) / r.width;
+            var y = (e.clientY - r.top) / r.height;
+            inner.classList.add("live");
+            inner.style.transform =
+              "rotateY(" + ((x - 0.5) * 26).toFixed(2) + "deg) " +
+              "rotateX(" + ((0.5 - y) * 18).toFixed(2) + "deg) scale(1.04)";
+            gloss.style.opacity = "1";
+            gloss.style.background =
+              "radial-gradient(circle at " + (x * 100).toFixed(1) + "% " + (y * 100).toFixed(1) + "%, rgba(255,255,255,.5), rgba(255,255,255,0) 55%)";
+          });
+          card.addEventListener("pointerleave", function () {
+            inner.classList.remove("live");
+            inner.style.transform = "";
+            gloss.style.opacity = "0";
+          });
+        });
+      }
     })();
   </script>
 </TrialsLayout>
@@ -117,17 +169,31 @@ const BADGES = [
   .b3d-gloss {
     position: absolute; inset: 0; pointer-events: none; opacity: 0;
     transition: opacity .25s; mix-blend-mode: soft-light;
-    clip-path: url(#cut-bb);
   }
   @keyframes b3d-float {
     0%, 100% { transform: rotateY(-7deg) rotateX(3deg) translateY(0); }
     50%      { transform: rotateY(7deg) rotateX(-3deg) translateY(-7px); }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .b3d-inner { animation: none; transition: none; }
-  }
   figcaption {
     margin-top: .8rem; text-align: center; font-weight: 600; font-size: .95rem;
-    color: var(--subtext1);
+    color: var(--subtext1); transition: opacity .4s;
+  }
+
+  /* stacked intro: pile aligned in the grid's center; the whole pile bobs gently */
+  .b3d-grid.stacked { cursor: pointer; animation: stack-bob 6s ease-in-out infinite; }
+  .b3d-grid.stacked .b3d-inner { animation: none; transition: none; }
+  .b3d-grid.stacked figcaption { opacity: 0; }
+  .b3d-grid.spreading .b3d { transition: transform .85s cubic-bezier(.22, .9, .3, 1.03); }
+  @keyframes stack-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .stack-hint {
+    margin: -0.6rem 0 0; text-align: center; color: var(--subtext0); font-size: .95rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .b3d-inner { animation: none; transition: none; }
+    .b3d-grid.stacked { animation: none; }
   }
 </style>
