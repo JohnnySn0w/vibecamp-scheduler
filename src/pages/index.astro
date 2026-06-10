@@ -46,7 +46,7 @@
 
       <div class="board">
         <nav class="choices" aria-label="Site sections">
-          <a class="choice" href="/schedule/" style="--ac: var(--blue); --tilt: -1.9deg">
+          <a class="choice" href="/schedule/" style="--ac: var(--blue); --tilt: -1.9deg; --p1: #e2e9f0; --p2: #d4dee8">
             <span class="choice-emoji" aria-hidden="true">🗓</span>
             <span class="choice-title">Event Schedule</span>
             <span class="choice-desc">
@@ -56,7 +56,7 @@
             <span class="choice-go" aria-hidden="true">Browse the timeline →</span>
           </a>
 
-          <a class="choice choice-trials" href="/trials/" style="--ac: var(--yellow); --tilt: 1.6deg">
+          <a class="choice choice-trials" href="/trials/" style="--ac: var(--yellow); --tilt: 1.6deg; --p1: #f7eebc; --p2: #eee0a0">
             <span class="choice-spark" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✶</i><i>✧</i><i>✦</i></span>
             <span class="choice-emoji" aria-hidden="true">🏆</span>
             <span class="choice-title">Vibecamp Trials</span>
@@ -218,7 +218,7 @@
       /* cards as flyers pinned at a slight angle, taped at the top */
       .choice {
         position: relative; text-decoration: none;
-        background: linear-gradient(178deg, #f5efe0, #ebe2cc);
+        background: linear-gradient(178deg, var(--p1, #f5efe0), var(--p2, #ebe2cc));
         color: #443e30; border: none; border-radius: 2px;
         box-shadow: 0 10px 24px rgba(0,0,0,.45);
         padding: 2rem 1.5rem 1.5rem; text-align: left;

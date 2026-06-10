@@ -75,7 +75,12 @@ const BADGES = [
     docs: [],
     noDocs: "No documents. Some things are only explained in person — find Michael at a shift and ask about Aether.",
   },
-].map((b, i) => ({ ...b, shape: CUT + " " + HEARTS.slice(0, i + 1).join(" ") }));
+].map((b, i) => ({
+  ...b,
+  shape: CUT + " " + HEARTS.slice(0, i + 1).join(" "),
+  // office paper stock per trial: mint ledger, canary, carbon pink, memo blue, lilac
+  paper: [["#e4efdc", "#d7e5cb"], ["#f7eebc", "#eee0a0"], ["#f7e2de", "#ecd2cd"], ["#e2e9f0", "#d4dee8"], ["#e9e2f1", "#dcd2e7"]][i],
+}));
 ---
 
 <TrialsLayout
@@ -116,7 +121,7 @@ const BADGES = [
   <p class="sticky stack-hint" id="stack-hint" hidden>the badges stack irl — click to lay them out ✦</p>
 
   {BADGES.map((b, i) => (
-    <section class="trial-panel pinned" id={`panel-${i}`} hidden aria-label={`${b.title} trial details`} style={`--ac:${b.color}`}>
+    <section class="trial-panel pinned" id={`panel-${i}`} hidden aria-label={`${b.title} trial details`} style={`--ac:${b.color}; --p1:${b.paper[0]}; --p2:${b.paper[1]}`}>
       <p class="tp-element" style={`--c:${b.color}`}>{b.sigil} The Trial of {b.element}</p>
       <p class="tp-flavor">{b.flavor}</p>
       {b.docs.length > 0 ? (
@@ -328,7 +333,7 @@ const BADGES = [
   .b3d-focus { width: 150px; }
 
   .trial-panel {
-    background: linear-gradient(178deg, #f5efe0, #ebe2cc);
+    background: linear-gradient(178deg, var(--p1, #f5efe0), var(--p2, #ebe2cc));
     border: none; border-radius: 2px;
     box-shadow: 0 10px 24px rgba(0,0,0,.45);
     padding: 1.6rem 1.6rem 1.4rem; max-width: 540px; margin: 0 auto; text-align: center;

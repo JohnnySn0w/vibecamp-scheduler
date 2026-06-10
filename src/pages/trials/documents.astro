@@ -24,7 +24,7 @@ const crumbs = [
   <div class="board">
 
   <section class="doc-group" style="--ac: var(--green)">
-  <div class="doc-intro pinned" style="--tilt: 0.4deg">
+  <div class="doc-intro pinned" style="--tilt: 0.4deg; --p1: #e4efdc; --p2: #d7e5cb">
     <p>
       ⛰️ <b>The Trial of Earth</b> — the camp map is on the
       <a href="/schedule/">schedule site</a>, and in interactive form at
@@ -66,7 +66,7 @@ const crumbs = [
   </section>
 
   <section class="doc-group" style="--ac: var(--yellow)">
-  <div class="doc-intro pinned" style="--tilt: -0.4deg">
+  <div class="doc-intro pinned" style="--tilt: -0.4deg; --p1: #f7eebc; --p2: #eee0a0">
     <p>
       🌬️ <b>The Trial of Air</b> — three sentences are hiding in three places.
       Each file below is a true copy of its clue card. The location clue and the
@@ -99,7 +99,7 @@ const crumbs = [
     </div>
   </article>
 
-  <article class="doc pinned" id="chautauqua" style="--tilt: -0.5deg">
+  <article class="doc pinned" id="chautauqua" style="--tilt: -0.5deg; --p1: #eedcb8; --p2: #e3cfa3">
     <header class="doc-head">
       <span class="doc-tag">FIELD COPY</span>
       <h2>The Chautauqua File</h2>
@@ -121,7 +121,7 @@ const crumbs = [
     </div>
   </article>
 
-  <article class="doc pinned" id="antimemetics" style="--tilt: 0.8deg">
+  <article class="doc pinned" id="antimemetics" style="--tilt: 0.8deg; --p1: #e2e9f0; --p2: #d4dee8">
     <header class="doc-head">
       <span class="doc-tag">FIELD COPY</span>
       <h2>The Antimemetics File</h2>
@@ -144,14 +144,14 @@ const crumbs = [
   </section>
 
   <section class="doc-group" style="--ac: var(--sky)">
-  <div class="doc-intro pinned" style="--tilt: 0.5deg">
+  <div class="doc-intro pinned" style="--tilt: 0.5deg; --p1: #e2e9f0; --p2: #d4dee8">
     <p>
       💧 <b>The Trial of Water</b> — the press never sleeps, and neither do the
       rats. One field document so far.
     </p>
   </div>
 
-  <article class="doc doc-news pinned" id="post" style="--tilt: -0.6deg">
+  <article class="doc doc-news pinned" id="post" style="--tilt: -0.6deg; --p1: #efece3; --p2: #e1ded3">
     <header class="np-mast">
       <span class="doc-tag">FIELD COPY</span>
       <h2 class="np-title">The Ramblewood Post</h2>
@@ -201,7 +201,7 @@ const crumbs = [
 
   /* trial headers as strips of paper */
   .doc-intro {
-    background: linear-gradient(175deg, #f3ecd9, #e8dfc6);
+    background: linear-gradient(175deg, var(--p1, #f3ecd9), var(--p2, #e8dfc6));
     border: none; border-radius: 2px;
     padding: .8rem 1.2rem; max-width: 560px; margin: 0 auto; text-align: left;
     width: 100%;
@@ -213,7 +213,7 @@ const crumbs = [
 
   /* the documents as sheets of paper pinned to the cork */
   .doc {
-    background: linear-gradient(178deg, #f5efe0, #ebe2cc);
+    background: linear-gradient(178deg, var(--p1, #f5efe0), var(--p2, #ebe2cc));
     border: none; border-radius: 2px;
     max-width: 640px; margin: 0 auto; width: 100%; text-align: left;
     box-shadow: 0 10px 24px rgba(0,0,0,.45);
