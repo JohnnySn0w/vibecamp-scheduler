@@ -1,6 +1,8 @@
 ---
-// Trials documents — copies of every handout from signup. Content lands here
-// once the handouts are final; the page exists so links/QR codes can point at it now.
+// Trials documents — true copies of the player-facing field documents.
+// PLAYER-SAFE ONLY: no passwords, no hints, no book titles, no operator
+// material. The coordinate blocks and location clues ride on the physical
+// cards handed out at camp.
 import TrialsLayout from "../../layouts/TrialsLayout.astro";
 const crumbs = [
   { href: "/trials/", label: "← Trials" },
@@ -16,18 +18,134 @@ const crumbs = [
   <header class="trials-hero">
     <p class="kicker">✦ Vibecamp Trials</p>
     <h1>Documents</h1>
-    <p class="trials-sub">Every handout from signup, in one place</p>
+    <p class="trials-sub">Every handout, in one place — lost your paper copy? It's here.</p>
   </header>
 
-  <section class="t-prose">
-    <h2>🗂 Nothing here yet</h2>
+  <section class="doc-intro">
     <p>
-      Copies of all the Trials documents — the signup handout, badge
-      requirements, and anything else handed out at the shifts — will be posted
-      here once the Trials begin.
+      🌬 <b>The Trial of Air</b> — three sentences are hiding in three places.
+      Each file below is a true copy of its clue card. The location clue and the
+      coordinate block ride on the <em>physical</em> cards — pick one up at a
+      Trials shift.
     </p>
+  </section>
+
+  <article class="doc" id="abraxas">
+    <header class="doc-head">
+      <span class="doc-tag">FIELD COPY</span>
+      <h2>The Abraxas File</h2>
+      <p class="doc-sub">FROM SINCLAIR'S NOTEBOOK · keep this between the two worlds</p>
+    </header>
+    <div class="doc-body">
+      <p>
+        Long before he became the master of a utopian diversion played with
+        translucent beads, he chronicled the splintering of a single, fragile
+        shell.
+      </p>
+      <p>
+        The bird must violently shatter the egg in order to be born. The shell
+        is the world, and the flight path inevitably leads toward a god of both
+        light and shadow.
+      </p>
+      <p class="doc-coords">
+        <span class="censor">█████████</span> · location clue &amp; coordinates on the physical card · <span class="censor">█████████</span>
+      </p>
+      <p class="doc-foot">Stuck? Three hints, if you can't yet read the sign — just ask the operator.</p>
+    </div>
+  </article>
+
+  <article class="doc" id="chautauqua">
+    <header class="doc-head">
+      <span class="doc-tag">FIELD COPY</span>
+      <h2>The Chautauqua File</h2>
+      <p class="doc-sub">CHAUTAUQUA · MILE <span class="censor">███</span> · engine warm, mind quiet</p>
+    </header>
+    <div class="doc-body">
+      <p>
+        Adjusting the tappets requires a quiet liturgy of feeler gauges. The
+        rhythm of the engine demands nothing less than a perfectly empty mind.
+      </p>
+      <p>
+        A false dichotomy separates the grease on a mechanic's hands from the
+        highest peaks of dialectic thought.
+      </p>
+      <p class="doc-coords">
+        <span class="censor">█████████</span> · location clue &amp; coordinates on the physical card · <span class="censor">█████████</span>
+      </p>
+      <p class="doc-foot">Stuck? Three hints, if your gumption runs low — just ask the operator.</p>
+    </div>
+  </article>
+
+  <article class="doc" id="antimemetics">
+    <header class="doc-head">
+      <span class="doc-tag">FIELD COPY</span>
+      <h2>The Antimemetics File</h2>
+      <p class="doc-sub">ITEM #: SCP-<span class="censor">████</span> · OBJECT CLASS: KETER · CLEARANCE LEVEL 4/<span class="censor">██████████</span></p>
+    </header>
+    <div class="doc-body">
+      <p>
+        There was a division for ideas that erase themselves on contact. Ask
+        about it and you'll be told it doesn't exist. We swear there's nothing
+        to find.
+      </p>
+      <p>...But if there were something to find, you could tell us.</p>
+      <p>It's not like you'll remember.</p>
+      <p class="doc-coords">
+        <span class="censor">█████████</span> · location clue &amp; coordinates on the physical card · <span class="censor">█████████</span>
+      </p>
+      <p class="doc-foot">Stuck? Three hints if the answer is hiding itself from you — just ask the operator.</p>
+    </div>
+  </article>
+
+  <section class="t-prose doc-more">
     <p class="muted">
-      Lost your paper copy mid-weekend? This is where you'll find a fresh one.
+      Documents for the other trials surface once the Trials begin — the signup
+      handout and badge requirements will be posted here too.
     </p>
   </section>
 </TrialsLayout>
+
+<style>
+  .doc-intro {
+    background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
+    padding: 1.1rem 1.4rem; max-width: 640px; margin: 0 auto; text-align: left;
+  }
+  .doc-intro p { margin: 0; color: var(--subtext1); }
+
+  .doc {
+    background: var(--card); border: 1px solid var(--surface0); border-radius: .6rem;
+    max-width: 640px; margin: 0 auto; width: 100%; text-align: left; overflow: hidden;
+  }
+  .doc-head {
+    border-bottom: 1px dashed var(--surface1); padding: 1.1rem 1.5rem .9rem;
+    position: relative;
+  }
+  .doc-tag {
+    position: absolute; top: .9rem; right: 1.2rem;
+    font-size: .62rem; font-weight: 800; letter-spacing: .14em;
+    color: var(--red); border: 1px solid var(--red); border-radius: .25rem;
+    padding: .15rem .45rem; transform: rotate(3deg); opacity: .85;
+  }
+  .doc-head h2 { margin: 0 0 .25rem; font-size: 1.25rem; color: var(--yellow); }
+  .doc-sub {
+    margin: 0; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: .78rem; letter-spacing: .05em; color: var(--overlay2); text-transform: uppercase;
+  }
+  .doc-body { padding: 1.1rem 1.5rem 1.2rem; }
+  .doc-body p { margin: 0 0 .85rem; color: var(--subtext1); }
+  .doc-body p:last-child { margin-bottom: 0; }
+  .doc-coords {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: .78rem; color: var(--overlay1); text-align: center;
+    border-top: 1px dashed var(--surface1); border-bottom: 1px dashed var(--surface1);
+    padding: .6rem 0;
+  }
+  .censor {
+    color: var(--surface2);
+    background: var(--surface2);
+    border-radius: .15rem; user-select: none;
+  }
+  .doc-foot { font-size: .85rem; font-style: italic; color: var(--overlay1); }
+  .doc-more { padding: 1.1rem 1.5rem; }
+  .doc-more p { margin: 0; }
+</style>

@@ -32,13 +32,43 @@ const HEARTS = [
   "M106.98 10.51 C106.62 10.79 106.14 10.79 105.79 10.51 C104.86 9.78 103.70 9.61 102.89 10.45 C101.85 11.53 102.72 13.13 103.58 14.49 L103.99 15.16 C104.53 15.94 105.06 16.68 105.65 17.44 C106.02 17.92 106.74 17.92 107.11 17.45 C107.68 16.73 108.18 16.01 108.71 15.23 L109.10 14.64 C109.57 13.81 110.11 13.06 110.30 12.19 C110.44 11.50 110.27 10.81 109.83 10.41 C108.99 9.61 107.90 9.78 106.98 10.51 Z",
 ];
 
-// acrylic colors, in order of appearance — medium hues (not too bright, not too dark)
+// acrylic colors, in order of appearance — medium hues (not too bright, not too dark).
+// The trials are elemental: earth, air, fire, water, aether, in badge order.
 const BADGES = [
-  { file: "map-territory",            title: "The Map Is Not the Territory", color: "#4f9e62" }, // green
-  { file: "mpot-ypot",                title: "MPOT Is Not YPOT",             color: "#d9b13b" }, // yellow
-  { file: "ycjdt-take-me",            title: "YCJDT!",                       color: "#c4544e" }, // red
-  { file: "post-rat",                 title: "Post Rat",                     color: "#4d82c4" }, // blue
-  { file: "friendly-ambitious-nerds", title: "Friendly Ambitious Nerds",     color: "#8a63b8" }, // purple
+  {
+    file: "map-territory", title: "The Map Is Not the Territory", color: "#4f9e62", // green
+    element: "Earth", sigil: "⛰",
+    flavor: "Ramblewood's paths are drawn on every map of camp — but the territory keeps a few places the map won't admit to. Walk it with your eyes open.",
+    docs: [],
+  },
+  {
+    file: "mpot-ypot", title: "MPOT Is Not YPOT", color: "#d9b13b", // yellow
+    element: "Air", sigil: "🌬",
+    flavor: "Words travel on the wind here. Three field documents have surfaced — each one written around something, never quite about it. Follow where the language points and bring back what it spells.",
+    docs: [
+      { label: "The Abraxas File",      href: "/trials/documents/#abraxas" },
+      { label: "The Chautauqua File",   href: "/trials/documents/#chautauqua" },
+      { label: "The Antimemetics File", href: "/trials/documents/#antimemetics" },
+    ],
+  },
+  {
+    file: "ycjdt-take-me", title: "YCJDT!", color: "#c4544e", // red
+    element: "Fire", sigil: "🔥",
+    flavor: "Some things only happen if you just do them. Bold moves, warm hands, no hesitation.",
+    docs: [],
+  },
+  {
+    file: "post-rat", title: "Post Rat", color: "#4d82c4", // blue
+    element: "Water", sigil: "💧",
+    flavor: "News flows downstream. Keep your whiskers dry and your sources close.",
+    docs: [],
+  },
+  {
+    file: "friendly-ambitious-nerds", title: "Friendly Ambitious Nerds", color: "#8a63b8", // purple
+    element: "Aether", sigil: "✨",
+    flavor: "The fifth element is other people. Five hearts, all cut through — nothing between you and the rest of us.",
+    docs: [],
+  },
 ].map((b, i) => ({ ...b, shape: CUT + " " + HEARTS.slice(0, i + 1).join(" ") }));
 ---
 
@@ -79,6 +109,23 @@ const BADGES = [
   </div>
   <p class="stack-hint" id="stack-hint" hidden>the badges stack irl — click to lay them out ✦</p>
 
+  {BADGES.map((b, i) => (
+    <section class="trial-panel" id={`panel-${i}`} hidden aria-label={`${b.title} trial details`}>
+      <p class="tp-element" style={`--c:${b.color}`}>{b.sigil} The Trial of {b.element}</p>
+      <p class="tp-flavor">{b.flavor}</p>
+      {b.docs.length > 0 ? (
+        <ul class="tp-docs">
+          {b.docs.map((doc) => (
+            <li><a href={doc.href}>🗂 {doc.label}</a></li>
+          ))}
+        </ul>
+      ) : (
+        <p class="tp-none">Field documents for this trial surface once the Trials begin.</p>
+      )}
+      <button class="tp-back" type="button">← all badges</button>
+    </section>
+  ))}
+
   <script is:inline>
     (function () {
       var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -100,25 +147,70 @@ const BADGES = [
           it.style.transform = "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)";
         });
       }
+      // ---- stage 3: click a badge → it shrinks to a solo view with the trial's
+      // element, flavor text, and field documents; "all badges" restores the grid ----
+      var solo = false;
+      function setHint(text) { hint.textContent = text; hint.hidden = false; }
+      function armBadges() {
+        setHint("click a badge to inspect its trial ✦");
+        items.forEach(function (it) { it.tabIndex = 0; it.setAttribute("role", "button"); });
+      }
+      function openSolo(fig) {
+        if (solo) return;
+        solo = true;
+        grid.classList.add("soloing");
+        items.forEach(function (it) { if (it !== fig) it.classList.add("b3d-away"); });
+        fig.classList.add("b3d-focus");
+        hint.hidden = true;
+        setTimeout(function () {
+          grid.classList.add("solo");
+          var panel = document.getElementById("panel-" + items.indexOf(fig));
+          panel.hidden = false;
+          panel.classList.add("tp-in");
+        }, 280);
+      }
+      function closeSolo() {
+        if (!solo) return;
+        document.querySelectorAll(".trial-panel").forEach(function (p) { p.hidden = true; p.classList.remove("tp-in"); });
+        grid.classList.remove("solo");
+        // setTimeout, not rAF — rAF stalls in backgrounded windows
+        setTimeout(function () {
+          items.forEach(function (it) { it.classList.remove("b3d-away", "b3d-focus"); });
+          setTimeout(function () { grid.classList.remove("soloing"); solo = false; setHint("click a badge to inspect its trial ✦"); }, 320);
+        }, 20);
+      }
+      document.querySelectorAll(".tp-back").forEach(function (btn) {
+        btn.addEventListener("click", closeSolo);
+      });
+
+      var spread = function () {
+        if (!grid.classList.contains("stacked")) return;
+        grid.classList.add("spreading");
+        grid.classList.remove("stacked");
+        items.forEach(function (it) { it.style.transform = ""; });
+        setTimeout(function () { grid.classList.remove("spreading"); armBadges(); }, 900);
+      };
+      grid.addEventListener("click", function (e) {
+        if (grid.classList.contains("stacked")) { spread(); return; }
+        var fig = e.target.closest(".b3d");
+        if (fig && !solo) openSolo(fig);
+      });
+      grid.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        if (grid.classList.contains("stacked")) { spread(); return; }
+        var fig = e.target.closest(".b3d");
+        if (fig && !solo) openSolo(fig);
+      });
+
       if (!reduce) {
         grid.classList.add("stacked");
         stackTransforms();
-        hint.hidden = false;
-        var onResize = function () { if (grid.classList.contains("stacked")) stackTransforms(); };
-        window.addEventListener("resize", onResize);
-        var spread = function () {
-          if (!grid.classList.contains("stacked")) return;
-          grid.classList.add("spreading");
-          grid.classList.remove("stacked");
-          items.forEach(function (it) { it.style.transform = ""; });
-          hint.hidden = true;
-          setTimeout(function () { grid.classList.remove("spreading"); }, 900);
-        };
-        grid.addEventListener("click", spread);
+        setHint("the badges stack irl — click to lay them out ✦");
         grid.tabIndex = 0;
-        grid.addEventListener("keydown", function (e) {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); spread(); }
-        });
+        window.addEventListener("resize", function () { if (grid.classList.contains("stacked")) stackTransforms(); });
+      } else {
+        armBadges();
       }
 
       // ---- pointer-tracking 3D tilt + gloss; idle float when untouched ----
@@ -192,8 +284,41 @@ const BADGES = [
     margin: -0.6rem 0 0; text-align: center; color: var(--subtext0); font-size: .95rem;
   }
 
+  /* stage 3: a clicked badge shrinks to a solo view with its trial panel */
+  .b3d-grid:not(.stacked) .b3d { cursor: pointer; }
+  .b3d-grid.soloing .b3d { transition: opacity .28s, transform .28s; }
+  .b3d-away { opacity: 0; transform: scale(.85); pointer-events: none; }
+  .b3d-grid.soloing:not(.solo) .b3d-focus { transform: scale(.8); }
+  .b3d-grid.solo { grid-template-columns: 1fr; justify-items: center; }
+  .b3d-grid.solo .b3d-away { display: none; }
+  .b3d-focus { width: 150px; }
+
+  .trial-panel {
+    background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
+    padding: 1.6rem 1.6rem 1.4rem; max-width: 540px; margin: 0 auto; text-align: center;
+    opacity: 0; transform: translateY(10px); transition: opacity .35s, transform .35s;
+  }
+  .trial-panel.tp-in { opacity: 1; transform: none; }
+  .tp-element {
+    margin: 0 0 .6rem; font-weight: 800; font-size: 1.15rem; letter-spacing: .04em;
+    color: var(--c, var(--yellow));
+  }
+  .tp-flavor { margin: 0 0 1rem; color: var(--subtext1); font-style: italic; }
+  .tp-docs { list-style: none; margin: 0 0 1.1rem; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+  .tp-docs a { color: var(--blue); font-weight: 600; text-decoration: none; }
+  .tp-docs a:hover { text-decoration: underline; }
+  .tp-none { margin: 0 0 1.1rem; color: var(--overlay1); font-size: .92rem; }
+  .tp-back {
+    background: none; border: 1px solid var(--surface1); border-radius: .55rem;
+    color: var(--subtext0); font: inherit; font-size: .9rem; font-weight: 600;
+    padding: .45rem .9rem; cursor: pointer;
+  }
+  .tp-back:hover { border-color: var(--yellow); color: var(--text); }
+
   @media (prefers-reduced-motion: reduce) {
     .b3d-inner { animation: none; transition: none; }
     .b3d-grid.stacked { animation: none; }
+    .b3d-grid.soloing .b3d { transition: none; }
+    .trial-panel { transition: none; }
   }
 </style>
