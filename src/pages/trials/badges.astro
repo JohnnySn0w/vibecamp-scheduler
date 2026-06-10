@@ -17,12 +17,13 @@ const CUT =
   "C155.91 206.04 121.01 240.95 77.95 240.95 C34.90 240.95 0.00 206.04 0.00 162.99 Z";
 const W = 155.91, H = 240.95;
 
+// acrylic colors, in order of appearance — medium hues (not too bright, not too dark)
 const BADGES = [
-  { file: "map-territory",            title: "The Map Is Not the Territory" },
-  { file: "mpot-ypot",                title: "MPOT Is Not YPOT" },
-  { file: "ycjdt-take-me",            title: "YCJDT!" },
-  { file: "post-rat",                 title: "Post Rat" },
-  { file: "friendly-ambitious-nerds", title: "Friendly Ambitious Nerds" },
+  { file: "map-territory",            title: "The Map Is Not the Territory", color: "#4f9e62" }, // green
+  { file: "mpot-ypot",                title: "MPOT Is Not YPOT",             color: "#d9b13b" }, // yellow
+  { file: "ycjdt-take-me",            title: "YCJDT!",                       color: "#c4544e" }, // red
+  { file: "post-rat",                 title: "Post Rat",                     color: "#4d82c4" }, // blue
+  { file: "friendly-ambitious-nerds", title: "Friendly Ambitious Nerds",     color: "#8a63b8" }, // purple
 ];
 ---
 
@@ -54,7 +55,7 @@ const BADGES = [
             <defs>
               <clipPath id={`cut-${i}`}><path d={CUT} /></clipPath>
             </defs>
-            <path d={CUT} fill="#fdfdfd" />
+            <path d={CUT} fill={b.color} />
             <image
               href={`/trials/badge-${b.file}.png`}
               x="0" y="0" width={W} height={H}
