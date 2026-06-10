@@ -135,9 +135,9 @@ const {
       }
       @media (prefers-reduced-motion: reduce) { .spark { animation: none; } }
 
-      /* link cards (the hub) */
-      .t-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
-      @media (max-width: 700px) { .t-cards { grid-template-columns: 1fr; } }
+      /* link cards (the hub) — 2×2 with four cards */
+      .t-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.1rem; }
+      @media (max-width: 640px) { .t-cards { grid-template-columns: 1fr; } }
       .t-card {
         text-decoration: none; color: var(--text);
         background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;

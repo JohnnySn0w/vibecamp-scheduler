@@ -1,0 +1,46 @@
+---
+// Support the Trials — donation handles. Zelle deliberately has no number here
+// (ask Michael in person) so bots can't scrape it.
+import TrialsLayout from "../../layouts/TrialsLayout.astro";
+const crumbs = [
+  { href: "/trials/", label: "← Trials" },
+  { href: "/schedule/", label: "Event schedule →" },
+];
+---
+
+<TrialsLayout
+  title="Donate · Vibecamp Trials"
+  description="Help cover the Vibecamp Trials — a year in the making and a resource stretcher."
+  crumbs={crumbs}
+>
+  <header class="trials-hero">
+    <p class="kicker">✦ Vibecamp Trials</p>
+    <h1>Support the Trials</h1>
+  </header>
+
+  <section class="t-prose">
+    <p>
+      This event took most of the last year to throw together, and has been a
+      resource stretcher. Frankly it was quite expensive. If the Trials brought
+      you some joy and you'd like to chip in, any amount helps:
+    </p>
+    <ul class="donate-list">
+      <li><span class="donate-svc">Venmo</span> <b>@jsn0w0</b></li>
+      <li><span class="donate-svc">PayPal</span> <b>@JSn0w</b></li>
+      <li><span class="donate-svc">Wise</span> <b>@michaelevanm2</b> <span class="muted">(international folks)</span></li>
+      <li><span class="donate-svc">Zelle</span> <span class="muted">ask me directly at camp and I'll set you up</span></li>
+    </ul>
+    <p class="muted">
+      Thank you — every bit goes toward what it took to build this thing.
+    </p>
+  </section>
+</TrialsLayout>
+
+<style>
+  .donate-list { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-direction: column; gap: .55rem; }
+  .donate-list li { display: flex; align-items: baseline; gap: .6rem; }
+  .donate-svc {
+    flex: 0 0 4.6rem; font-size: .8rem; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--yellow);
+  }
+</style>
