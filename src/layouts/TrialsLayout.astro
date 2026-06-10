@@ -167,6 +167,20 @@ const {
       }
       @media (max-width: 640px) { .board { padding: 2rem 1rem 1.8rem; border-width: 8px; } }
 
+      /* anything .pinned hangs on the board with a pushpin and a slight tilt */
+      .pinned { position: relative; transform: rotate(var(--tilt, 0deg)); }
+      .pinned::before {
+        content: ""; position: absolute; top: -8px; left: 50%; margin-left: -8px;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%,
+          color-mix(in srgb, var(--ac, var(--red)) 45%, white),
+          var(--ac, var(--red)) 55%,
+          color-mix(in srgb, var(--ac, var(--red)) 55%, black));
+        box-shadow: 0 3px 4px rgba(0,0,0,.45), inset 0 -1px 2px rgba(0,0,0,.3);
+        z-index: 2;
+      }
+      .board .t-prose h2, .board .doc-head h2 { font-family: var(--hand); }
+
       /* a scrawled sticky note on the board */
       .sticky {
         width: max-content; max-width: 80%;

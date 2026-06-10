@@ -21,6 +21,7 @@ const crumbs = [
     <p class="trials-sub">Every handout, in one place — lost your paper copy? It's here.</p>
   </header>
 
+  <div class="board">
   <section class="doc-intro">
     <p>
       ⛰️ <b>The Trial of Earth</b> — the camp map is on the
@@ -30,7 +31,7 @@ const crumbs = [
     </p>
   </section>
 
-  <article class="doc" id="erratum">
+  <article class="doc pinned" id="erratum" style="--ac: var(--green); --tilt: -0.7deg">
     <header class="doc-head">
       <span class="doc-tag">FIELD COPY</span>
       <h2>The Surveyor's Erratum</h2>
@@ -70,7 +71,7 @@ const crumbs = [
     </p>
   </section>
 
-  <article class="doc" id="abraxas">
+  <article class="doc pinned" id="abraxas" style="--ac: var(--yellow); --tilt: 0.6deg">
     <header class="doc-head">
       <span class="doc-tag">FIELD COPY</span>
       <h2>The Abraxas File</h2>
@@ -94,7 +95,7 @@ const crumbs = [
     </div>
   </article>
 
-  <article class="doc" id="chautauqua">
+  <article class="doc pinned" id="chautauqua" style="--ac: var(--yellow); --tilt: -0.5deg">
     <header class="doc-head">
       <span class="doc-tag">FIELD COPY</span>
       <h2>The Chautauqua File</h2>
@@ -116,7 +117,7 @@ const crumbs = [
     </div>
   </article>
 
-  <article class="doc" id="antimemetics">
+  <article class="doc pinned" id="antimemetics" style="--ac: var(--yellow); --tilt: 0.8deg">
     <header class="doc-head">
       <span class="doc-tag">FIELD COPY</span>
       <h2>The Antimemetics File</h2>
@@ -144,7 +145,7 @@ const crumbs = [
     </p>
   </section>
 
-  <article class="doc doc-news" id="post">
+  <article class="doc doc-news pinned" id="post" style="--ac: var(--sky); --tilt: -0.6deg">
     <header class="doc-head">
       <span class="doc-tag">FIELD COPY</span>
       <h2>The Post File</h2>
@@ -179,6 +180,7 @@ const crumbs = [
       handout and badge requirements will be posted here too.
     </p>
   </section>
+  </div>
 </TrialsLayout>
 
 <style>
@@ -190,7 +192,7 @@ const crumbs = [
 
   .doc {
     background: var(--card); border: 1px solid var(--surface0); border-radius: .6rem;
-    max-width: 640px; margin: 0 auto; width: 100%; text-align: left; overflow: hidden;
+    max-width: 640px; margin: 0 auto; width: 100%; text-align: left;
   }
   .doc-head {
     border-bottom: 1px dashed var(--surface1); padding: 1.1rem 1.5rem .9rem;

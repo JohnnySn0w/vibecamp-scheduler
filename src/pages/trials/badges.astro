@@ -89,6 +89,7 @@ const BADGES = [
     <p class="trials-sub">Five to earn. Tilt them around — the real ones are laser-cut.</p>
   </header>
 
+  <div class="board">
   <div class="b3d-grid" id="b3d-grid">
     {BADGES.map((b, i) => (
       <figure class="b3d" data-tilt>
@@ -113,10 +114,10 @@ const BADGES = [
       </figure>
     ))}
   </div>
-  <p class="stack-hint" id="stack-hint" hidden>the badges stack irl — click to lay them out ✦</p>
+  <p class="sticky stack-hint" id="stack-hint" hidden>the badges stack irl — click to lay them out ✦</p>
 
   {BADGES.map((b, i) => (
-    <section class="trial-panel" id={`panel-${i}`} hidden aria-label={`${b.title} trial details`}>
+    <section class="trial-panel pinned" id={`panel-${i}`} hidden aria-label={`${b.title} trial details`} style={`--ac:${b.color}`}>
       <p class="tp-element" style={`--c:${b.color}`}>{b.sigil} The Trial of {b.element}</p>
       <p class="tp-flavor">{b.flavor}</p>
       {b.docs.length > 0 ? (
@@ -131,6 +132,7 @@ const BADGES = [
       <button class="tp-back" type="button">← all badges</button>
     </section>
   ))}
+  </div>
 
   <script is:inline>
     (function () {
@@ -273,8 +275,8 @@ const BADGES = [
     50%      { transform: rotateY(7deg) rotateX(-3deg) translateY(-7px); }
   }
   figcaption {
-    margin-top: .8rem; text-align: center; font-weight: 600; font-size: .95rem;
-    color: var(--subtext1); transition: opacity .4s;
+    margin-top: .8rem; text-align: center; font-weight: 600; font-size: 1.02rem;
+    color: var(--subtext1); transition: opacity .4s; font-family: var(--hand);
   }
 
   /* stacked intro: pile aligned in the grid's center; the whole pile bobs gently */
@@ -286,9 +288,7 @@ const BADGES = [
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-6px); }
   }
-  .stack-hint {
-    margin: -0.6rem 0 0; text-align: center; color: var(--subtext0); font-size: .95rem;
-  }
+  .stack-hint { text-align: center; }
 
   /* stage 3: a clicked badge shrinks to a solo view with its trial panel */
   .b3d-grid:not(.stacked) .b3d { cursor: pointer; }

@@ -1720,6 +1720,9 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .bar.selected { outline: 2px solid var(--green); outline-offset: -1px; z-index: 5; }
       /* event you're currently looking at (panel open): glow in its own color */
       .bar.viewing { box-shadow: 0 0 0 2px var(--c), 0 0 16px 2px color-mix(in srgb, var(--c) 65%, transparent); z-index: 6; }
+      /* background-layer long events stay in the background regardless of state —
+         a selected/hovered/viewed bgbar must never blanket the short events on top */
+      .bar.bgbar:hover, .bar.bgbar.selected, .bar.bgbar.viewing { z-index: 1; }
       .bar.selected .bar-check { display: flex; }
       .bar.conflict { outline: 2px solid var(--red); }
       .bar.conflict .bar-check { background: var(--red); }
