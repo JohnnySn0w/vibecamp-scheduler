@@ -146,13 +146,15 @@ const BADGES = [
         items.forEach(function (it) {
           it.style.transform = "";   // measure the natural grid spot
         });
-        // collapse the grid to one badge tall while stacked — otherwise the
-        // board reserves the full spread height (very tall on mobile)
-        var stackedH = items[0].offsetHeight + 24;
-        grid.style.height = stackedH + "px";
+        // The board never resizes. On narrow screens the pile anchors to the TOP
+        // of the board (so it's visible without scrolling past empty cork) and
+        // the badges spread downward from there; desktop centers the pile.
+        var mobile = window.matchMedia("(max-width: 640px)").matches;
         var gr = grid.getBoundingClientRect();
         var cx = gr.left + gr.width / 2;
-        var cy = gr.top + stackedH / 2;
+        var cy = mobile
+          ? gr.top + items[0].offsetHeight / 2 + 12
+          : gr.top + gr.height / 2;
         items.forEach(function (it) {
           var r = it.getBoundingClientRect();
           var dx = cx - (r.left + r.width / 2);
@@ -200,13 +202,8 @@ const BADGES = [
         if (!grid.classList.contains("stacked")) return;
         grid.classList.add("spreading");
         grid.classList.remove("stacked");
-        grid.style.height = grid.scrollHeight + "px";   // grow the board open
         items.forEach(function (it) { it.style.transform = ""; });
-        setTimeout(function () {
-          grid.classList.remove("spreading");
-          grid.style.height = "";
-          armBadges();
-        }, 900);
+        setTimeout(function () { grid.classList.remove("spreading"); armBadges(); }, 900);
       };
       grid.addEventListener("click", function (e) {
         if (grid.classList.contains("stacked")) { spread(); return; }
@@ -315,8 +312,6 @@ const BADGES = [
   .b3d-grid.stacked { cursor: pointer; animation: stack-bob 6s ease-in-out infinite; }
   .b3d-grid.stacked .b3d-inner { animation: none; transition: none; }
   .b3d-grid.spreading .b3d { transition: transform .85s cubic-bezier(.22, .9, .3, 1.03); }
-  .b3d-grid.spreading { transition: height .85s cubic-bezier(.22, .9, .3, 1.03); }
-  .b3d-grid.stacked { overflow: visible; }
   @keyframes stack-bob {
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-6px); }
