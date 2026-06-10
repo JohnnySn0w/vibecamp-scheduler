@@ -152,13 +152,17 @@ const crumbs = [
   </div>
 
   <article class="doc doc-news pinned" id="post" style="--tilt: -0.6deg">
-    <header class="doc-head">
+    <header class="np-mast">
       <span class="doc-tag">FIELD COPY</span>
-      <h2>The Post File</h2>
-      <p class="doc-sub">THE RAMBLEWOOD POST · CLASSIFIEDS · est. this weekend</p>
+      <h2 class="np-title">The Ramblewood Post</h2>
+      <p class="np-dateline">CLASSIFIEDS · EST. THIS WEEKEND · PRICE: ONE (1) VIBE</p>
     </header>
-    <div class="doc-body">
+    <div class="doc-body np-body">
       <p class="news-head">HAVE YOU SEEN THIS RAT?</p>
+      <figure class="np-photo">
+        <img src="/trials/rat-wanted.jpg" alt="A black rat photographed at large on a wooden table" loading="lazy" />
+        <figcaption>The suspect, photographed at large. Notice the whiskers. — staff photo</figcaption>
+      </figure>
       <p>
         Several rats have nested around camp — plush, photogenic, and exactly
         where the whispers say they are. The Post will pay handsomely (in glory)
@@ -244,12 +248,39 @@ const crumbs = [
     border-radius: .15rem; user-select: none;
   }
   .doc-foot { font-size: .85rem; font-style: italic; color: #8d8169; }
-  .news-head {
-    font-size: 1.3rem; font-weight: 800; letter-spacing: .02em; text-align: center;
-    text-transform: uppercase; color: #322c22;
-    border-bottom: 2px solid #c9bfa4; padding-bottom: .5rem;
+  /* The Ramblewood Post — broadsheet styling */
+  .doc-news, .doc-news .doc-body p { font-family: Georgia, "Times New Roman", serif; }
+  .np-mast {
+    position: relative; text-align: center;
+    padding: 1.2rem 1.5rem .6rem;
+    border-bottom: 3px double #57503e;
   }
-  .doc-news .doc-sub { font-variant: small-caps; text-transform: none; letter-spacing: .12em; }
+  .np-title {
+    margin: 0; font-size: 2rem; font-weight: 700; color: #221d15;
+    font-family: Georgia, "Times New Roman", serif; letter-spacing: .01em;
+  }
+  .np-dateline {
+    margin: .45rem 0 0; padding-top: .35rem; border-top: 1px solid #c9bfa4;
+    font-size: .68rem; letter-spacing: .2em; color: #6f6550;
+  }
+  .news-head {
+    font-size: 1.6rem; font-weight: 900; letter-spacing: .01em; text-align: center;
+    text-transform: uppercase; color: #221d15; line-height: 1.15;
+    margin-bottom: .7rem;
+  }
+  .np-photo { margin: 0 auto 1rem; max-width: 440px; }
+  .np-photo img {
+    display: block; width: 100%;
+    filter: grayscale(1) contrast(1.08) sepia(.15);
+    border: 1px solid #8d8169; padding: 3px; background: #efe7d2;
+  }
+  .np-photo figcaption {
+    font-size: .74rem; font-style: italic; color: #6f6550;
+    text-align: center; padding-top: .35rem;
+  }
+  .np-body > p:not(.news-head):not(.doc-coords):not(.doc-foot) {
+    text-align: justify; hyphens: auto;
+  }
   .doc-more { padding: 1.1rem 1.5rem; }
   .doc-more p { margin: 0; }
 </style>
