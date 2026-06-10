@@ -46,6 +46,15 @@ const {
     </main>
 
     <footer class="trials-foot">
+      <nav class="t-icons" aria-label="The Trials badges">
+        <a href="/trials/badges/" title="See the badges in 3D">
+          <img src="/trials/icons/logo-map-territory.png" alt="Map badge icon" loading="lazy" />
+          <img src="/trials/icons/logo-mpot-ypot.png" alt="Bird badge icon" loading="lazy" />
+          <img src="/trials/icons/logo-ycjdt-take-me.png" alt="Take Me badge icon" loading="lazy" />
+          <img src="/trials/icons/logo-post-rat.png" alt="Rat badge icon" loading="lazy" />
+          <img src="/trials/icons/logo-friendly-ambitious-nerds.png" alt="Puzzle badge icon" loading="lazy" />
+        </a>
+      </nav>
       <p>Send bugs to <a href="https://twitter.com/timebard" target="_blank" rel="noopener">@timebard</a> on twitter!</p>
     </footer>
 
@@ -154,6 +163,7 @@ const {
       .t-card-title { font-size: 1.15rem; font-weight: 700; }
       .t-card-desc { color: var(--subtext0); font-size: .92rem; }
       .t-card-go { margin-top: auto; padding-top: .5rem; color: var(--yellow); font-weight: 600; font-size: .92rem; }
+      .t-card-wide { grid-column: 1 / -1; }
       @media (prefers-reduced-motion: reduce) { .t-card { transition: none; } }
 
       /* prose card (about / documents / hints content) */
@@ -170,6 +180,23 @@ const {
       .trials-foot { padding: 1.4rem 1.5rem 2.4rem; text-align: center; }
       .trials-foot p { margin: 0; font-size: .82rem; color: var(--overlay0); }
       .trials-foot a { color: var(--blue); }
+
+      /* badge-icon strip: black engrave art → inverted to glow on the dark theme */
+      .t-icons { margin-bottom: 1rem; }
+      .t-icons a { display: inline-flex; gap: 1.1rem; align-items: center; }
+      .t-icons img {
+        height: 30px; width: auto;
+        filter: invert(.88) opacity(.55);
+        transition: filter .15s, transform .15s;
+      }
+      .t-icons a:hover img { filter: invert(.88) opacity(.95); transform: translateY(-2px); }
+      :root[data-theme="light"] .t-icons img { filter: opacity(.5); }
+      :root[data-theme="light"] .t-icons a:hover img { filter: opacity(.9); }
+      @media (prefers-color-scheme: light) {
+        :root[data-theme="system"] .t-icons img { filter: opacity(.5); }
+        :root[data-theme="system"] .t-icons a:hover img { filter: opacity(.9); }
+      }
+      @media (max-width: 480px) { .t-icons img { height: 22px; } .t-icons a { gap: .7rem; } }
     </style>
   </body>
 </html>
