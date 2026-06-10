@@ -144,27 +144,41 @@ const {
       }
       @media (prefers-reduced-motion: reduce) { .spark { animation: none; } }
 
-      /* link cards (the hub) — 2×2 with four cards */
-      .t-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.1rem; }
+      /* link cards (the hub) — flyers pinned at slight angles, taped at the top */
+      .t-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4rem 1.2rem; }
       @media (max-width: 640px) { .t-cards { grid-template-columns: 1fr; } }
       .t-card {
-        text-decoration: none; color: var(--text);
+        position: relative; text-decoration: none; color: var(--text);
         background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
-        padding: 1.5rem 1.3rem 1.3rem; text-align: left;
+        padding: 1.7rem 1.3rem 1.3rem; text-align: left;
         display: flex; flex-direction: column; gap: .5rem;
-        transition: transform .14s, box-shadow .14s, border-color .14s;
+        transform: rotate(var(--tilt, 0deg));
+        transition: transform .18s, box-shadow .18s, border-color .18s;
+      }
+      .t-card::before {
+        content: ""; position: absolute; top: -10px; left: 50%;
+        width: 84px; height: 22px; transform: translateX(-50%) rotate(-2.5deg);
+        background: color-mix(in srgb, var(--ac, var(--yellow)) 32%, transparent);
+        border-left: 1px dashed color-mix(in srgb, var(--ac, var(--yellow)) 45%, transparent);
+        border-right: 1px dashed color-mix(in srgb, var(--ac, var(--yellow)) 45%, transparent);
+        border-radius: 2px;
       }
       .t-card:hover, .t-card:focus-visible {
-        transform: translateY(-3px);
-        box-shadow: 0 14px 38px rgba(17,17,27,.45);
-        border-color: var(--yellow);
+        transform: rotate(0deg) translateY(-5px) scale(1.02);
+        box-shadow: 0 16px 42px color-mix(in srgb, var(--ac, var(--yellow)) 18%, rgba(17,17,27,.5));
+        border-color: var(--ac, var(--yellow));
       }
-      .t-card-emoji { font-size: 1.7rem; line-height: 1; }
+      .t-card-emoji {
+        font-size: 2.1rem; line-height: 1; width: max-content;
+        transform: rotate(-8deg); filter: drop-shadow(0 3px 6px rgba(17,17,27,.4));
+        transition: transform .18s;
+      }
+      .t-card:hover .t-card-emoji { transform: rotate(6deg) scale(1.12); }
       .t-card-title { font-size: 1.15rem; font-weight: 700; }
       .t-card-desc { color: var(--subtext0); font-size: .92rem; }
-      .t-card-go { margin-top: auto; padding-top: .5rem; color: var(--yellow); font-weight: 600; font-size: .92rem; }
+      .t-card-go { margin-top: auto; padding-top: .5rem; color: var(--ac, var(--yellow)); font-weight: 600; font-size: .92rem; }
       .t-card-wide { grid-column: 1 / -1; }
-      @media (prefers-reduced-motion: reduce) { .t-card { transition: none; } }
+      @media (prefers-reduced-motion: reduce) { .t-card, .t-card-emoji { transition: none; } }
 
       /* prose card (about / documents / hints content) */
       .t-prose {

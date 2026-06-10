@@ -37,8 +37,10 @@
         <p class="land-sub">June 18–21, 2026 · Camp Ramblewood, MD</p>
       </header>
 
+      <span class="land-stars" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✶</i><i>✧</i></span>
+
       <nav class="choices" aria-label="Site sections">
-        <a class="choice" href="/schedule/">
+        <a class="choice" href="/schedule/" style="--ac: var(--blue); --tilt: -1.7deg">
           <span class="choice-emoji" aria-hidden="true">🗓</span>
           <span class="choice-title">Event Schedule</span>
           <span class="choice-desc">
@@ -48,7 +50,7 @@
           <span class="choice-go" aria-hidden="true">Browse the timeline →</span>
         </a>
 
-        <a class="choice choice-trials" href="/trials/">
+        <a class="choice choice-trials" href="/trials/" style="--ac: var(--yellow); --tilt: 1.4deg">
           <span class="choice-spark" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✶</i><i>✧</i><i>✦</i></span>
           <span class="choice-emoji" aria-hidden="true">🏆</span>
           <span class="choice-title">Vibecamp Trials</span>
@@ -142,24 +144,54 @@
       .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
       @media (max-width: 640px) { .choices { grid-template-columns: 1fr; } }
 
+      /* cards as flyers pinned at a slight angle, taped at the top */
       .choice {
-        position: relative; overflow: hidden; text-decoration: none; color: var(--text);
+        position: relative; text-decoration: none; color: var(--text);
         background: var(--card); border: 1px solid var(--surface0); border-radius: 1rem;
-        padding: 1.8rem 1.5rem 1.5rem; text-align: left;
+        padding: 2rem 1.5rem 1.5rem; text-align: left;
         display: flex; flex-direction: column; gap: .55rem;
-        transition: transform .14s, box-shadow .14s, border-color .14s;
+        transform: rotate(var(--tilt, 0deg));
+        transition: transform .18s, box-shadow .18s, border-color .18s;
+      }
+      .choice::before {
+        content: ""; position: absolute; top: -11px; left: 50%;
+        width: 96px; height: 24px; transform: translateX(-50%) rotate(-2.5deg);
+        background: color-mix(in srgb, var(--ac) 32%, transparent);
+        border-left: 1px dashed color-mix(in srgb, var(--ac) 45%, transparent);
+        border-right: 1px dashed color-mix(in srgb, var(--ac) 45%, transparent);
+        border-radius: 2px;
       }
       .choice:hover, .choice:focus-visible {
-        transform: translateY(-3px);
-        box-shadow: 0 14px 38px rgba(17,17,27,.45);
-        border-color: var(--mauve);
+        transform: rotate(0deg) translateY(-5px) scale(1.015);
+        box-shadow: 0 16px 42px color-mix(in srgb, var(--ac) 18%, rgba(17,17,27,.5));
+        border-color: var(--ac);
       }
-      .choice-emoji { font-size: 2rem; line-height: 1; }
+      .choice-emoji {
+        font-size: 2.6rem; line-height: 1; width: max-content;
+        transform: rotate(-8deg); filter: drop-shadow(0 3px 6px rgba(17,17,27,.4));
+        transition: transform .18s;
+      }
+      .choice:hover .choice-emoji { transform: rotate(6deg) scale(1.12); }
       .choice-title { font-size: 1.35rem; font-weight: 700; }
       .choice-desc { color: var(--subtext0); font-size: .95rem; }
-      .choice-go { margin-top: auto; padding-top: .6rem; color: var(--blue); font-weight: 600; font-size: .95rem; }
-      .choice-trials:hover, .choice-trials:focus-visible { border-color: var(--yellow); }
-      .choice-trials .choice-go { color: var(--yellow); }
+      .choice-go { margin-top: auto; padding-top: .6rem; color: var(--ac, var(--blue)); font-weight: 600; font-size: .95rem; }
+
+      /* a few stars drifting between the hero and the cards */
+      .land-stars { position: relative; display: block; height: 0; }
+      .land-stars i {
+        position: absolute; font-style: normal; color: var(--mauve); opacity: .4;
+        animation: land-drift 6s ease-in-out infinite;
+      }
+      .land-stars i:nth-child(1) { left: 6%;  top: -3.2rem; font-size: .8rem; }
+      .land-stars i:nth-child(2) { left: 22%; top: -1rem;   font-size: .6rem; color: var(--teal); animation-delay: 1.2s; }
+      .land-stars i:nth-child(3) { left: 55%; top: -2.4rem; font-size: .7rem; color: var(--yellow); animation-delay: 2.4s; }
+      .land-stars i:nth-child(4) { left: 78%; top: -.8rem;  font-size: .9rem; animation-delay: 3.6s; }
+      .land-stars i:nth-child(5) { left: 93%; top: -2.8rem; font-size: .6rem; color: var(--sky); animation-delay: 4.8s; }
+      @keyframes land-drift {
+        0%, 100% { transform: translateY(0) scale(1); opacity: .35; }
+        50%      { transform: translateY(-7px) scale(1.15); opacity: .75; }
+      }
+      @media (prefers-reduced-motion: reduce) { .land-stars i { animation: none; } }
 
       /* ambient sparkles on the Trials card */
       .choice-spark { position: absolute; inset: 0; pointer-events: none; }
