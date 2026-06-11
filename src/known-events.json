@@ -1,7 +1,7 @@
 {
   "note": "Event UIDs known on/before 2026-06-18; frozen from then on.",
-  "updated": "2026-06-10",
-  "count": 128,
+  "updated": "2026-06-11",
+  "count": 129,
   "uids": [
     "0173e493-64b6-465b-9cb2-8fe3473cb6d8@my.vibe.camp",
     "0305a083-6b09-46cd-a97e-16f24291b433@my.vibe.camp",
@@ -123,6 +123,7 @@
     "e85402ab-d344-4a66-a331-1039c176c463@my.vibe.camp",
     "ec441fe2-0d5d-4d98-815c-044a39c13a3e@my.vibe.camp",
     "ec56dc49-a119-4a0e-b9de-59a4d15a4efb@my.vibe.camp",
+    "f218a023-3469-484c-8e1f-90256839a763@my.vibe.camp",
     "f2d04e48-82ec-4213-bc15-d75e8c0ce30f@my.vibe.camp",
     "f4e21e6d-b74f-403f-92ed-9dce40aed5c8@my.vibe.camp",
     "f5e0304e-321c-4c8e-af83-e07f6bbf43ab@my.vibe.camp",
