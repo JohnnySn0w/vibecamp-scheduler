@@ -214,7 +214,7 @@ for (const name of venueNames) {
 const lanesHeight = Math.max(0, yCursor - VENUE_GAP);
 
 const bands = groups.map((g, i) => ({
-  left: g.offset, width: g.width,
+  left: g.offset, width: g.width, date: g.date,
   day: g.day, pretty: g.pretty, count: g.count, peak: g.peak, first: i === 0,
 }));
 const hourTicks = groups.flatMap((g) =>
@@ -287,6 +287,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
             <button id="search-clear" class="search-clear" type="button" aria-label="Clear search" hidden>✕</button>
           </div>
           <span id="count" class="count">{totalEvents} events</span>
+          <button id="picks-toggle" class="view-toggle picks-toggle" type="button" hidden>🎟 My picks only</button>
           <button id="view-toggle" class="view-toggle" type="button">📍 Location view</button>
           <button id="map-btn" class="view-toggle" type="button">🗺️ Map</button>
           <button id="clock-toggle" class="view-toggle" type="button">🕐 Clock: 24h</button>
@@ -327,7 +328,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
           <div class="chart" id="chart" data-tw={totalWidth} style={`width:${totalWidth}px`}>
             <div class="daylabels" id="daylabels" style={`width:${totalWidth}px`}>
               {bands.map((b) => (
-                <div class="daylabel" data-bx={b.left} data-bw={b.width} style={`left:${b.left}px;width:${b.width}px`}>
+                <div class="daylabel" data-bx={b.left} data-bw={b.width} data-date={b.date} style={`left:${b.left}px;width:${b.width}px`}>
                   <span class="dl-day">{b.day}</span>
                   <span class="dl-date">{b.pretty}</span>
                   <span class="dl-meta">{b.count} events · {b.peak} at peak</span>
@@ -450,6 +451,9 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
             <span class="export-txt"><b>PDF schedule</b><small>A printable one-page schedule. Any unresolved overlaps are flagged on the page.</small></span>
           </button>
         </div>
+        <label class="export-mapchk" title="Include each event's description in the PDF">
+          <input type="checkbox" id="desc-pdf" checked /> 📝 Include event descriptions in the PDF
+        </label>
         <label class="export-mapchk" title="Include the camp map at the top of the PDF">
           <input type="checkbox" id="map-pdf" checked /> 🗺️ Include the camp map in the PDF
         </label>
@@ -547,6 +551,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       }
 
       function applyFilter() {
+        if (picksMode) exitPicks();
         const q = search.value.trim().toLowerCase();
         let visible = 0;
         for (const b of bars) {
@@ -578,12 +583,20 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       const baseWidth = +chart.dataset.tw;
       const xEls = Array.from(document.querySelectorAll("[data-bx]"));
       let curZoom = 1;   // tracks the applied scale so we can re-anchor on change
+      // --- "My picks only" re-pack: when on, picksX overrides the baked X axis ---
+      let picksMode = false;
+      const picksX = new Map();   // element -> { bx, bw? }  (collapsed-axis overrides)
+      let picksTotalW = 0;
+      const venueSearchActive = () => picksMode || search.value.trim() !== "";
       function setZoom(z) {
         for (const el of xEls) {
-          el.style.left = (+el.dataset.bx * z) + "px";
-          if (el.dataset.bw != null) el.style.width = (+el.dataset.bw * z) + "px";
+          const px = picksMode ? picksX.get(el) : null;
+          const bx = px ? px.bx : +el.dataset.bx;
+          el.style.left = (bx * z) + "px";
+          const bw = px && px.bw != null ? px.bw : (el.dataset.bw != null ? +el.dataset.bw : null);
+          if (bw != null) el.style.width = (bw * z) + "px";
         }
-        const w = (baseWidth * z) + "px";
+        const w = ((picksMode ? picksTotalW : baseWidth) * z) + "px";
         chart.style.width = w; daylabels.style.width = w;
         curZoom = z;
       }
@@ -758,15 +771,15 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         axisHead.textContent = tracks ? (TROWS + " rows · " + bgSet.size + " bg") : "Location";
         collapseAllBtn.style.display = tracks ? "none" : "";
         viewToggleBtn.textContent = tracks ? "📍 Location view" : "☰ Row view";
-        if (tracks) layoutTracks(); else layoutVenues(search.value.trim() !== "");
+        if (tracks) layoutTracks(); else layoutVenues(venueSearchActive());
       }
-      viewToggleBtn.addEventListener("click", () => setView(viewMode === "tracks" ? "venues" : "tracks"));
+      viewToggleBtn.addEventListener("click", () => { if (picksMode) exitPicks(); setView(viewMode === "tracks" ? "venues" : "tracks"); });
 
       for (const v of venues) {
         v.label.addEventListener("click", () => {
           if (manualCollapsed.has(v.name)) manualCollapsed.delete(v.name);
           else manualCollapsed.add(v.name);
-          layoutVenues(search.value.trim() !== "");
+          layoutVenues(venueSearchActive());
           syncCollapseAll();
         });
       }
@@ -778,7 +791,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         const allCollapsed = venues.every((v) => manualCollapsed.has(v.name));
         if (allCollapsed) manualCollapsed.clear();
         else for (const v of venues) manualCollapsed.add(v.name);
-        layoutVenues(search.value.trim() !== "");
+        layoutVenues(venueSearchActive());
         syncCollapseAll();
       });
 
@@ -786,6 +799,77 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       try { savedView = localStorage.getItem("vc-view") || "tracks"; } catch (e) {}
       setView(savedView);
       syncCollapseAll();
+
+      // ---- "My picks only": re-pack the continuous axis over just the picks ----
+      const picksToggle = document.getElementById("picks-toggle");
+      const daylabelEls = Array.from(document.querySelectorAll(".daylabel"));
+      const PICK_GAP = 76, PICK_PAD = 16;   // mirror server-side DAY_GAP / SIDE_PAD
+      let viewBeforePicks = null;
+
+      function buildPicksGeometry() {
+        picksX.clear();
+        const picked = bars.filter((b) => b.classList.contains("selected"));
+        const byDate = new Map();
+        for (const b of picked) {
+          if (!byDate.has(b.dataset.date)) byDate.set(b.dataset.date, []);
+          byDate.get(b.dataset.date).push(b);
+        }
+        // days in original axis order, each shrunk to span only its picked events
+        const dates = [...byDate.keys()].sort((a, b) =>
+          Math.min(...byDate.get(a).map((x) => +x.dataset.bx)) -
+          Math.min(...byDate.get(b).map((x) => +x.dataset.bx)));
+        let cursor = PICK_PAD;
+        for (const d of dates) {
+          const g = byDate.get(d);
+          const minL = Math.min(...g.map((b) => +b.dataset.bx));
+          const maxR = Math.max(...g.map((b) => +b.dataset.bx + (+b.dataset.bw)));
+          const w = Math.max(1, maxR - minL);
+          for (const b of g) picksX.set(b, { bx: cursor + (+b.dataset.bx - minL) });
+          const dl = daylabelEls.find((x) => x.dataset.date === d);
+          if (dl) picksX.set(dl, { bx: cursor, bw: w });
+          cursor += w + PICK_GAP;
+        }
+        picksTotalW = Math.max(1, cursor - PICK_GAP + PICK_PAD);
+        for (const band of vbands) picksX.set(band, { bx: 0, bw: picksTotalW });
+        return picked;
+      }
+
+      function syncPicksView() {
+        const picked = buildPicksGeometry();
+        if (!picked.length) { exitPicks(); return; }
+        const pd = new Set(picked.map((b) => b.dataset.date));
+        for (const dl of daylabelEls) dl.style.display = pd.has(dl.dataset.date) ? "" : "none";
+        for (const b of bars) b.classList.toggle("dim", !b.classList.contains("selected"));
+        layoutVenues(true);          // hides venues with no picks (the searchActive path)
+        setZoom(curZoom);
+      }
+
+      function enterPicks() {
+        if (!bars.some((b) => b.classList.contains("selected"))) return;
+        picksMode = true;
+        viewBeforePicks = viewMode;
+        if (search.value) { search.value = ""; searchClear.hidden = true; }
+        chart.classList.add("picks-only");
+        picksToggle.classList.add("on");
+        picksToggle.textContent = "\u{1F39F} Showing your picks — show all";
+        if (viewMode !== "venues") setView("venues");
+        syncPicksView();
+      }
+      function exitPicks() {
+        if (!picksMode) return;
+        picksMode = false;
+        picksX.clear();
+        for (const dl of daylabelEls) dl.style.display = "";
+        for (const b of bars) b.classList.remove("dim");
+        chart.classList.remove("picks-only");
+        picksToggle.classList.remove("on");
+        picksToggle.textContent = "\u{1F39F} My picks only";
+        const back = viewBeforePicks || viewMode;
+        if (back !== viewMode) setView(back);
+        else if (viewMode === "tracks") layoutTracks(); else layoutVenues(venueSearchActive());
+        setZoom(curZoom);
+      }
+      picksToggle.addEventListener("click", () => { picksMode ? exitPicks() : enterPicks(); });
 
       const el = (tag, cls, text) => {
         const n = document.createElement(tag);
@@ -871,6 +955,11 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         syncCatChecks();
         updateTrayToggle();
         saveSelection();
+        // the "My picks only" toggle only makes sense once something's picked
+        if (picksToggle) {
+          picksToggle.hidden = !has;
+          if (picksMode) { if (!has) exitPicks(); else syncPicksView(); }
+        }
       }
 
       // ---- persist picks across refreshes ----
@@ -1106,6 +1195,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         const unackedIds = new Set();
         for (const [a, b] of unackedPairs) { unackedIds.add(a.id); unackedIds.add(b.id); }
 
+        const withDesc = document.getElementById("desc-pdf").checked;
         const body = document.getElementById("ps-body");
         body.textContent = "";
         const days = [...new Set(sel.map((b) => b.dataset.day))];
@@ -1133,6 +1223,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
               meta.appendChild(el("span", "ps-loc", b.dataset.loc));
             }
             if (b.dataset.org || b.dataset.loc) main.appendChild(meta);
+            if (withDesc && b.dataset.desc) main.appendChild(el("div", "ps-desc", b.dataset.desc));
             item.appendChild(main);
             sec.appendChild(item);
           }
@@ -1710,6 +1801,10 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       .bar-time { font-size: .66rem; font-variant-numeric: tabular-nums; color: var(--c); font-weight: 700; line-height: 1; }
       .bar-title { font-size: .8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.15; }
       .bar.dim { opacity: .1; pointer-events: none; }
+      /* "My picks only": hide everything but the picks + their day labels */
+      .picks-only .bar:not(.selected) { display: none !important; }
+      .picks-only .ruler .tick, .picks-only .grid, .picks-only .divider { display: none !important; }
+      .picks-toggle.on { background: var(--green); color: var(--crust); border-color: var(--green); }
 
       /* multi-day events: span across the day columns with a striped fill + dashed leading edge */
       .bar.multi {
@@ -1983,6 +2078,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         .ps-main .m { margin-top: 2.5pt; font-size: 8.5pt; color: #8c8fa1; }
         .ps-host { font-style: italic; }
         .ps-loc { color: #6c6f85; }
+        .ps-desc { margin-top: 3pt; font-size: 8.5pt; line-height: 1.35; color: #5c5f77; white-space: pre-wrap; }
         .ps-dot { margin: 0 5pt; color: #bcc0cc; }
 
         /* conflicts */
