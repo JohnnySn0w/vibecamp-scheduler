@@ -676,15 +676,16 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       // underneath layer needs. Label every row so the labels don't stop short.
       const TROWS = Math.max(K, bgLanes);
       const compactAreaH = TROWS * ROW - LG;
-      const tbands = [];
+      const tbands = [], tlabels = [];
       for (let i = 0; i < TROWS; i++) {
         const lbl = document.createElement("div");
         lbl.className = "tlabel" + (i % 2 ? " alt" : "");
         lbl.style.top = (i * ROW) + "px"; lbl.style.height = LH + "px";
         const count = (trackCounts[i] || 0) + (bgLaneCounts[i] || 0);
+        lbl.dataset.count0 = count;   // full-view count, restored when leaving picks mode
         const c = document.createElement("span"); c.className = "vlabel-count"; c.textContent = count;
         const n = document.createElement("span"); n.className = "vlabel-name"; n.textContent = "events";
-        lbl.append(c, n); trackRowsEl.appendChild(lbl);   // count first, then "events"
+        lbl.append(c, n); trackRowsEl.appendChild(lbl); tlabels.push(lbl);   // count first, then "events"
         const band = document.createElement("span");
         band.className = "tband" + (i % 2 ? " alt" : "");
         band.style.top = (i * ROW) + "px"; band.style.height = LH + "px"; band.style.display = "none";
@@ -739,6 +740,12 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       }
 
       function layoutTracks() {
+        // restore every row (picks mode may have hidden some / changed counts)
+        tlabels.forEach((lbl, i) => {
+          lbl.style.display = ""; lbl.style.top = (i * ROW) + "px";
+          lbl.querySelector(".vlabel-count").textContent = lbl.dataset.count0;
+        });
+        tbands.forEach((band, i) => { band.style.top = (i * ROW) + "px"; });
         for (const b of bars) {
           b.style.display = "";
           if (bgSet.has(b)) {
@@ -760,6 +767,51 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         trackRowsEl.style.height = compactAreaH + "px";
       }
 
+      // "My picks only" in Row view: re-pack just the picks into the fewest rows.
+      function layoutTracksPicks() {
+        const picked = bars.filter((b) => b.classList.contains("selected"));
+        const byPos = (a, b) => left(a) - left(b) || right(a) - right(b);
+        const fgP = picked.filter((b) => !bgSet.has(b)).sort(byPos);
+        const ends = [], trackOfP = new Map();
+        for (const b of fgP) {
+          let t = ends.findIndex((e) => e <= left(b) + 0.5);
+          if (t === -1) { t = ends.length; ends.push(0); }
+          ends[t] = right(b); trackOfP.set(b, t);
+        }
+        const bgP = picked.filter((b) => bgSet.has(b)).sort(byPos);
+        const bgEndsP = [], bgOfP = new Map();
+        for (const b of bgP) {
+          let l = bgEndsP.findIndex((e) => e <= left(b) + 0.5);
+          if (l === -1) { l = bgEndsP.length; bgEndsP.push(0); }
+          bgEndsP[l] = right(b); bgOfP.set(b, l);
+        }
+        const rows = Math.max(1, ends.length, bgEndsP.length);
+        const rowCount = new Array(rows).fill(0);
+        for (const b of fgP) rowCount[trackOfP.get(b)]++;
+        for (const b of bgP) rowCount[bgOfP.get(b)]++;
+        for (const b of picked) {
+          if (bgSet.has(b)) {
+            b.classList.add("bgbar");
+            const lane = bgOfP.get(b), peekUp = lane > 0 ? BG_PEEK : 0;
+            b.style.top = (lane * ROW - peekUp) + "px";
+            b.style.height = (LH + peekUp + BG_PEEK) + "px";
+          } else {
+            b.classList.remove("bgbar"); b.style.height = "";
+            b.style.top = (trackOfP.get(b) * ROW) + "px";
+          }
+        }
+        tlabels.forEach((lbl, i) => {
+          if (i < rows) { lbl.style.display = ""; lbl.style.top = (i * ROW) + "px"; lbl.querySelector(".vlabel-count").textContent = rowCount[i]; }
+          else lbl.style.display = "none";
+        });
+        tbands.forEach((band, i) => {
+          if (i < rows) { band.style.display = ""; band.style.top = (i * ROW) + "px"; }
+          else band.style.display = "none";
+        });
+        const h = Math.max(0, rows * ROW - LG);
+        lanesEl.style.height = h + "px"; trackRowsEl.style.height = h + "px";
+      }
+
       function setView(mode) {
         viewMode = mode;
         try { localStorage.setItem("vc-view", mode); } catch (e) {}
@@ -773,7 +825,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         viewToggleBtn.textContent = tracks ? "📍 Location view" : "☰ Row view";
         if (tracks) layoutTracks(); else layoutVenues(venueSearchActive());
       }
-      viewToggleBtn.addEventListener("click", () => { if (picksMode) exitPicks(); setView(viewMode === "tracks" ? "venues" : "tracks"); });
+      viewToggleBtn.addEventListener("click", () => { setView(viewMode === "tracks" ? "venues" : "tracks"); if (picksMode) syncPicksView(); });
 
       for (const v of venues) {
         v.label.addEventListener("click", () => {
@@ -804,7 +856,6 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
       const picksToggle = document.getElementById("picks-toggle");
       const daylabelEls = Array.from(document.querySelectorAll(".daylabel"));
       const PICK_GAP = 76, PICK_PAD = 16;   // mirror server-side DAY_GAP / SIDE_PAD
-      let viewBeforePicks = null;
 
       function buildPicksGeometry() {
         picksX.clear();
@@ -834,26 +885,29 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         return picked;
       }
 
+      // re-pack the picks in whichever view is active (Row or Location)
+      function layoutPicks() {
+        if (viewMode === "tracks") layoutTracksPicks();
+        else layoutVenues(true);   // venues: searchActive path hides venues with no picks
+      }
       function syncPicksView() {
         const picked = buildPicksGeometry();
         if (!picked.length) { exitPicks(); return; }
         const pd = new Set(picked.map((b) => b.dataset.date));
         for (const dl of daylabelEls) dl.style.display = pd.has(dl.dataset.date) ? "" : "none";
         for (const b of bars) b.classList.toggle("dim", !b.classList.contains("selected"));
-        layoutVenues(true);          // hides venues with no picks (the searchActive path)
+        layoutPicks();
         setZoom(curZoom);
       }
 
       function enterPicks() {
         if (!bars.some((b) => b.classList.contains("selected"))) return;
         picksMode = true;
-        viewBeforePicks = viewMode;
         if (search.value) { search.value = ""; searchClear.hidden = true; }
         chart.classList.add("picks-only");
         picksToggle.classList.add("on");
         picksToggle.textContent = "\u{1F39F} Showing your picks — show all";
-        if (viewMode !== "venues") setView("venues");
-        syncPicksView();
+        syncPicksView();   // works in the current view, no forced switch
       }
       function exitPicks() {
         if (!picksMode) return;
@@ -864,9 +918,7 @@ const CATS = CAT_RULES.map((c) => ({ key: c.key, label: c.label, count: catCount
         chart.classList.remove("picks-only");
         picksToggle.classList.remove("on");
         picksToggle.textContent = "\u{1F39F} My picks only";
-        const back = viewBeforePicks || viewMode;
-        if (back !== viewMode) setView(back);
-        else if (viewMode === "tracks") layoutTracks(); else layoutVenues(venueSearchActive());
+        if (viewMode === "tracks") layoutTracks(); else layoutVenues(venueSearchActive());
         setZoom(curZoom);
       }
       picksToggle.addEventListener("click", () => { picksMode ? exitPicks() : enterPicks(); });
