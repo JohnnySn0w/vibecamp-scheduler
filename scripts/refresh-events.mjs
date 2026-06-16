@@ -21,18 +21,27 @@ const pad = (n) => String(n).padStart(2, "0");
 const unescapeIcs = (s) =>
   s.replace(/\\n/g, "\n").replace(/\\,/g, ",").replace(/\\;/g, ";").replace(/\\\\/g, "\\");
 
+// Parse an iCalendar date(-time). The feed now emits FLOATING local times
+// (no trailing Z, no TZID) — the raw wall-clock at the camp venue (Eastern).
+// We still handle trailing-Z (UTC instant) values for robustness / old caches.
+// `dt` is a naive Date built from the components (UTC fields == the written
+// numbers); good for duration math and chronological sort regardless of zone.
 function parseDt(v) {
   v = v.trim();
   if (v.includes("T")) {
-    const m = v.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z?$/);
+    const m = v.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/);
     if (!m) return { dt: null, hasTime: false };
-    const [, Y, Mo, D, H, Mi, S] = m.map(Number);
-    return { dt: new Date(Date.UTC(Y, Mo - 1, D, H, Mi, S)), hasTime: true };
+    const Y = +m[1], Mo = +m[2], D = +m[3], H = +m[4], Mi = +m[5], S = +m[6];
+    return {
+      dt: new Date(Date.UTC(Y, Mo - 1, D, H, Mi, S)),
+      hasTime: true, isUTC: m[7] === "Z",
+      Y, Mo, D, H, Mi,
+    };
   }
   const m = v.match(/^(\d{4})(\d{2})(\d{2})$/);
   if (!m) return { dt: null, hasTime: false };
-  const [, Y, Mo, D] = m.map(Number);
-  return { dt: new Date(Date.UTC(Y, Mo - 1, D)), hasTime: false };
+  const Y = +m[1], Mo = +m[2], D = +m[3];
+  return { dt: new Date(Date.UTC(Y, Mo - 1, D)), hasTime: false, isUTC: false, Y, Mo, D };
 }
 
 function durLabel(start, end) {
@@ -97,22 +106,31 @@ const main = async () => {
   const rows = [];
   for (const e of events) {
     if (!e.DTSTART) continue;
-    const { dt: start, hasTime } = parseDt(e.DTSTART);
-    if (!start) continue;
-    const { dt: end } = e.DTEND ? parseDt(e.DTEND) : { dt: null };
+    const ps = parseDt(e.DTSTART);
+    if (!ps.dt) continue;
+    const pe = e.DTEND ? parseDt(e.DTEND) : null;
+    const start = ps.dt, end = pe ? pe.dt : null;
 
     let date, day, startStr, endStr;
-    if (hasTime) {
-      const es = eastern(start);               // convert UTC → Eastern (may shift the day)
+    if (ps.hasTime && ps.isUTC) {
+      // legacy UTC instant (trailing Z) → convert to Eastern (may shift the day)
+      const es = eastern(start);
       date = es.date; day = es.day; startStr = es.time;
       endStr = end ? eastern(end).time : "";
+    } else if (ps.hasTime) {
+      // floating local time: the written wall-clock IS Eastern (camp venue) —
+      // emit it verbatim, no zone conversion (that was the 4h-early bug).
+      date = `${ps.Y}-${pad(ps.Mo)}-${pad(ps.D)}`;
+      day = DAYS[(start.getUTCDay() + 6) % 7];
+      startStr = `${pad(ps.H)}:${pad(ps.Mi)}`;
+      endStr = pe && pe.hasTime ? `${pad(pe.H)}:${pad(pe.Mi)}` : "";
     } else {
       // genuine all-day (date-only) events are floating — do not shift across zones
-      date = `${start.getUTCFullYear()}-${pad(start.getUTCMonth() + 1)}-${pad(start.getUTCDate())}`;
+      date = `${ps.Y}-${pad(ps.Mo)}-${pad(ps.D)}`;
       day = DAYS[(start.getUTCDay() + 6) % 7];
       startStr = "all-day"; endStr = "";
     }
-    if (!date.startsWith(String(YEAR))) continue; // filter on the Eastern-local year
+    if (!date.startsWith(String(YEAR))) continue; // filter on the local year
 
     rows.push({
       date, day, start: startStr, end: endStr,
