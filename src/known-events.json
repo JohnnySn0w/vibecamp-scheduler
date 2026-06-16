@@ -1,7 +1,7 @@
 {
   "note": "Event UIDs known on/before 2026-06-18; frozen from then on.",
   "updated": "2026-06-16",
-  "count": 175,
+  "count": 178,
   "uids": [
     "00bf55d2-d6c2-42f4-8944-5ccd99f28993@my.vibe.camp",
     "0173e493-64b6-465b-9cb2-8fe3473cb6d8@my.vibe.camp",
@@ -26,6 +26,7 @@
     "21f11826-bb37-4eca-a5ec-4f2ccec90f66@my.vibe.camp",
     "2254ce79-1ef2-445b-b606-d19d2da55ef8@my.vibe.camp",
     "227da690-9f6f-4dde-a086-14cd4bbda0f9@my.vibe.camp",
+    "22d6f135-d3cd-46a8-b081-336426261caf@my.vibe.camp",
     "2468f972-5827-4410-86eb-60803364a421@my.vibe.camp",
     "25be9fed-f674-4c6d-ae64-a999062a8d72@my.vibe.camp",
     "25c16f28-30a5-4e93-b442-6c06841bfdc1@my.vibe.camp",
@@ -84,6 +85,7 @@
     "8031342f-48ff-4384-969c-9844600dcd7e@my.vibe.camp",
     "80b8742c-bd1c-4748-ada9-d865680dc059@my.vibe.camp",
     "81126411-a7ca-4f80-a7dc-8593add7a371@my.vibe.camp",
+    "8326cb14-6086-4b0e-8b4f-97972eb78d2c@my.vibe.camp",
     "861fd6d6-e4d3-4499-8c6d-8907fdfc8ca3@my.vibe.camp",
     "86497a40-f94d-446f-9933-d435102c6f22@my.vibe.camp",
     "880101b9-0ca0-4a7d-9e70-4a8d94b7f0b5@my.vibe.camp",
@@ -171,6 +173,7 @@
     "f2d04e48-82ec-4213-bc15-d75e8c0ce30f@my.vibe.camp",
     "f4e21e6d-b74f-403f-92ed-9dce40aed5c8@my.vibe.camp",
     "f5e0304e-321c-4c8e-af83-e07f6bbf43ab@my.vibe.camp",
+    "f7473816-0273-48af-ac82-b13321b7f113@my.vibe.camp",
     "f77b7a79-6f94-459e-91a3-756a2cadd03a@my.vibe.camp",
     "f9b85a5e-de6b-46af-b6b4-2b35867ba724@my.vibe.camp",
     "fb51e371-fd74-4c37-99ab-9baebdc5e61d@my.vibe.camp",
