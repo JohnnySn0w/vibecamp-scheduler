@@ -1,8 +1,8 @@
 ---
 // Trials documents — true copies of the player-facing field documents.
 // PLAYER-SAFE ONLY: no passwords, no hints, no book titles, no operator
-// material. The coordinate blocks and location clues ride on the physical
-// cards handed out at camp.
+// material. The full coordinate blocks live on the downloadable field guide
+// (puzzle inputs, not answers) and the cards handed out at camp.
 import TrialsLayout from "../../layouts/TrialsLayout.astro";
 const crumbs = [
   { href: "/trials/", label: "← Trials" },
@@ -20,6 +20,12 @@ const crumbs = [
     <h1>Documents</h1>
     <p class="trials-sub">Every handout, in one place — lost your paper copy? It's here.</p>
   </header>
+
+  <p class="dl-row">
+    <a class="dl-btn" href="/trials/vibecamp-trials-field-guide.pdf" download>
+      ⬇ Download the printable field guide <span class="dl-meta">(PDF · 2 pages)</span>
+    </a>
+  </p>
 
   <div class="board">
 
@@ -70,8 +76,8 @@ const crumbs = [
     <p>
       🌬️ <b>The Trial of Air</b> — three sentences are hiding in three places.
       Each file below is a true copy of its clue card. The location clue and the
-      coordinate block ride on the <em>physical</em> cards — pick one up at a
-      Trials shift.
+      full coordinate block are on the <em>sheet</em> — download it at the top,
+      or grab a copy at a Trials shift.
     </p>
   </div>
 
@@ -93,7 +99,7 @@ const crumbs = [
         light and shadow.
       </p>
       <p class="doc-coords">
-        <span class="censor">█████████</span> · location clue &amp; coordinates on the physical card · <span class="censor">█████████</span>
+        <span class="censor">█████████</span> · location clue &amp; coordinates on the sheet · <span class="censor">█████████</span>
       </p>
       <p class="doc-foot">Stuck? If you can't yet read the sign, the Bard has hints — just ask.</p>
     </div>
@@ -115,7 +121,7 @@ const crumbs = [
         highest peaks of dialectic thought.
       </p>
       <p class="doc-coords">
-        <span class="censor">█████████</span> · location clue &amp; coordinates on the physical card · <span class="censor">█████████</span>
+        <span class="censor">█████████</span> · location clue &amp; coordinates on the sheet · <span class="censor">█████████</span>
       </p>
       <p class="doc-foot">Stuck? If your gumption runs low, the Bard has hints — just ask.</p>
     </div>
@@ -136,7 +142,7 @@ const crumbs = [
       <p>...But if there were something to find, you could tell us.</p>
       <p>It's not like you'll remember.</p>
       <p class="doc-coords">
-        <span class="censor">█████████</span> · location clue &amp; coordinates on the physical card · <span class="censor">█████████</span>
+        <span class="censor">█████████</span> · location clue &amp; coordinates on the sheet · <span class="censor">█████████</span>
       </p>
       <p class="doc-foot">Stuck? If the answer is hiding itself from you, the Bard has hints — just ask.</p>
     </div>
@@ -195,6 +201,19 @@ const crumbs = [
 </TrialsLayout>
 
 <style>
+  /* download-the-sheet call to action */
+  .dl-row { text-align: center; margin: 0 0 1.6rem; }
+  .dl-btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--yellow); color: var(--crust);
+    font-weight: 700; font-size: 1rem; text-decoration: none;
+    padding: .7rem 1.3rem; border-radius: .6rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,.35);
+    transition: transform .14s, box-shadow .14s;
+  }
+  .dl-btn:hover, .dl-btn:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.45); }
+  .dl-meta { font-weight: 600; opacity: .8; font-size: .85rem; }
+
   /* the board stacks trial groups; inside a group, the intro hangs tight above its docs */
   .board { display: flex; flex-direction: column; gap: 2.2rem; }
   .doc-group { display: flex; flex-direction: column; gap: 1rem; }
